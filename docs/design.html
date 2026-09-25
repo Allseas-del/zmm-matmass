@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Material Mass Upload – Design</title>
+<style>
+  :root { --ink:#1d2330; --muted:#667085; --line:#d9dde5; --acc:#0a6ed1; --bg:#fff; --soft:#f5f6f8; --warn:#b36b00; }
+  body { margin:0; font:15px/1.55 "72", Arial, sans-serif; color:var(--ink); background:var(--bg); }
+  main { max-width:980px; margin:0 auto; padding:24px 20px 60px; }
+  h1 { font-size:26px; margin:0 0 4px; } h2 { font-size:20px; margin:34px 0 8px; border-bottom:1px solid var(--line); padding-bottom:4px; }
+  h3 { font-size:16px; margin:20px 0 6px; }
+  .meta td { border:none; padding:1px 12px 1px 0; }
+  table { border-collapse:collapse; width:100%; font-size:13.5px; margin:8px 0; }
+  th, td { border:1px solid var(--line); padding:5px 7px; text-align:left; vertical-align:top; }
+  th { background:var(--soft); }
+  code { background:var(--soft); padding:0 3px; border-radius:3px; font-size:13px; }
+  .open { color:var(--warn); font-weight:600; }
+  .note { background:#fff8e6; border-left:4px solid var(--warn); padding:8px 12px; margin:10px 0; }
+  pre { background:var(--soft); padding:10px; overflow:auto; font-size:12.5px; }
+</style>
+</head>
+<body>
+<main>
+<h1>Material Master Mass Upload</h1>
+<div class="muted">Functional and Technical Design – LTMC product template → OData V4 Product API, hosted in the Fiori launchpad</div>
+<table class="meta">
+<tr><td>Customer</td><td>Allseas – S/4HANA 2023 FPS01, DS4 (build 400, test 410) → QS4 → PS4</td></tr>
+<tr><td>Author</td><td>Pjotr Dassen</td></tr>
+<tr><td>Version</td><td>0.1 (draft – mapping pending)</td></tr>
+<tr><td>Date</td><td>25 September 2026</td></tr>
+<tr><td>Package / transport</td><td><code>ZMM_MATMASS</code> / <code>DS4K915674</code></td></tr>
+<tr><td>Repository</td><td><code>C:\dev\zmm-matmass</code> – github.com/Allseas-del/zmm-matmass</td></tr>
+</table>
+
+<h2>Part A – Functional design</h2>
+
+<h3>1. Purpose and scope</h3>
+<p>Materials delivered in the SAP Migration Cockpit (LTMC) template for the migration object <em>Product</em> are created (and optionally changed) in S/4HANA through SAP's released OData V4 Product API, from a browser-based tool that runs as an app in the Fiori launchpad. The engine is the one built and tested for the STIHL maintenance task list upload (API_MAINTENANCETASKLIST, v1.0, 24 Sep 2026).</p>
+<table>
+<tr><th>In scope</th><th>Details</th></tr>
+<tr><td>Create materials</td><td>Basic data, descriptions, plant, storage location, valuation, sales and other views – as far as the template sheets have an entity in the API (chapter 5).</td></tr>
+<tr><td>Change materials</td><td>Change mode reads the existing material and PATCHes only the fields that differ; missing sub-entities (e.g. an extra plant) are added.</td></tr>
+<tr><td>Custom fields</td><td>ZZ1_*_PRD fields on MARA, if enabled for the V4 API in the Custom Fields app (open point).</td></tr>
+<tr><td>Volume</td><td>$batch per chunk ("split"), parallel workers, results file and resume.</td></tr>
+</table>
+<table>
+<tr><th>Out of scope</th><th>Reason</th></tr>
+<tr><td>MDG change requests</td><td>Decision 25 Sep 2026: materials are created directly through the API; MDG governance is bypassed for this load.</td></tr>
+<tr><td>Deleting materials</td><td>Deletion flag via standard transactions.</td></tr>
+<tr><td>Template sheets without API entity</td><td>Reported in the log and not sent (list follows with the mapping).</td></tr>
+</table>
+
+<h3>2. Solution overview</h3>
+<p>Fiori launchpad tile → BSP application <code>ZMMMATMASS</code> (UI5 component that hosts the self-contained upload tool in a same-origin frame) → OData V4 Product API on the same host. Because the app is served by the SAP system itself, there is no CORS issue and no console loader: the tool uses the launchpad session of the user.</p>
+
+<h3>3. Process</h3>
+<ol>
+<li>Open the tile <em>Material Master Mass Upload</em>.</li>
+<li>Test connection – reads CSRF token, <code>$metadata</code>, effective user.</li>
+<li>Load the filled LTMC template (XML Spreadsheet 2003); check / edit the grid per sheet.</li>
+<li>Dry run – validates every payload against <code>$metadata</code>.</li>
+<li>Execute – create or change; progress per material.</li>
+<li>Download results (CSV) and full log; resume from results after an interruption.</li>
+</ol>
+
+<h3>4. User interface</h3>
+<p>Same layout as the task list tool: Connection, File, Data (editable grid per sheet, max. 500 rows shown, filter on material), Execute, Log. Connection is reduced to sap-client and service path; host and logon come from the launchpad.</p>
+
+<h3>5. Data: template and mapping</h3>
+<div class="note"><span class="open">Pending.</span> Needs (a) the LTMC product template with sample rows and (b) the <code>$metadata</code> of the Product V4 service on DS4. Property names are taken from the real metadata only.</div>
+<p>Principle: each template sheet is identified by its structure name (row 4) and field names (row 5); child rows are linked to the header through the source material number. With internal numbering the material number is assigned by SAP and returned in the results.</p>
+
+<h3>6. Create mode and change mode</h3>
+<p>Create: POST the product root, then the child entities per sheet in $batch chunks with the key returned by SAP. Change: read the product with its children, PATCH only differing fields, POST missing children.</p>
+
+<h3>7. Error handling, results and restart</h3>
+<p>Per step, never per run. Status per material: <code>done</code>, <code>partial</code> (root exists, some children failed – complete with Change), <code>failed</code> (nothing in SAP). Results CSV: source key → SAP material number, status, failed children, message.</p>
+
+<h3>8. Authorizations</h3>
+<h4>8.1 Who can start the app</h4>
+<p>Users whose role contains the launchpad catalog with tile/target mapping <code>Material-massUpload</code> <span class="open">(catalog, group/space and role: open point)</span>. The tile only makes the app visible; it grants no data access.</p>
+<h4>8.2 Checks in SAP</h4>
+<table>
+<tr><th>Check</th><th>Object / values</th><th>Effect when missing</th></tr>
+<tr><td>Start of the BSP application</td><td>ICF service <code>/sap/bc/ui5_ui5/sap/zmmmatmass</code> (logon via launchpad session)</td><td>App does not load.</td></tr>
+<tr><td>Start authorization for the V4 service group</td><td><code>S_START</code> AUTHPGMID=R3TR, AUTHOBJTYP=G4BA, AUTHOBJNAM=<span class="open">&lt;Product service group, to be confirmed in /IWFND/V4_ADMIN&gt;</span></td><td>HTTP 403 "no start authorization for R3TR G4BA …".</td></tr>
+<tr><td>Material master authorizations</td><td>The checks the product business object performs (material type, plant, sales org, valuation, …). Exact objects from SU24 of the service and SU53 after a test run.</td><td>Error message per material.</td></tr>
+<tr><td>CSRF</td><td>X-CSRF-Token fetched and renewed automatically.</td><td>Handled by the tool.</td></tr>
+</table>
+<h4>8.3 Where the protection sits</h4>
+<p>All authorization and data checks are in SAP. The tool cannot bypass them; changes are recorded under the launchpad user. Because the load bypasses MDG, the role with <code>S_START</code> on the Product service should be restricted to the migration team <span class="open">(decision data owner)</span>.</p>
+
+<h3>9. Constraints and assumptions</h3>
+<ul>
+<li>Product V4 service group published in /IWFND/V4_ADMIN on DS4/QS4/PS4; virus scan profile <code>/IWBEP/V4/ODATA_UPLOAD</code> active (note 3027559).</li>
+<li>Referenced master data (plants, storage locations, material types, units, sales orgs) exists.</li>
+<li>Units: the API expects the external code in the user's logon language (finding on STIHL); unit mapping in the tool.</li>
+</ul>
+
+<h2>Part B – Technical design</h2>
+<h3>10. Architecture</h3>
+<table>
+<tr><th>Object</th><th>Content</th></tr>
+<tr><td>BSP <code>ZMMMATMASS</code></td><td>UI5 component (<code>Component.js</code>, <code>manifest.json</code>) + <code>tool.html</code> (vanilla JS, no libraries). Deployed with <code>npm run deploy</code> (deploy-to-abap, DS4/400, <code>ZMM_MATMASS</code>, <code>DS4K915674</code>).</td></tr>
+<tr><td>Launchpad</td><td>Inbound <code>Material-massUpload</code>; catalog / target mapping <span class="open">open</span>.</td></tr>
+<tr><td>Engine (reused)</td><td>SpreadsheetML parser, index, mapper, <code>$metadata</code> validator, HTTP layer (CSRF, logon-page detection, $batch with <code>odata.continue-on-error</code>, resend of unprocessed rest), worker pool, results/resume.</td></tr>
+</table>
+<h3>11. API usage</h3>
+<p class="open">Pending $metadata.</p>
+<h3>12. Volume</h3>
+<p>Chunk size ("split") and parallel workers configurable; to be measured with ~100 materials in DS4/410.</p>
+
+<h2>13. Open points</h2>
+<table>
+<tr><th>#</th><th>Point</th><th>Status</th></tr>
+<tr><td>1</td><td>LTMC product template with sample data</td><td class="open">open</td></tr>
+<tr><td>2</td><td>Product V4 service on DS4: service group, path, $metadata</td><td class="open">open</td></tr>
+<tr><td>3</td><td>ZZ1_*_PRD fields enabled for the V4 Product API (Custom Fields app)</td><td class="open">open</td></tr>
+<tr><td>4</td><td>Launchpad catalog, target mapping, role; who gets S_START on the Product service</td><td class="open">open</td></tr>
+<tr><td>5</td><td>MDG bypass accepted for this load – confirm with data owner</td><td class="open">open</td></tr>
+</table>
+<p class="muted">Material Master Mass Upload – FD/TD – version 0.1 – 25 September 2026</p>
+</main>
+</body>
+</html>
