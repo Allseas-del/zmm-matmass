@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Material Mass Upload – Acceptance Test</title>
+<style>
+  :root { --ink:#1d2330; --muted:#667085; --line:#d9dde5; --acc:#0a6ed1; --soft:#f5f6f8; --ok:#107e3e; --err:#bb0000; }
+  body { margin:0; font:15px/1.5 "72", Arial, sans-serif; color:var(--ink); background:#fff; }
+  main { max-width:1000px; margin:0 auto; padding:24px 16px 60px; }
+  h1 { font-size:24px; margin:0 0 4px; } h2 { font-size:18px; margin:28px 0 8px; }
+  table { border-collapse:collapse; width:100%; font-size:14px; }
+  th, td { border:1px solid var(--line); padding:6px 8px; vertical-align:top; text-align:left; }
+  th { background:var(--soft); }
+  input[type=text], textarea, select { font:inherit; border:1px solid var(--line); border-radius:4px; padding:4px 6px; width:100%; box-sizing:border-box; }
+  textarea { min-height:60px; }
+  .row { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin:10px 0; }
+  label { display:block; font-size:13px; color:var(--muted); }
+  button { padding:8px 16px; border:1px solid var(--acc); background:var(--acc); color:#fff; border-radius:4px; font:inherit; cursor:pointer; }
+  button.sec { background:#fff; color:var(--acc); }
+  .muted { color:var(--muted); }
+  select.pass { color:var(--ok); } select.fail { color:var(--err); }
+  #free { min-height:160px; }
+  .sticky { position:sticky; bottom:0; background:#fff; border-top:1px solid var(--line); padding:10px 0; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+</style>
+</head>
+<body>
+<main>
+<h1>Material Master Mass Upload – Acceptance Test</h1>
+<div class="muted">App <em>Material Master Mass Upload</em> (BSP ZMMMATMASS) on DS4 client 410 · LTMC template "Product" → API_PRODUCT_2 · version 0.3, 25 September 2026</div>
+
+<div class="row">
+  <div><label>Tester</label><input type="text" id="tester"></div>
+  <div><label>Date</label><input type="text" id="date"></div>
+  <div><label>System / client</label><input type="text" id="system" value="DS4 / 410"></div>
+  <div><label>Test file</label><input type="text" id="file"></div>
+</div>
+
+<h2>Before you start</h2>
+<ul>
+  <li>Your user has the migration role with the tile and write authorization for material master in the test plants.</li>
+  <li>Prepare a Product template with 2–3 new materials (Basic Data, Plant Data, Storage Locations, Valuation Data; optionally Alternative Units and Descriptions) and one material with a deliberate error, e.g. a plant that does not exist.</li>
+  <li>Enter "Pass", "Fail" or "Not tested" per step and write what you saw. Anything else – missing functions, problems you expect but could not test – goes in the free text field at the bottom.</li>
+</ul>
+
+<h2>Test steps</h2>
+<table id="steps">
+<tr><th style="width:36px">#</th><th>Action</th><th>Expected result</th><th style="width:130px">Result</th><th style="width:240px">Remarks</th></tr>
+</table>
+
+<h2>Anything else</h2>
+<p class="muted">Missing functionality, things that were unclear, problems you expect in production, steps you could not execute – everything is welcome here, also if you did not run the test.</p>
+<textarea id="free"></textarea>
+
+<div class="sticky">
+  <button id="mail">Send results by e-mail</button>
+  <button class="sec" id="copy">Copy results to clipboard</button>
+  <span class="muted" id="state"></span>
+</div>
+</main>
+<script>
+'use strict';
+const RECIPIENT = 'pjotr.dassen@delaware.pro';
+const STEPS = [
+  ['Open the Fiori launchpad in DS4/410 and start the tile "Material Master Mass Upload".', 'The app opens. Section 1 shows "OK"; the log shows "Service reachable", the custom fields (incl. ZZ1_MFRPN_PRD) and your SAP user.'],
+  ['Load the prepared template file (section 2).', 'Log: "File loaded: n product(s)". Rows per sheet are shown. Sheets without API entity (e.g. Class Data) are reported as "not sent".'],
+  ['Open the tabs Basic Data, Plant and Valuation. Change one description in the grid.', 'Data of the file is shown; under each column the API field. The changed cell turns yellow.'],
+  ['Click "Save changed file (XML)" and open the saved file in Excel.', 'The file opens in Excel and contains the change.'],
+  ['Click "Show payload (dry run)".', 'Log: "Validation against $metadata: no problems" (or a clear list of problems) and the payload of the first products.'],
+  ['Mode Create, "Send product number from the file" as agreed, method "deep insert". Click "Execute in SAP".', 'Correct materials: status "created <number>". Material with the error: status "error" with SAP\'s message (e.g. plant does not exist). The other materials are not affected.'],
+  ['Check one created material in the Fiori app "Manage Product Master Data" or MM03.', 'Basic data, descriptions, custom fields (noun/modifier, manufacturer, MFRPN …), plant data, storage location and valuation are as in the file.'],
+  ['Click "Download results (CSV)" and "Download full log".', 'CSV with one row per material: source number, SAP number, status, message. Log file with all steps.'],
+  ['Correct the faulty material in the grid and click "Execute in SAP" again.', 'Only the corrected material is sent; it is created. Materials already done are skipped.'],
+  ['Mode Change: change e.g. the MRP type (Plant tab) and a basic data field of a created material; select only that material; Execute.', 'Log: "<material>: n change(s)" with the changed fields. The changes are visible in SAP; other fields unchanged.'],
+  ['Execute Change again without changes.', 'Log: "no differences". Nothing is changed in SAP.'],
+  ['Close the app, open it again, load the template and then the results CSV under "Resume from results".', 'Log: "Results loaded: n done (deselected)". Done materials are deselected.'],
+  ['Optional: method "product first, then views in one change set" for a new material.', 'Material is created; log shows "basic data created" followed by the view changes.'],
+  ['Optional: run ~100 materials to measure throughput (progress line).', 'Note the throughput (products/s) and total duration in the remarks.']
+];
+const tbl = document.getElementById('steps');
+STEPS.forEach(([a, e], i) => {
+  const tr = tbl.insertRow();
+  tr.innerHTML = `<td>${i + 1}</td><td>${a}</td><td>${e}</td><td><select><option value="">–</option><option>Pass</option><option>Fail</option><option>Not tested</option></select></td><td><textarea></textarea></td>`;
+  const sel = tr.querySelector('select'); sel.onchange = () => sel.className = sel.value === 'Pass' ? 'pass' : sel.value === 'Fail' ? 'fail' : '';
+});
+document.getElementById('date').value = new Date().toISOString().substring(0, 10);
+function text() {
+  const v = id => document.getElementById(id).value.trim();
+  let t = `Material Master Mass Upload – acceptance test\nTester: ${v('tester')}\nDate: ${v('date')}\nSystem: ${v('system')}\nTest file: ${v('file')}\n\n`;
+  [...tbl.rows].slice(1).forEach((r, i) => {
+    const res = r.querySelector('select').value || '–', rem = r.querySelector('textarea').value.trim();
+    t += `${i + 1}. ${res}${rem ? ' – ' + rem : ''}\n`;
+  });
+  const passed = [...tbl.querySelectorAll('select')].filter(s => s.value === 'Pass').length, failed = [...tbl.querySelectorAll('select')].filter(s => s.value === 'Fail').length;
+  t += `\nSummary: ${passed} pass, ${failed} fail, ${STEPS.length - passed - failed} not tested / empty\n\nOther remarks:\n${v('free') || '-'}\n`;
+  return t;
+}
+document.getElementById('mail').onclick = () => {
+  const body = text(); const subject = `Acceptance test Material Mass Upload – ${document.getElementById('tester').value.trim() || 'tester'}`;
+  const url = `mailto:${RECIPIENT}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  if (url.length > 1900) { navigator.clipboard && navigator.clipboard.writeText(body); document.getElementById('state').textContent = 'Text is long: it was also copied to the clipboard – paste it into the mail if it is cut off.'; }
+  location.href = url;
+};
+document.getElementById('copy').onclick = async () => {
+  try { await navigator.clipboard.writeText(text()); document.getElementById('state').textContent = 'Copied.'; }
+  catch (e) { document.getElementById('state').textContent = 'Copy not allowed by the browser – use the mail button.'; }
+};
+</script>
+</body>
+</html>

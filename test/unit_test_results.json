@@ -1,0 +1,132 @@
+[
+ {
+  "name": "01 connection test runs on start-up (launchpad session), $metadata read",
+  "pass": true,
+  "info": "OK"
+ },
+ {
+  "name": "02 effective SAP user reported",
+  "pass": true,
+  "info": ""
+ },
+ {
+  "name": "03 original SAP template (leading line break, <LS>…</> markup) is parsed",
+  "pass": true,
+  "info": ""
+ },
+ {
+  "name": "04 sheet without API entity reported (Class Data)",
+  "pass": true,
+  "info": ""
+ },
+ {
+  "name": "05 grid shows the sheets with data / mapped sheets",
+  "pass": true,
+  "info": "Basic Data (3) | Descriptions (1) | Alt. Units (1) | GTINs (1) | Class Data (1) | Distribution Chains (0)"
+ },
+ {
+  "name": "06 dry run: validation against $metadata without problems",
+  "pass": true,
+  "info": ""
+ },
+ {
+  "name": "07 payload: ISO base unit, booleans, numbers",
+  "pass": true,
+  "info": "{\"b\":\"PCE\",\"s\":true,\"g\":0.05}"
+ },
+ {
+  "name": "08 payload: ZZ1_MFRPN_PRD and standard MFRPN both mapped",
+  "pass": true,
+  "info": ""
+ },
+ {
+  "name": "09 payload: descriptions from Basic Data and Descriptions sheet merged (EN + NL)",
+  "pass": true,
+  "info": ""
+ },
+ {
+  "name": "10 payload: plant with MRP (1:1) and storage location (1:n), valuation, UoM with GTIN",
+  "pass": true,
+  "info": ""
+ },
+ {
+  "name": "11 validation reports a description longer than 40 characters",
+  "pass": true,
+  "info": ""
+ },
+ {
+  "name": "12 deep create: ZTEST-001 and ZTEST-002 created",
+  "pass": true,
+  "info": "ZTEST-001,ZTEST-002"
+ },
+ {
+  "name": "13 split: 3 products in 2 $batch requests",
+  "pass": true,
+  "info": "batches=2"
+ },
+ {
+  "name": "14 SAP error per product, others continue (plant ZZZZ)",
+  "pass": true,
+  "info": ""
+ },
+ {
+  "name": "15 SAP content: plant NL01 MRP type PD, storage location 0001, BOX with GTIN, 2 languages, custom fields",
+  "pass": true,
+  "info": ""
+ },
+ {
+  "name": "16 status column: created / error",
+  "pass": true,
+  "info": "created ZTEST-001 | created ZTEST-002 | error"
+ },
+ {
+  "name": "17 repeated create sends only the failed product again",
+  "pass": true,
+  "info": "1 POST"
+ },
+ {
+  "name": "18 change: header field and plant MRP type changed in one change set",
+  "pass": true,
+  "info": "groes=M12X50 mrp=VB"
+ },
+ {
+  "name": "19 change: ETag handling — no 412 within the change set",
+  "pass": true,
+  "info": ""
+ },
+ {
+  "name": "20 change without differences: nothing sent",
+  "pass": true,
+  "info": ""
+ },
+ {
+  "name": "21 step-wise create: product first, views via change set (1:1 views PATCHed, plant POSTed)",
+  "pass": true,
+  "info": "plants=1"
+ },
+ {
+  "name": "22 results CSV: one row per product with SAP number and status",
+  "pass": true,
+  "info": "3 rows"
+ },
+ {
+  "name": "23 rejected change set is atomic: nothing of it saved, error logged",
+  "pass": true,
+  "info": "groes=undefined"
+ },
+ {
+  "name": "24 resume: results loaded, done products deselected",
+  "pass": true,
+  "info": "false,false,false"
+ },
+ {
+  "name": "25 \"Save changed file\" round trip: file readable again, change kept",
+  "pass": true,
+  "info": ""
+ },
+ {
+  "name": "26 no JavaScript errors on the page",
+  "pass": true,
+  "info": ""
+ }
+]

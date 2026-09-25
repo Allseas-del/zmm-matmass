@@ -1,0 +1,3604 @@
+[
+{
+"sheet": "Introduction"
+},
+{
+"sheet": "Field List"
+},
+{
+"sheet": "Basic Data",
+"struct": "S_MARA",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"MTART",
+"ETE;80;0;C;80;0",
+"Product Type*\n\nKey that assigns the product to a group of products such as raw product, finished product or trading goods.\n\nType: Text\nLength: 80"
+],
+[
+"ATTYP",
+"ETE;80;0;C;80;0",
+"Product Category\n\nSpecifies the category of the product. For example, whether it is a single product, a sales set, a generic product or a variant.\n\nType: Text\nLength: 80"
+],
+[
+"SATNR",
+"ETE;80;0;C;80;0",
+"Configuration Product for Retail Variant\n\nKey uniquely identifying a generic product to which the variant is linked.\n\n\nType: Text\nLength: 80"
+],
+[
+"MATKL",
+"ETE;80;0;C;80;0",
+"Product Group\n\nKey that you use to group together several products or services with the same attributes, and to assign them to a particular product group.\n\nType: Text\nLength: 80"
+],
+[
+"MBRSH",
+"ETE;80;0;C;80;0",
+"Industry Sector\n\nKey that specifies the branch of industry to which the product is assigned.\n\nType: Text\nLength: 80"
+],
+[
+"MAKTX",
+"ETE;40;0;C;40;0",
+"Description*\n\nText that describes the product in more detail.\nNote: You can maintain additional descriptions (for languages other than those provided on the 'Basic Data' sheet).\n\nType: Text\nLength: 40"
+],
+[
+"SPRAS",
+"ETE;80;0;C;80;0",
+"Language Key*\n\nPlease provide the language for the product description.\n\n\n\nType: Text\nLength: 80"
+],
+[
+"MEINS",
+"ETE;80;0;C;80;0",
+"Base Unit of Measure (ISO Format)*\n\nUnit of measure in which stocks of the product are managed. The system converts all the quantities you enter in other units of measure (alternative units of measure) to the base unit of measure. Note: define your alternative units of measure in sheet 'Alternative Unit of Measure'.\n\nType: Text\nLength: 80"
+],
+[
+"AENNR",
+"ETE;80;0;C;80;0",
+"Change Number\n\nNumber used to uniquely identify a change master record.\n\nType: Text\nLength: 80"
+],
+[
+"REVLV",
+"ETE;80;0;C;80;0",
+"Revision Level\n\nIndicates a product or document's change status in addition to the change number.\n\nType: Text\nLength: 80"
+],
+[
+"EAN11",
+"ETE;18;0;C;18;0",
+"GTIN\n\nThe GTIN on the Basic Data sheet always relates to the base unit of measure. Note: if you have additional GTIN's for this unit please enter them on the Additional GTIN sheet. The GTIN entered here is always the Main GTIN.\nWith internal number assignment, you enter the GTIN category but not a GTIN.\n\nType: Text\nLength: 18"
+],
+[
+"NUMTP",
+"ETE;80;0;C;80;0",
+"GTIN Category\n\nThe EAN category defines the following attributes of the corresponding EAN:\nType/method of number assignment (internal and/or external number assignment) and details as to whether alphanumerical EANs are allowed\nCheck-digit algorithm that checks whether a check digit is required\nPrefix (for perishables EANs)\nLength of the EAN.\n\nType: Text\nLength: 80"
+],
+[
+"SPART",
+"ETE;80;0;C;80;0",
+"Division\n\nA way of grouping products, or services. The system uses divisions to determine the sales areas and the business areas for a product, or service. Please maintain the division for all sales relevant products.\n\nType: Text\nLength: 80"
+],
+[
+"BISMT",
+"ETE;40;0;C;40;0",
+"Old Product Number\n\nNumber under which you have managed the product so far or still manage it, for example, in another system or in a card index.\nThe maximum length of field Old Product Number is identical with the defined length for product numbers in your system.\n\nType: Text\nLength: 40"
+],
+[
+"PRDHA",
+"ETE;80;0;C;80;0",
+"Product Hierarchy\n\nAlphanumeric character string for grouping together products by combining different characteristics. It is used for analyses and price determination.\n\nType: Text\nLength: 80"
+],
+[
+"BRAND_ID",
+"ETE;80;0;C;80;0",
+"Brand\n\nWhere applicable specify the manufacturer brand or private label of the product.\n\nType: Text\nLength: 80"
+],
+[
+"XCHPF",
+"ETE;1;0;C;1;0",
+"Batch Management Required Ind.\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nSpecifies whether the product is managed in batches ('X') or not (<blank>).\nNote: to assign the batch class to your product please use migration object 'Material classification'.\n\nType: Text\nLength: 1"
+],
+[
+"MLGUT",
+"ETE;1;0;C;1;0",
+"Has Empties\n\nThis is an indicator field. If you want to create an empties bill of material for this product the indicator should be set to X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"DATAB",
+"EDA;8;0;D;8;0",
+"Valid From\n\nDate indicating until when the product is valid. This date must not be later than the beginning of the listing periods.\n\n\nType: Date"
+],
+[
+"LIQDT",
+"EDA;8;0;D;8;0",
+"Deletion Date\n\nDate on which the product is to be deleted. This is the latest possible date of all \"To-dates\" referring to the product. (Usually, this date is set to 31.12.9999.)\n\nType: Date"
+],
+[
+"KUNNR",
+"ETE;80;0;C;80;0",
+"Competitor\n\nCustomer number of the competitor. The competitor number in the product master record serves to identify a competitive product as that of a particular competitor.\n\nType: Text\nLength: 80"
+],
+[
+"NORMT",
+"ETE;18;0;C;18;0",
+"Industry Standard Description\n\nDescription of the product in accordance with the appropriate industry standard (such as ANSI or ISO). This field is purely for information.\n\nType: Text\nLength: 18"
+],
+[
+"GROES",
+"ETE;32;0;C;32;0",
+"Size/Dimensions\n\nText field that you can use as you like, for example, to record the size or dimensions of the product. The data you enter is merely for information and is not used by the system.\n\nType: Text\nLength: 32"
+],
+[
+"LABOR",
+"ETE;80;0;C;80;0",
+"Laboratory / Design Office\n\nKey for the design office, laboratory, or laboratory worker responsible.\n\nType: Text\nLength: 80"
+],
+[
+"INHAL",
+"ENU;13;3;P;13;3",
+"Net Contents\n\nSpecify the net contents for the base unit of measure of the product. The relevant content unit is maintained in the next column. The information in the content fields can be used to calculate the basic price/unit price of a product (for example a price per kg), that allows consumers to compare prices of products with different weights.\n\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"INHME",
+"ETE;80;0;C;80;0",
+"Net Contents Unit (ISO Format)\n\nSpecify the unit of measure (UoM) which is related to the statement of net and gross contents.\n\nType: Text\nLength: 80"
+],
+[
+"INHBR",
+"ENU;13;3;P;13;3",
+"Gross Contens\n\nSpecify the gross contents for the base unit of measure for the product.\n\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"VPREH",
+"ENU;5;0;P;5;0",
+"Comparison Price Unit\n\nNumber of units of measure in the content unit to which the comparison price relates.\n\nType: Number\nLength: 5"
+],
+[
+"EXTWG",
+"ETE;80;0;C;80;0",
+"External Product Group\n\nKey that you can use to assign the product to an external product group or to a product group determined according to external systematics.\n\nType: Text\nLength: 80"
+],
+[
+"MTPOS_MARA",
+"ETE;80;0;C;80;0",
+"General Item Category Group\n\nProducts grouping that helps the system to determine item categories during sales document processing.\n\nType: Text\nLength: 80"
+],
+[
+"BEGRU",
+"ETE;4;0;C;4;0",
+"Authorization Group\n\nThe authorization group enables you protect access to certain objects.\n\nType: Text\nLength: 4"
+],
+[
+"MSTAE",
+"ETE;80;0;C;80;0",
+"Cross-Plant Product Status\n\nThe product status determines how a product is handled in different applications and in business operations (for example, purchasing, products planning, usage in bills of material ..). If a product has a product status, the system will issue either a warning or an error message (depending on which status you have chosen) if the product is used.\nNote: The cross-plant product status restricts the usability of the product for all plants. Please see further information in the migration object documentation under Mapping instructions.\n\nType: Text\nLength: 80"
+],
+[
+"MSTDE",
+"EDA;8;0;D;8;0",
+"Valid-From Date\n\nDate from which the cross-plant product status is valid.\n\nType: Date"
+],
+[
+"SERLV",
+"ETE;80;0;C;80;0",
+"Level of Explicitness for Serial Number\n\nLevel on which the serial number must be unique.\n\nType: Text\nLength: 80"
+],
+[
+"QMPUR",
+"ETE;1;0;C;1;0",
+"Quality Manag. in Procurement Is Active\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\nNote: This field must only be filled if there will be a related Quality Info record existing in the system. If the fields are filled and the QIR is missing, the business process will run into an error.\n\nType: Text\nLength: 1"
+],
+[
+"ANIMAL_ORIGIN",
+"ETE;1;0;C;1;0",
+"Animal Origin\n\nThis is an indicator field. If the product contains non-textile parts of animal origin enter X. If not, leave the field empty.\n\n\nType: Text\nLength: 1"
+],
+[
+"ANP",
+"ETE;80;0;C;80;0",
+"ANP Code\n\nFor Brazil only !\nIdentifies the products that are controlled by the Brazilian Oil Agency.\n\nType: Text\nLength: 80"
+],
+[
+"BRGEW",
+"ENU;13;3;P;13;3",
+"Gross Weight\n\nGross weight expressed in the unit of weight specified by you in the Unit of weight field.\nThe system can use the gross weight at a later stage, depending on what kind of capacity check you run, to check storage bin capacity for warehouse management purposes.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"NTGEW",
+"ENU;13;3;P;13;3",
+"Net Weight\n\nNet weight expressed in the unit of weight specified by you in the Unit of weight field.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"GEWEI",
+"ETE;80;0;C;80;0",
+"Unit of Weight (ISO Format)\n\nUnit referring to the gross weight or net weight of the product.\nIf a product is created with sales data, the field unit of weight gets mandatory. Please provide an entry in this field or a default unit of weight is defined in product groups settings.\n\n\nType: Text\nLength: 80"
+],
+[
+"LAENG",
+"ENU;13;3;P;13;3",
+"Length\n\nLength of the product or its packaging, measured in the unit of dimension.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"BREIT",
+"ENU;13;3;P;13;3",
+"Width\n\nWidth of the product or its packaging, measured in the unit of dimension.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"HOEHE",
+"ENU;13;3;P;13;3",
+"Height\n\nHeight of the product or its packaging, measured in the unit of dimension.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"MEABM",
+"ETE;80;0;C;80;0",
+"Unit for Length/Width/Height(ISO Format)\n\nUnit in which the dimensions of length, breadth, and height of a product or its packaging are measured.\n\nType: Text\nLength: 80"
+],
+[
+"VOLUM",
+"ENU;13;3;P;13;3",
+"Volume\n\nSpace that the product occupies per unit of volume. The volume refers to the unit specified in the \"Volume unit\" field. The volume and its unit always refer to the base unit of measure.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"VOLEH",
+"ETE;80;0;C;80;0",
+"Volume Unit\n\nIf you specify a volume, you have to enter the corresponding volume unit here.\n\nType: Text\nLength: 80"
+],
+[
+"CAPAUSE",
+"ENU;15;3;P;15;3",
+"Capacity Usage\n\nType: Number\nLength: 15\nDecimal: 3"
+],
+[
+"CHML_CMPLNC_RLVNCE_IND",
+"ETE;80;0;C;80;0",
+"Compliance Relevant\n\nIndicates whether the product needs to be assessed for Compliance.\n\nType: Text\nLength: 80"
+],
+[
+"KZKFG",
+"ETE;1;0;C;1;0",
+"Product Is Configurable\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\nIndicator that determines whether the product is configurable. If this indicator is set, you can assign a variant class to the product, making it possible to use it as a configurable product. Consider: if you are dealing with product type 'KMAT' the system will set this indicator automatically in the product master.\nThis is described in detail in the migration object documentation.\n\nType: Text\nLength: 1"
+],
+[
+"BSTME",
+"ETE;80;0;C;80;0",
+"Order Unit of Measure (ISO Format)\n\nEnter a value in this field only if you want to use a unit of measure differing from the base unit of measure.\n\nType: Text\nLength: 80"
+],
+[
+"EKWSL",
+"ETE;80;0;C;80;0",
+"Purchasing Value Key\n\nKey defining the reminder days and tolerance limits valid, as well as the shipping instructions and order acknowledgment requirement of the product for Purchasing.\n\nType: Text\nLength: 80"
+],
+[
+"VABME",
+"ETE;80;0;C;80;0",
+"State of Variable Purchase Order Unit\n\nActivation of the variable purchase order unit.\nThe information from the field in the product master record is adopted in the purchasing info record. In the purchase order and in the source list, you can enter an order unit that differs from the one in the purchasing info record. If you wish to specify a different order unit for a requisition, you must assign a source with a different order unit to the requisition. The field also determines whether you work with conditions for each order unit.\n\nType: Text\nLength: 80"
+],
+[
+"BMATN",
+"ETE;80;0;C;80;0",
+"Internal Product Number\n\nNumber of firm's own (internal) inventory-managed product.\n\nType: Text\nLength: 80"
+],
+[
+"MFRPN",
+"ETE;40;0;C;40;0",
+"Manufacturer Part Number\n\nSpecifies the number used by the manufacturer, or also by the supplier, to manage a product.\n\nType: Text\nLength: 40"
+],
+[
+"MFRNR",
+"ETE;80;0;C;80;0",
+"Manufacturer Number\n\nSpecifies the manufacturer of the MPN product or the manufacturer's plant for which a manufacturer master record has been created.\n\nType: Text\nLength: 80"
+],
+[
+"MPROF",
+"ETE;80;0;C;80;0",
+"Manufacturer Part Profile\n\nDefines how you can work with MPN products in the procurement process. If you wish to work with MPN products, enter a profile. The profile then applies to all MPN products that are assigned to this firm's own, inventory-managed product.\n\nType: Text\nLength: 80"
+],
+[
+"TRAGR",
+"ETE;80;0;C;80;0",
+"Transportation Group\n\nA grouping of products that share the same route and transportation requirements.\nThe transportation group is product specific and therefore valid for all plants (where the loading group can be maintained at plant level). Transportation groups are used for automatic route scheduling during requirements.\n\nType: Text\nLength: 80"
+],
+[
+"MSTAV",
+"ETE;80;0;C;80;0",
+"Cross-Distribution Chain Product Status\n\nIndicates whether the product may be used in individual functions in Sales and Distribution for all distribution chains.\nThe cross-distribution-chain product status restricts the usability of the product for all the distribution chains, that is, it defines whether a warning or error message is displayed if you include the product in a particular function.\n\nType: Text\nLength: 80"
+],
+[
+"MSTDV",
+"EDA;8;0;D;8;0",
+"Valid From Date for Status\n\nDate from which the cross-distribution-chain product status is valid.\n\nType: Date"
+],
+[
+"PMATA",
+"ETE;80;0;C;80;0",
+"Pricing Reference Product\n\nProduct master record that the system uses as a reference for pricing purposes. When maintaining this field for a variant make sure to enter the number of the generic article here if the variant price should correspond to that of the generic product.\n\nType: Text\nLength: 80"
+],
+[
+"SPROF",
+"ETE;80;0;C;80;0",
+"Pricing Profile for Variants\n\nSpecifies how you can maintain the sales prices of the variants of a generic product. You have the following options:\n- The sales prices of the variants correspond to that of the generic product.\n- The sales prices of the variants differ from that of the generic product.\n\n\nType: Text\nLength: 80"
+],
+[
+"ALLOW_PMAT_IGNO",
+"ETE;1;0;C;1;0",
+"Variant Price Allowed\n\nThis is an indicator field.\nSetting this indicator to X for a generic product will permit the overwriting of the pricing reference article for variants that are price dependant on the generic product within a promotion.\n\n\n\nType: Text\nLength: 1"
+],
+[
+"SOM_CYCLE",
+"ETE;80;0;C;80;0",
+"Billing Cycle\n\nDefines periodic billing periods and specifies the following:\n- The frequency of a billing period\n- The length of a billing period (defined by a start and end date)\n- The rule for determining the period end\n\nType: Text\nLength: 80"
+],
+[
+"SOM_CYCLE_RULE",
+"ETE;80;0;C;80;0",
+"Billing Cycle Determination Rule\n\nType: Text\nLength: 80"
+],
+[
+"SOM_TC_SCHEMA",
+"ETE;80;0;C;80;0",
+"Assignment Schema\n\nType: Text\nLength: 80"
+],
+[
+"BBTYP",
+"ETE;80;0;C;80;0",
+"Assortment List Type\n\nKey that assigns a product to an assortment list type. The assortment list type controls the chronological supply of product data to the assortment list.\n\nType: Text\nLength: 80"
+],
+[
+"SERVV",
+"ETE;80;0;C;80;0",
+"Service Agreement\n\nYou can define a particular service profile according to which the product is staged for customers. This profile is for information and is used in organizational arrangements.\n\nType: Text\nLength: 80"
+],
+[
+"MAGRV",
+"ETE;80;0;C;80;0",
+"Product Group: Packaging Materials\n\nGroups together products that require similar packaging products.\n\nType: Text\nLength: 80"
+],
+[
+"VHIART",
+"ETE;80;0;C;80;0",
+"Packaging Product Type\n\nEnter a code for a grouping of similar products, such as crates, trucks or pallets.\n\nType: Text\nLength: 80"
+],
+[
+"ERGEW",
+"ENU;13;3;P;13;3",
+"Allowed Packaging Weight\n\nMaximum weight of other products that are packed in this packaging product.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"ERGEI",
+"ETE;80;0;C;80;0",
+"Unit of Allowed Packaging Weight\n\nUnit referring to the allowed packaging weight of the product. If you specify an allowed packaging weight, you must enter the corresponding unit of weight here. Please note that the entered value needs to be mapped to a valid ISO code value after uploading the file and starting the transfer process.\n\nType: Text\nLength: 80"
+],
+[
+"GEWTO",
+"ENU;3;1;P;3;1",
+"Excess Weight Tolerance for HU\n\nSpecifies the tolerance limit for exceeding the maximum weight allowed for a particular packaging material during packing.\n\nType: Number\nLength: 3\nDecimal: 1"
+],
+[
+"ERVOL",
+"ENU;13;3;P;13;3",
+"Allowed Packaging Volume\n\nMaximum volume of other products that are packed in this packaging product.\n\n\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"ERVOE",
+"ETE;80;0;C;80;0",
+"Unit of Allowed Packaging Volume\n\nUnit referring to the allowed packaging volume of the product. If you specify an allowed packaging volume, you must enter the corresponding volume unit here. Please note that the entered value needs to be mapped to a valid ISO code value after uploading the file and starting the transfer process.\n\nType: Text\nLength: 80"
+],
+[
+"KZGVH",
+"ETE;1;0;C;1;0",
+"Packaging Product Is Closed Packaging\n\nFor closed packaging products, during packing the total volume is not increased by the loading volume of the contents. This is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"VOLTO",
+"ENU;3;1;P;3;1",
+"Excess Volume Tolerance for HU\n\nSpecifies the tolerance limit for the maximum packing volume allowed for a particular packaging product.\n\nType: Number\nLength: 3\nDecimal: 1"
+],
+[
+"IPRKZ",
+"ETE;80;0;C;80;0",
+"Period Indicator for Shelf Life\n\nPeriod Indicator for Shelf Life Expiration Date\nThe period indicator specifies the unit of measurement for a period of time. Like day, week, month, year.\n\nType: Text\nLength: 80"
+],
+[
+"RAUBE",
+"ETE;80;0;C;80;0",
+"Storage Conditions\n\nIndicates what storage conditions are required for the product.\n\nType: Text\nLength: 80"
+],
+[
+"TEMPB",
+"ETE;80;0;C;80;0",
+"Temperature Conditions Indicator\n\nIndicates the temperature conditions in which the product should be stored.\n\nType: Text\nLength: 80"
+],
+[
+"BEHVO",
+"ETE;80;0;C;80;0",
+"Container Requirements\n\nKey for the regulation that governs which type of container the product must be stored and shipped in.\n\nType: Text\nLength: 80"
+],
+[
+"STOFF",
+"ETE;40;0;C;40;0",
+"Hazardous Product Number\n\nThe hazardous product number indicates that the product is dangerous, making special precautions necessary for its storage and shipment.\n\nType: Text\nLength: 40"
+],
+[
+"ETIAR",
+"ETE;80;0;C;80;0",
+"Label Type\n\nDetermines the way labels are created. The label type specifies, for example, whether labels are preprinted by the supplier or created on a central printer.\n\nType: Text\nLength: 80"
+],
+[
+"ETIFO",
+"ETE;80;0;C;80;0",
+"Label Form\n\nDetermines the size and layout of the label. The label form specifies, for example, whether the label is an adhesive or a pin-on label.\n\nType: Text\nLength: 80"
+],
+[
+"WESCH",
+"ENU;13;3;P;13;3",
+"Number of Goods Receipt/Issue Slips\n\nIn the case of a goods receipt with reference to a purchase order or production order, the system automatically calculates the number of GR/GI slips to be printed for the product document item as a quotient from the goods receipt quantity and the quantity defined here.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"XGCHP",
+"ETE;1;0;C;1;0",
+"Indicator: Approved Batch Rec. Required\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"MHDHB",
+"ENU;4;0;P;4;0",
+"Total Shelf Life\n\nPeriod for which the product will keep in total, that is, from the date of production to the shelf life expiration date.\nThe period (day, week, month, year) depends on the entry in the Period indicator field.\n\nType: Number\nLength: 4"
+],
+[
+"MHDRZ",
+"ENU;4;0;P;4;0",
+"Minimum Remaining Shelf Life\n\nMinimum amount of time for which the product must keep upon goods receipt for the goods receipt to be accepted by the system.\n\nThe period (day, week, month, year) depends on the entry in the Period indicator field.\n\n\nType: Number\nLength: 4"
+],
+[
+"SLED_BBD",
+"ETE;80;0;C;80;0",
+"Indi. for the Shelf Life Expiration Date\n\nIndicator for the shelf life expiration date or expiration date.\nIn batch management, the shelf life expiration date or expiration date can be specified. You select the date type you want by using this indicator.\n\nType: Text\nLength: 80"
+],
+[
+"MHDLP",
+"ENU;3;0;P;3;0",
+"Storage Percentage\n\nPercentage specifying how much of the minimum remaining shelf life must be left if the product is to be sent to another plant (such as a store) from a central plant (such as a distribution center).\n\nType: Number\nLength: 3"
+],
+[
+"RDMHD",
+"ETE;80;0;C;80;0",
+"Rounding Rule for Calculation of SLED\n\nExample:\nTotal shelf life in product master = 3\nPeriod indicator in product master = M (month)\nProduction date, specified at goods receipt = 10.01.2016\n=> SLED = 10.01.2016 + 3 months = 10.04.2016\n\nRounding indicator = MHD = 10.04.2016 (no rounding)\nRounding indicator = '-' = 01.04.2016 (first day of month)\nRounding indicator = '+' = 30.04.2016 (last day of month).\n\n\nType: Text\nLength: 80"
+],
+[
+"HNDLCODE",
+"ETE;80;0;C;80;0",
+"Handling Indicator\n\nIndicator that specifies how products are handled in the warehouse. The handling code could have the attribute Fragile, for example, and would therefore need to be stored in a special section of the warehouse.\n\nType: Text\nLength: 80"
+],
+[
+"WHMATGR",
+"ETE;80;0;C;80;0",
+"Warehouse Product Group\n\nGroups products by warehousing points of view.\n\nType: Text\nLength: 80"
+],
+[
+"WHSTC",
+"ETE;80;0;C;80;0",
+"Warehouse Storage Condition\n\nDescribes the storage condition that should be used to store the product.\n\nType: Text\nLength: 80"
+],
+[
+"HUTYP_DFLT",
+"ETE;80;0;C;80;0",
+"Standard Handling Unit Type\n\nDescribes the standard handling unit type for mixed handling units, where no packing instruction is used for creating the HU.\n\nType: Text\nLength: 80"
+],
+[
+"SERIAL",
+"ETE;80;0;C;80;0",
+"Serial Number Profile\n\nCombined data, grouped in a four-figure abbreviation, that determines the conditions and business transactions for issuing serial numbers to serialized materials.\nYou must enter the serial number profile in the product master record for products that need serial numbers.\n\nType: Text\nLength: 80"
+],
+[
+"PILFERABLE",
+"ETE;1;0;C;1;0",
+"Pilferable\n\nThe product is pilferable, and possibly requires special storage in a secure storage type/section within the warehouse.\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"HAZMAT",
+"ETE;1;0;C;1;0",
+"Relevant for Hazardous Substances\n\nThere is hazardous substance data for this product. The system has to read additional data because this hazardous substance is relevant for storage.\n\nType: Text\nLength: 1"
+],
+[
+"QQTIME",
+"ENU;3;0;P;3;0",
+"Quarantine Period\n\nType: Number\nLength: 3"
+],
+[
+"QQTIMEUOM",
+"ETE;80;0;C;80;0",
+"Time Unit for Quarantine Period\n\nType: Text\nLength: 80"
+],
+[
+"QGRP",
+"ETE;80;0;C;80;0",
+"Quality Inspection Group\n\nType: Text\nLength: 80"
+],
+[
+"HUTYP",
+"ETE;80;0;C;80;0",
+"Handling Unit Type\n\nSpecifies the HU type of the packaging product used for creating handling units.\n\nType: Text\nLength: 80"
+],
+[
+"MAXC",
+"ENU;15;3;P;15;3",
+"Maximum Capacity\n\nMaximum allowed capacity of packaging product.\n\nType: Number\nLength: 15\nDecimal: 3"
+],
+[
+"MAXC_TOL",
+"ENU;3;1;P;3;1",
+"Overcapacity Tolerance\n\nDefines the tolerance limit for the maximum packaging capacity of a packaging product.\n\nType: Number\nLength: 3\nDecimal: 1"
+],
+[
+"TARE_VAR",
+"ETE;1;0;C;1;0",
+"Variable Tare Weight\n\nFlags all packaging products for this packaging product type as packaging products with a variable tare weight. If a change in the total weight occurs, then the tare weight is adjusted and not the loading weight.\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"MAXL",
+"ENU;15;3;P;15;3",
+"Max. Pack. Length\n\nMaximum packing length of packaging product.\n\nType: Number\nLength: 15\nDecimal: 3"
+],
+[
+"MAXDIM_UOM",
+"ETE;80;0;C;80;0",
+"UoM for Max. Pack. Length (ISO Format)\n\nUnit of Measure for Maximum Packing Length/Width/Height in ISO\n\nType: Text\nLength: 80"
+],
+[
+"MAXB",
+"ENU;15;3;P;15;3",
+"Max. Pack. Width\n\nMaximum packing width of packaging product.\n\nType: Number\nLength: 15\nDecimal: 3"
+],
+[
+"MAXH",
+"ENU;15;3;P;15;3",
+"Max. Pack. Height\n\nMaximum packing height of packaging product.\n\nType: Number\nLength: 15\nDecimal: 3"
+],
+[
+"RBNRM",
+"ETE;80;0;C;80;0",
+"Catalog Profile\n\nA combination of code groups from several catalogs.\nA catalog profile is defined in Customizing and then assigned to the notification type. It restricts the list of values for the information contained in the quality notification.\n\nType: Text\nLength: 80"
+],
+[
+"SSTUF",
+"ETE;80;0;C;80;0",
+"Assortment Grade\n\nThe assortment grade is an optional criterion to structure assortments. Maintain the assortment grade to which the product is assigned if you use a listing procedure where the assortment grade is relevant.\n\n\nType: Text\nLength: 80"
+],
+[
+"LSTVZ",
+"ETE;80;0;C;80;0",
+"Listing Procedure\n\nSpecify the procedure to be used for the automatic selection of distribution center assortments where the product is to be listed. The listing procedure determines which checks are made to identify the relevant assortments for the product.\n\n\n\nType: Text\nLength: 80"
+],
+[
+"LDVZL",
+"EDA;8;0;D;8;0",
+"Listing Period Start Date\n\nDate from which the product is listed in the distribution center.\n\nType: Date"
+],
+[
+"LDBZL",
+"EDA;8;0;D;8;0",
+"Listing Period End Date\n\nDate to which the product is listed in the distribution center.\n\nType: Date"
+],
+[
+"LSTFL",
+"ETE;80;0;C;80;0",
+"Listing Procedure\n\nSpecify the procedure to be used for the automatic selection of store assortments where the product is to be listed.\nThe listing procedure determines which checks are made to identify the relevant assortments for the product.\n\n\nType: Text\nLength: 80"
+],
+[
+"LDVFL",
+"EDA;8;0;D;8;0",
+"Listing Period Start Date\n\nDate from which the product is listed in the stores.\n\nType: Date"
+],
+[
+"LDBFL",
+"EDA;8;0;D;8;0",
+"Listing Period End Date\n\nDate to which the product is listed in the stores.\n\nType: Date"
+],
+[
+"VDVZL",
+"EDA;8;0;D;8;0",
+"Sales Period Start Date\n\nDate from which the product is sold in the distribution center.\n\nType: Date"
+],
+[
+"VDBZL",
+"EDA;8;0;D;8;0",
+"Sales Period End Date\n\nDate to which the product is sold in the distribution center.\n\nType: Date"
+],
+[
+"VDVFL",
+"EDA;8;0;D;8;0",
+"Sales Period Start Date\n\nDate from which the product is sold in the stores.\n\nType: Date"
+],
+[
+"VDBFL",
+"EDA;8;0;D;8;0",
+"Sales Period End Date\n\nDate to which the product is sold in the stores.\n\nType: Date"
+],
+[
+"WAUSM",
+"ETE;80;0;C;80;0",
+"Delivery Unit of Measure (ISO Format)\n\nUnit in which the product is issued from the warehouse.\n\nType: Text\nLength: 80"
+],
+[
+"WVRKM",
+"ETE;80;0;C;80;0",
+"Sales Unit of Measure (ISO Format)\n\nUnit in which the product is sold. If you need to differentiate the sales unit of measure depending on the used sales channel you can do so in the sheet distribution chains.\n\nType: Text\nLength: 80"
+],
+[
+"WMAAB",
+"ETE;80;0;C;80;0",
+"ABC Indicator\n\nIndicator that classifies a product for an ABC analysis as an A, B, or C part according to its consumption value.\n\n\nType: Text\nLength: 80"
+],
+[
+"WBKLA",
+"ETE;80;0;C;80;0",
+"Valuation Class\n\nThe valuation class plays a role in the determination of the G/L accounts that are updated for a valuation relevant transaction such as a goods movement.\n\n\nType: Text\nLength: 80"
+],
+[
+"WHERL",
+"ETE;80;0;C;80;0",
+"Country/Region of Origin\n\nCountry/Region in which the product has been produced.\n\nType: Text\nLength: 80"
+],
+[
+"WHERR",
+"ETE;80;0;C;80;0",
+"Region of Origin\n\nRegion of Origin of the product.\n\nType: Text\nLength: 80"
+],
+[
+"WEKGR",
+"ETE;80;0;C;80;0",
+"Purchasing Group\n\nKey for a buyer or a group of buyers responsible for the procurement of the product.\n\n\nType: Text\nLength: 80"
+],
+[
+"BWSCL",
+"ETE;80;0;C;80;0",
+"Source of Supply\n\nRestricts the search for sources of supply for this product to external (normal) or internal (stock transfer) sources of supply, and also allows you to define a search sequence.\n\nType: Text\nLength: 80"
+],
+[
+"TAKLV",
+"ETE;80;0;C;80;0",
+"Tax Classification\n\nKey that identifies the tax classification of a product.\nThe value entered here serves as the default value for the tax classification of the tax categories to be taken into account (for example, for the tax category value-added tax in Germany).\n\n\nType: Text\nLength: 80"
+],
+[
+"WLADG",
+"ETE;80;0;C;80;0",
+"Loading Group\n\nA grouping of products that share the same loading requirements.\nThe system uses the loading group as well as the ' Shipping conditions' and 'Delivering plant' to automatically determine the shipping point for the item in sales and transfer documents (for example Sales Order, outbound delivery).\n\nType: Text\nLength: 80"
+],
+[
+"WBWSP",
+"ENU;6;2;P;6;2",
+"Valuation Margin\n\nThe valuation margin is the difference in percent between the retail value and the cost value of a product in relation to the retail value:\nValuation margin = (total retail - total cost) / total retail x 100\n\nType: Number\nLength: 6\nDecimal: 2"
+],
+[
+"PSTATQ",
+"ETE;1;0;C;1;0",
+"Indicator: Quality\n\nYou can use this indicator to set the quality view on client level active. For further information please refer to the migration object documentation.\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\n\nType: Text\nLength: 1"
+],
+[
+"PSTATV",
+"ETE;1;0;C;1;0",
+"Indicator: Sales\n\nYou can use this indicator to set the sales view on client level active. For further information please refer to the migration object documentation.\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"PSTATL",
+"ETE;1;0;C;1;0",
+"Indicator: Storage\n\nYou can use this indicator to set the storage view on client level active. For further information please refer to the migration object documentation.\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"PSTATE",
+"ETE;1;0;C;1;0",
+"Indicator: Purchasing\n\nYou can use this indicator to set the purchasing view on client level active. For further information please refer to the migration object documentation.\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"ZEINR",
+"ETE;22;0;C;22;0",
+"Document\n\nType: Text\nLength: 22"
+],
+[
+"BLATT",
+"ETE;3;0;C;3;0",
+"Page Number of document\n\nType: Text\nLength: 3"
+],
+[
+"ZZ1_CROSS_REF_PRD",
+"ETE;255;0;C;255;0",
+"Cross Reference\n\nType: Text\nLength: 255"
+],
+[
+"ZZ1_MAKERSUPPLIER_PRD",
+"ETE;30;0;C;30;0",
+"Manufacturer\n\nType: Text\nLength: 30"
+],
+[
+"ZZ1_MATRL_PRD",
+"ETE;30;0;C;30;0",
+"Material Specification\n\nType: Text\nLength: 30"
+],
+[
+"ZZ1_MFRPN_PRD",
+"ETE;40;0;C;40;0",
+"Manufacturer Part Number\n\nType: Text\nLength: 40"
+],
+[
+"ZZ1_NMOD_PRD",
+"ETE;30;0;C;30;0",
+"Noun and Modifier\n\nType: Text\nLength: 30"
+],
+[
+"ZZ1_SERNP_PRD",
+"ETE;1;0;C;1;0",
+"Serialized\n\nType: Text\nLength: 1"
+],
+[
+"ZZ1_WNFI_PRD",
+"ETE;100;0;C;100;0",
+"Others\n\nType: Text\nLength: 100"
+]
+],
+"n": 0
+},
+{
+"sheet": "Additional Descriptions",
+"struct": "S_MAKT",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"SPRAS",
+"ETE;80;0;C;80;0",
+"Language Key*\n\nThe language key indicates\n\n- the language in which texts are displayed,\n- the language in which you enter texts,\n- the language in which the system prints texts.\n\nType: Text\nLength: 80"
+],
+[
+"MAKTX",
+"ETE;40;0;C;40;0",
+"Product Description*\n\nText that describes the product in more detail.\nNote: You can maintain additional descriptions (for languages other than those provided on the 'Basic Data' sheet).\n\nType: Text\nLength: 40"
+]
+],
+"n": 0
+},
+{
+"sheet": "Seasons",
+"struct": "S_FSH_SEASONS_MAT",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"FSH_SGT",
+"ETE;80;0;C;80;0",
+"Requirement Segment\n\nDon't use. Functionality not supported.\n\nType: Text\nLength: 80"
+],
+[
+"FSH_SEASON_YEAR",
+"ETE;80;0;C;80;0",
+"Year*\n\nSpecifies the season year in which the product is sold for the first time.\n\nType: Text\nLength: 80"
+],
+[
+"FSH_SEASON",
+"ETE;80;0;C;80;0",
+"Season*\n\nReporting period in which a fashion product is available. Examples of a season can be summer, winter or autumn. A season belongs to a season year.\n\nType: Text\nLength: 80"
+],
+[
+"FSH_COLLECTION",
+"ETE;80;0;C;80;0",
+"Collection\n\nThis defines the collection to which the fashion product belongs.\n\nType: Text\nLength: 80"
+],
+[
+"FSH_THEME",
+"ETE;80;0;C;80;0",
+"Theme\n\nThis defines the theme to which the fashion product belongs.\nA theme exists as a combination along with the combination of season year, season and collection. It cannot exist independently.\n\n\nType: Text\nLength: 80"
+],
+[
+"SEASON1",
+"ETE;1;0;C;1;0",
+"Type 1\n\nThis is an indicator field. Set to X if this season type applies for the product.\n\nType: Text\nLength: 1"
+],
+[
+"SEASON2",
+"ETE;1;0;C;1;0",
+"Type 2\n\nThis is an indicator field. Set to X if this season type applies for the product.\n\nType: Text\nLength: 1"
+],
+[
+"SEASON3",
+"ETE;1;0;C;1;0",
+"Type 3\n\nThis is an indicator field. Set to X if this season type applies for the product.\n\nType: Text\nLength: 1"
+]
+],
+"n": 0
+},
+{
+"sheet": "Alternative Units of Measure",
+"struct": "S_MARM",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"MEINH",
+"ETE;80;0;C;80;0",
+"Alternative Unit of Measure (ISO Format)*\n\nProvide only Alternative Unit of Measures (please provide the Base Unit of Measure only on sheet 'Basic Data').\n\nType: Text\nLength: 80"
+],
+[
+"UMREN",
+"ENU;5;0;P;5;0",
+"Denominator for Conversion to Base Unit*\n\nEnter the number of units of the alternative unit of measure (denominator) that corresponds to the number of units of the base unit of measure (numerator).\nThe alternative unit of measure is kilogram (kg). The base unit of measure is piece (PC). 5 kg correspond to 3 pieces.\n5 kg = 3 PC => 1 kg = 3/5 PC\nIn this case, the quotient is therefore 3/5 (the numerator being 3 and the denominator 5).\n\nType: Number\nLength: 5"
+],
+[
+"UMREZ",
+"ENU;5;0;P;5;0",
+"Numerator for Conversion to Base Unit*\n\nEnter the number of units of the alternative unit of measure (denominator) that corresponds to the number of units of the base unit of measure (numerator).\nThe alternative unit of measure is kilogram (kg). The base unit of measure is piece (PC). 5 kg correspond to 3 pieces.\n5 kg = 3 PC => 1 kg = 3/5 PC\nIn this case, the quotient is therefore 3/5 (the numerator being 3 and the denominator 5).\n\nType: Number\nLength: 5"
+],
+[
+"EAN11",
+"ETE;18;0;C;18;0",
+"GTIN\n\nNote: if you have additional EAN's for this unit please enter them on the Additional EAN sheet. The EAN entered here is always the Main EAN for this unit.\n\nType: Text\nLength: 18"
+],
+[
+"NUMTP",
+"ETE;80;0;C;80;0",
+"GTIN Category\n\nThe EAN category defines the following attributes of the corresponding EAN:\nType/method of number assignment (internal and/or external number assignment) and details as to whether alphanumerical EANs are allowed\nCheck-digit algorithm that checks whether a check digit is required\nPrefix (for perishables EANs)\nLength of the EAN.\n\nType: Text\nLength: 80"
+],
+[
+"LAENG",
+"ENU;13;3;P;13;3",
+"Length\n\nLength of the product or its packaging, measured in the unit of dimension for the alternative unit of measure.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"BREIT",
+"ENU;13;3;P;13;3",
+"Width\n\nWidth of the product or its packaging, measured in the unit of dimension for the alternative unit of measure.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"HOEHE",
+"ENU;13;3;P;13;3",
+"Height\n\nHeight of the product or its packaging, measured in the unit of dimension for the alternative unit of measure.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"MEABM",
+"ETE;80;0;C;80;0",
+"Unit for Length/Width/Height(ISO Format)\n\nUnit in which the dimensions of length, width, and height of a product or its packaging for the alternative unit of measure are measured.\n\nType: Text\nLength: 80"
+],
+[
+"BRGEW",
+"ENU;13;3;P;13;3",
+"Gross Weight\n\nGross weight expressed in the unit of weight specified by you in the Unit of weight field.\nThe system can use the gross weight at a later stage, depending on what kind of capacity check you run, to check storage bin capacity for warehouse management purposes.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"GEWEI",
+"ETE;80;0;C;80;0",
+"Unit of Weight (ISO Format)\n\nUnit referring to the gross weight of the alternative unit of measure.\n\nType: Text\nLength: 80"
+],
+[
+"VOLUM",
+"ENU;13;3;P;13;3",
+"Volume\n\nSpace that the product occupies per unit of volume. The volume refers to the unit specified in the \"Volume unit\" field. The volume and its unit always refer to the alternative unit of measure.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"VOLEH",
+"ETE;80;0;C;80;0",
+"Volume Unit (ISO Format)\n\nIf you specify a volume, you have to enter the corresponding volume unit here.\n\nType: Text\nLength: 80"
+],
+[
+"CAPAUSE",
+"ENU;15;3;P;15;3",
+"Capacity Usage\n\nThe capacity usage of a product refers to the product quantity and is therefore specified as a variable in the system. It represents the consumption of a product in relation to the capacity.\n\nType: Number\nLength: 15\nDecimal: 3"
+]
+],
+"n": 0
+},
+{
+"sheet": "Additional GTINs",
+"struct": "S_MEAN",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"MEINH",
+"ETE;80;0;C;80;0",
+"Alternative Unit of Measure (ISO Format)*\n\nProvide the Alternative Unit of Measures for the additional GTIN.\n\nType: Text\nLength: 80"
+],
+[
+"EAN11",
+"ETE;18;0;C;18;0",
+"GTIN\n\nNote: the GTIN for the additional units is always not flagged as main GTIN. The main GTIN has to be filled on basic data sheet for the Base unit of measure and on sheet Alternative unit of measure for the alternative unit of measure.\nWith internal number assignment, you enter the GTIN category but not a GTIN.\n\nType: Text\nLength: 18"
+],
+[
+"EANTP",
+"ETE;80;0;C;80;0",
+"GTIN Category\n\nDefines how the system determines an International Article Number (EAN) to be assigned internally, and which check criteria (check digit, prefix, and so on) an EAN of this category must fulfil.\n\nType: Text\nLength: 80"
+]
+],
+"n": 0
+},
+{
+"sheet": "GTINs Assigned to Supplier",
+"struct": "S_MLEA",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"MEINH",
+"ETE;80;0;C;80;0",
+"Unit of Measure (ISO Format)*\n\nSpecify the unit of measure for the supplier-specific GTIN.\n\n\nType: Text\nLength: 80"
+],
+[
+"LIFNR",
+"ETE;80;0;C;80;0",
+"Supplier*\n\nAccount number of supplier.\n\nType: Text\nLength: 80"
+],
+[
+"EAN11",
+"ETE;18;0;C;18;0",
+"GTIN\n\nInternational Article Number (EAN/UPC).\n\nType: Text\nLength: 18"
+],
+[
+"LFEAN",
+"ETE;1;0;C;1;0",
+"Suppliers Main GTIN\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\nSpecifies that the GTIN concerned is the main supplier-specific GTIN for the given unit of measure. The GTIN with this indicator is copied into the purchasing documents as the default value.\n\n\nType: Text\nLength: 1"
+],
+[
+"LARTN",
+"ETE;35;0;C;35;0",
+"Product Used by Supplier\n\nProduct number used by the supplier. In most cases, the supplier uses a different number for the product than the one used in this system.\n\nType: Text\nLength: 35"
+]
+],
+"n": 0
+},
+{
+"sheet": "Receipt Texts",
+"struct": "S_MAMT",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"MEINH",
+"ETE;80;0;C;80;0",
+"Unit of Measure (ISO Format)*\n\nUnit of measure for which you want to define the receipt text.\n\nType: Text\nLength: 80"
+],
+[
+"SPRAS",
+"ETE;80;0;C;80;0",
+"Language*\n\nProvide the language for the receipt text.\n\nType: Text\nLength: 80"
+],
+[
+"MTXID",
+"ETE;80;0;C;80;0",
+"Text ID*\n\nIdentifies the type of description (for example receipt text) specific to the unit of measure.\n\nType: Text\nLength: 80"
+],
+[
+"LFDNR",
+"ENU;2;0;N;2;0",
+"Sequence\n\nEnter here a unique sequence number. That is, you can define several text lines for the specified unit of measure.\n\n\nType: Number\nLength: 2"
+],
+[
+"MAKTM",
+"ETE;40;0;C;40;0",
+"Text\n\nMaintain the text for the specified unit of measure.\n\nType: Text\nLength: 40"
+]
+],
+"n": 0
+},
+{
+"sheet": "Article Hierarchy",
+"struct": "S_WRF_MATGRP_SKU",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"HIER_ID",
+"ETE;80;0;C;80;0",
+"Hierarchy*\n\nSpecify the ID of the article hierarchy to which you want to assign the product. The status of the hierarchy must be active.\n\nType: Text\nLength: 80"
+],
+[
+"NODE",
+"ETE;80;0;C;80;0",
+"Hierarchy Node*\n\nSpecify the hierarchy node to which you want to assign the product.\nNote: You can only assign products to end nodes.\n\n\nType: Text\nLength: 80"
+],
+[
+"DATE_FROM",
+"EDA;8;0;D;8;0",
+"Valid From*\n\nValidity start date of the assignment of the product to the article hierarchy.\n\n\nType: Date"
+],
+[
+"DATE_TO",
+"EDA;8;0;D;8;0",
+"Valid To\n\nValidity end date of the assignment of the product to the article hierarchy.\n\nType: Date"
+],
+[
+"MAINFLG",
+"ETE;1;0;C;1;0",
+"Main Assignment\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\nWith this indicator you specify which is the main assignment for the product to the hierarchy. If the article hierarchy has the property 'Multiple Assignment' the same product can be assigned to multiple nodes from different categories.\n\nType: Text\nLength: 1"
+]
+],
+"n": 0
+},
+{
+"sheet": "Class Data",
+"struct": "S_CLASS",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"CLASS",
+"ETE;80;0;C;80;0",
+"Class*\n\nSupported classes are merchandise group classes (class type '026' internal only) and classes with variant class types assigned (for example class type '300'). For more details please refer to the migration object documentation.\n\nType: Text\nLength: 80"
+],
+[
+"CLASSTYPE",
+"ETE;80;0;C;80;0",
+"Class Type*\n\nSupported class types are '026' for merchandise group classes and class types of type variant (for example class type '300'). For more details please refer to the migration object documentation.\n\nType: Text\nLength: 80"
+]
+],
+"n": 0
+},
+{
+"sheet": "Characteristic Data",
+"struct": "S_CHARACT",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"CLASS",
+"ETE;80;0;C;80;0",
+"Class*\n\nSupported classes are merchandise group classes (class type '026' internal only) and classes with variant class types assigned (for example class type '300'). For more details please refer to the migration object documentation.\n\nType: Text\nLength: 80"
+],
+[
+"CLASSTYPE",
+"ETE;80;0;C;80;0",
+"Class Type*\n\nSupported class types are '026' for merchandise group classes and class types of type variant (for example class type '300'). For more details please refer to the migration object documentation.\n\nType: Text\nLength: 80"
+],
+[
+"ATNAM",
+"ETE;80;0;C;80;0",
+"Characteristic Name*\n\nName that uniquely identifies a characteristic. The relevant value of the characteristic is to be entered in one of the following columns depending on the data type of the characteristic. For more details please refer to the migration object documentation.\n\nType: Text\nLength: 80"
+],
+[
+"POSNR",
+"ETE;3;0;C;3;0",
+"Item\n\nThe item number is only an additional technical key to allow multiple values in the file and to prevent errors by the duplicate record check.\nIt is not mapped to a target field.\nPlease maintain a number from 001 to 999 per multiple value.\n\nType: Text\nLength: 3"
+],
+[
+"VALUE_CHAR",
+"ETE;70;0;C;70;0",
+"Character Value\n\nEnter here the value of the characteristic for data type CHAR.\n\nType: Text\nLength: 70"
+],
+[
+"VALUE_NUMC",
+"ENU;16;16;F;16;16",
+"Numeric Value\n\nEnter the value for the characteristic of the data type \"NUM\" here.\nThe values can be entered with or without a decimal separator, for example 1000 or 1000.99.\nMissing decimals are automatically set when pressing Enter.\n\n\nType: Number\nLength: 16\nDecimal: 16"
+],
+[
+"VALUE_DATE",
+"EDA;8;0;D;8;0",
+"Date\n\nEnter the value for the characteristic of the data type \"DATE\" here. Date intervals are not supported.\n\nType: Date"
+],
+[
+"VALUE_TIME",
+"ETI;6;0;T;6;0",
+"Time\n\nEnter the value for the characteristic of the data type \"TIME\" here.Time intervals are not supported.\n\nType: Time"
+],
+[
+"VALUE_CURR",
+"ENU;23;2;P;23;2",
+"Currency Value\n\nEnter the value for the characteristic of the data type \"CURR\" here.\nValues can be entered with or without a decimal separator, for example 1000 or 1000.99.\nThe value is related to the currency code.\nMissing decimals are automatically set by the spreadsheet, when pressing enter.\nYou can ignore them on currencies without decimals, for example JPY.\n\nType: Number\nLength: 23\nDecimal: 2"
+]
+],
+"n": 0
+},
+{
+"sheet": "Value for Variants",
+"struct": "S_VARIANT",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"ATNAM",
+"ETE;80;0;C;80;0",
+"Characteristic Name*\n\nCharacteristic used for the definition of the variant. The relevant value of the characteristic is to be entered in one of the following columns depending on the data type of the characteristic. For more details please refer to the migration object documentation.\n\nType: Text\nLength: 80"
+],
+[
+"VALUE_CHAR",
+"ETE;70;0;C;70;0",
+"Character Value\n\nEnter the value of the characteristic used to define the variant if the characteristic has the data type \"CHAR\".\n\n\nType: Text\nLength: 70"
+],
+[
+"VALUE_NUMC",
+"ENU;16;16;F;16;16",
+"Numeric Value\n\nEnter the value for the characteristic of the data type \"NUM\" here.\nThe values can be entered with or without a decimal separator, for example 1000 or 1000.99.\nMissing decimals are automatically set when pressing Enter.\n\n\nType: Number\nLength: 16\nDecimal: 16"
+],
+[
+"VALUE_DATE",
+"EDA;8;0;D;8;0",
+"Date\n\nEnter the value for the characteristic of the data type \"DATE\" here. Date intervals are not supported.\n\nType: Date"
+],
+[
+"VALUE_TIME",
+"ETI;6;0;T;6;0",
+"Time\n\nEnter the value for the characteristic of the data type \"TIME\" here.Time intervals are not supported.\n\nType: Time"
+],
+[
+"VALUE_CURR",
+"ENU;16;16;F;16;16",
+"Currency Value\n\nEnter the value for the characteristic of the data type \"CURR\" here.\nValues can be entered with or without a decimal separator, for example 1000 or 1000.99.\nThe value is related to the currency code.\nMissing decimals are automatically set by the spreadsheet, when pressing enter.\nYou can ignore them on currencies without decimals, for example JPY.\n\nType: Number\nLength: 16\nDecimal: 16"
+]
+],
+"n": 0
+},
+{
+"sheet": "Distribution Chains",
+"struct": "S_MVKE",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"VKORG",
+"ETE;80;0;C;80;0",
+"Sales Organization*\n\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\n\nType: Text\nLength: 80"
+],
+[
+"VTWEG",
+"ETE;80;0;C;80;0",
+"Distribution Channel*\n\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\n\nType: Text\nLength: 80"
+],
+[
+"VRKME",
+"ETE;80;0;C;80;0",
+"Sales Unit (ISO Format)\n\nUnit of measure in which the product is sold.\nEnter a value in this field only if you want to use a unit of measure differing from the base unit of measure.\n\n\n\nType: Text\nLength: 80"
+],
+[
+"VAVME",
+"ETE;1;0;C;1;0",
+"Variable Sales Unit Not Allowed\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\nSet the indicator to 'X' if a variable sales unit is not allowed. In that case the unit specified in SD documents may not differ from that in the master record.\n\nType: Text\nLength: 1"
+],
+[
+"DWERK",
+"ETE;80;0;C;80;0",
+"Delivery Plant\n\nPlant from which the goods should be delivered to the customer.\n\nType: Text\nLength: 80"
+],
+[
+"VMSTA",
+"ETE;80;0;C;80;0",
+"Distribution-Chain-Spec. Product Status\n\nIndicates whether, for a specific distribution chain, the product may be used in individual functions in Sales and Distribution.\nThe distribution-chain-specific product status restricts the usability of the product for the distribution chain concerned, that is, it defines whether a warning or error message is displayed if you include the product in a particular function.\n\nType: Text\nLength: 80"
+],
+[
+"VMSTD",
+"EDA;8;0;D;8;0",
+"Valid-From Date for Product Status\n\nType: Date"
+],
+[
+"SKTOF",
+"ETE;1;0;C;1;0",
+"Cash Discount\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"PBIND",
+"ETE;80;0;C;80;0",
+"Price Fixing\n\nIndicator for price fixing. Price fixing can be required due to national regulations. In Germany, for example, books and tobacco are subject to fixed prices. Price fixing affects how sales prices are calculated, for example if the indicator is set to '2' (Fixed price) the retail price cannot be changed.\n\n\nType: Text\nLength: 80"
+],
+[
+"LFMNG",
+"ENU;13;3;P;13;3",
+"Minimum Delivery Quantity\n\nMinimum quantity that may be delivered to a customer.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"LFMAX",
+"ENU;13;3;P;13;3",
+"Maximum Delivery Quantity\n\nMaximum delivery quantity in store order processing.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"AUMNG",
+"ENU;13;3;P;13;3",
+"Minimum Order Quantity in Base UoM\n\nThe minimum quantity a customer may order.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"SCMNG",
+"ENU;13;3;P;13;3",
+"Delivery Unit\n\nOnly exact multiples of this number can be delivered.\nExample: The delivery unit consists of a number and a unit of measure. In the case of a delivery unit of 30 pieces, 30, 60, 90, and so on pieces can be delivered, but not, however, 100 pieces.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"SCHME",
+"ETE;80;0;C;80;0",
+"Unit of Measure (ISO) of Delivery Unit\n\nUnit of measure in which stocks of the product are managed. The system converts all the quantities you enter in other units of measure (alternative units of measure) to the base unit of measure.\nYou define the base unit of measure and also alternative units of measure and their conversion factors in the product master record.\n\nType: Text\nLength: 80"
+],
+[
+"CTR_TERM_DEF",
+"ENU;3;0;N;3;0",
+"Default Contract Term\n\nType: Number\nLength: 3"
+],
+[
+"CTR_TERM_ALT1",
+"ENU;3;0;N;3;0",
+"Alternative Contract Term 1\n\nType: Number\nLength: 3"
+],
+[
+"CTR_TERM_ALT2",
+"ENU;3;0;N;3;0",
+"Alternative Contract Term 2\n\nType: Number\nLength: 3"
+],
+[
+"CTR_TERM_UNIT",
+"ETE;80;0;C;80;0",
+"Unit for Contract Term\n\nType: Text\nLength: 80"
+],
+[
+"EXT_PERIOD_DEF",
+"ENU;3;0;N;3;0",
+"Default Extension Period\n\nType: Number\nLength: 3"
+],
+[
+"EXT_PERIOD_ALT1",
+"ENU;3;0;N;3;0",
+"Alternative Extension Period 1\n\nType: Number\nLength: 3"
+],
+[
+"EXT_PERIOD_ALT2",
+"ENU;3;0;N;3;0",
+"Alternative Extension Period 2\n\nType: Number\nLength: 3"
+],
+[
+"EXT_PERIOD_UNIT",
+"ETE;80;0;C;80;0",
+"Unit for Extension Period\n\nType: Text\nLength: 80"
+],
+[
+"RDPRF",
+"ETE;80;0;C;80;0",
+"Rounding Profile\n\nKey that the system uses to adjust the order proposal quantity to deliverable units.\n\nType: Text\nLength: 80"
+],
+[
+"SSTUF",
+"ETE;80;0;C;80;0",
+"Assortment Grade\n\nThe assortment grade is an optional criterion to structure assortments. Maintain the assortment grade to which the product is assigned if you use a listing procedure where the assortment grade is relevant.\n\n\nType: Text\nLength: 80"
+],
+[
+"LSTFL",
+"ETE;80;0;C;80;0",
+"Listing Procedure\n\nSpecify the procedure to be used for the automatic selection of store assortments where the product is to be listed.\nThe listing procedure determines which checks are made to identify the relevant assortments for the product.\n\n\nType: Text\nLength: 80"
+],
+[
+"LDVFL",
+"EDA;8;0;D;8;0",
+"Listing Period Start Date\n\nDate from which the product is listed in the stores.\n\nType: Date"
+],
+[
+"LDBFL",
+"EDA;8;0;D;8;0",
+"Listing Period End Date\n\nDate to which the product is listed in the stores.\n\nType: Date"
+],
+[
+"LSTVZ",
+"ETE;80;0;C;80;0",
+"Listing Procedure\n\nSpecify the procedure to be used for the automatic selection of distribution center assortments where the product is to be listed. The listing procedure determines which checks are made to identify the relevant assortments for the product.\n\n\n\nType: Text\nLength: 80"
+],
+[
+"LDVZL",
+"EDA;8;0;D;8;0",
+"Listing Period Start Date\n\nDate from which the product is listed in the distribution center.\n\nType: Date"
+],
+[
+"LDBZL",
+"EDA;8;0;D;8;0",
+"Listing Period End Date\n\nDate to which the product is listed in the distribution center.\n\nType: Date"
+],
+[
+"VDVFL",
+"EDA;8;0;D;8;0",
+"Sales Period Start Date\n\nDate from which the product is sold in the stores.\n\n\nType: Date"
+],
+[
+"VDBFL",
+"EDA;8;0;D;8;0",
+"Sales Period End Date\n\nDate to which the product is sold in the stores.\n\nType: Date"
+],
+[
+"VDVZL",
+"EDA;8;0;D;8;0",
+"Sales Period Start Date\n\nDate from which the product is sold in the distribution center.\n\nType: Date"
+],
+[
+"VDBZL",
+"EDA;8;0;D;8;0",
+"Sales Period End Date\n\nDate to which the product is sold in the distribution center.\n\nType: Date"
+],
+[
+"KONDM",
+"ETE;80;0;C;80;0",
+"Product Pricing Group\n\nA way of grouping products to which you want to apply the same conditions.\nYou can create condition records for a product price group using the following condition types:\n\u2022Product price group (for example, all non-food products)\n\u2022A combination of customer and product price group\n\u2022A combination of customer price group and product price group (for example, all wholesale customers and all non-food products).\n\n\nType: Text\nLength: 80"
+],
+[
+"BONUS",
+"ETE;80;0;C;80;0",
+"Volume Rebate Group\n\nGroup definition that can be used for rebate settlement.\n\nType: Text\nLength: 80"
+],
+[
+"MTPOS",
+"ETE;80;0;C;80;0",
+"Item Category Group*\n\nA grouping of products that the system uses to determine item categories during the processing of sales documents.Depending on the item category group that you apply and the sales document type you are processing, the system automatically proposes an item category in the document.\nExample: In the standard system there are standard items, items that represent services, and items that represent packaging products.\n\nType: Text\nLength: 80"
+],
+[
+"KTGRM",
+"ETE;80;0;C;80;0",
+"Account Assignment Group\n\nGroup of products with the same accounting requirements.\nUsed by the system when creating an accounting document from a billing document to determine the revenue or sales deduction account.\nNote: this field will become mandatory for several product types foe example for product type Trading Goods, Semifinished Products, Finished Goods and also for others.\n\nType: Text\nLength: 80"
+],
+[
+"PROVG",
+"ETE;80;0;C;80;0",
+"Volume Commission Group\n\nCommission group to which the product is assigned.\n\nType: Text\nLength: 80"
+],
+[
+"PMATN",
+"ETE;80;0;C;80;0",
+"Pricing Reference Product\n\nProduct master record that the system uses as a reference for pricing purposes.\nThe conditions that apply to the pricing reference product also apply to the product in whose product master record the pricing reference product is stored.\n\nType: Text\nLength: 80"
+],
+[
+"MEGRU",
+"ETE;80;0;C;80;0",
+"Unit of Measure Group\n\nKey that you can use for grouping several units of measure.You can use the unit of measure group, for example, to define allowed units of measure for a particular product for a vendor or a recipient. This can be taken into account when working with rounding profiles.\n\nType: Text\nLength: 80"
+],
+[
+"PRODH",
+"ETE;80;0;C;80;0",
+"Product Hierarchy\n\nAlphanumeric character string for grouping together products by combining different characteristics. It is used for analyses and price determination.\n\nType: Text\nLength: 80"
+],
+[
+"VERSG",
+"ETE;80;0;C;80;0",
+"Product Statistics Group\n\nSpecifies a statistics group for this product and helps determine which data the system updates in the logistics information system.\n\n\nType: Text\nLength: 80"
+],
+[
+"MVGR1",
+"ETE;80;0;C;80;0",
+"Product Group 1\n\nYou can use product groups when maintaining a product master record. Since these product groups are not used in the standard SAP System, you can use them as required, for example, for analyses.\n\nType: Text\nLength: 80"
+],
+[
+"MVGR2",
+"ETE;80;0;C;80;0",
+"Product Group 2\n\nYou can use product groups when maintaining a product master record. Since these product groups are not used in the standard SAP System, you can use them as required, for example, for analyses.\n\nType: Text\nLength: 80"
+],
+[
+"MVGR3",
+"ETE;80;0;C;80;0",
+"Product Group 3\n\nYou can use product groups when maintaining a product master record. Since these product groups are not used in the standard SAP System, you can use them as required, for example, for analyses.\n\nType: Text\nLength: 80"
+],
+[
+"MVGR4",
+"ETE;80;0;C;80;0",
+"Product Group 4\n\nYou can use product groups when maintaining a product master record. Since these product groups are not used in the standard SAP System, you can use them as required, for example, for analyses.\n\nType: Text\nLength: 80"
+],
+[
+"MVGR5",
+"ETE;80;0;C;80;0",
+"Product Group 5\n\nYou can use product groups when maintaining a product master record. Since these product groups are not used in the standard SAP System, you can use them as required, for example, for analyses.\n\nType: Text\nLength: 80"
+]
+],
+"n": 0
+},
+{
+"sheet": "Point of Sale Data",
+"struct": "S_WLK2",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"VKORG",
+"ETE;80;0;C;80;0",
+"Sales Organization*\n\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\n\nType: Text\nLength: 80"
+],
+[
+"VTWEG",
+"ETE;80;0;C;80;0",
+"Distribution Chanel*\n\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\n\nType: Text\nLength: 80"
+],
+[
+"WERKS",
+"ETE;80;0;C;80;0",
+"Plant\n\nEnter a store if the data you maintain is store-specific.\n\nType: Text\nLength: 80"
+],
+[
+"RBZUL",
+"ETE;1;0;C;1;0",
+"Discount Allowed\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\nIndicates that in POS interface - inbound processing, no (cash register receipt) discount can be granted for this product.\n\n\nType: Text\nLength: 1"
+],
+[
+"SCAGR",
+"ETE;80;0;C;80;0",
+"Scales Group\n\nThe scales group is used during the provision of master data for electronically controlling scales in a store. Using the scales group, the cash register server can control which product master record should be loaded on to which scales.\n\nType: Text\nLength: 80"
+],
+[
+"MSTAV",
+"ETE;80;0;C;80;0",
+"Distribution-Chain-Specific Prod. Status\n\nThe distribution-chain-specific product status restricts the usability of the product for the distribution chain concerned, that is, it defines whether a warning or error message is displayed if you include the product in a particular function.\n\nType: Text\nLength: 80"
+],
+[
+"MSTDV",
+"EDA;8;0;D;8;0",
+"Valid From Date for Product Status\n\nDate from which distr.-chain-spec. product status is valid.\n\nType: Date"
+],
+[
+"VKDAB",
+"EDA;8;0;D;8;0",
+"Sales Period Start Date\n\nDate from which the product is sold in the stores.\n\nType: Date"
+],
+[
+"VKBIS",
+"EDA;8;0;D;8;0",
+"Sales Period End Date\n\nDate to which the product is sold in the stores.\n\nType: Date"
+]
+],
+"n": 0
+},
+{
+"sheet": "Tax Classification",
+"struct": "S_MLAN",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"ALAND",
+"ETE;80;0;C;80;0",
+"Country/Region*\n\nIdentifies the country/region in which the delivery originates.\n\nType: Text\nLength: 80"
+],
+[
+"TATYP1",
+"ETE;80;0;C;80;0",
+"Tax Category 1*\n\nPlease provide the tax category and the tax classification. If you have more than 1 tax category for one country/region please use the fields Tax category 2/3/4 and so on and Tax classification 2/3/4 and so on on sheet 'Tax classification' to provide the additional tax data.\n\nType: Text\nLength: 80"
+],
+[
+"TAXM1",
+"ETE;80;0;C;80;0",
+"Tax Classification 1*\n\nSpecifies the tax classification of a material for a particular tax category.\n\nType: Text\nLength: 80"
+],
+[
+"TATYP2",
+"ETE;80;0;C;80;0",
+"Tax Category 2\n\nType: Text\nLength: 80"
+],
+[
+"TAXM2",
+"ETE;80;0;C;80;0",
+"Tax Classification 2\n\nType: Text\nLength: 80"
+],
+[
+"TATYP3",
+"ETE;80;0;C;80;0",
+"Tax Category 3\n\nType: Text\nLength: 80"
+],
+[
+"TAXM3",
+"ETE;80;0;C;80;0",
+"Tax Classification 3\n\nType: Text\nLength: 80"
+],
+[
+"TATYP4",
+"ETE;80;0;C;80;0",
+"Tax Category 4\n\nType: Text\nLength: 80"
+],
+[
+"TAXM4",
+"ETE;80;0;C;80;0",
+"Tax Classification 4\n\nType: Text\nLength: 80"
+],
+[
+"TATYP5",
+"ETE;80;0;C;80;0",
+"Tax Category 5\n\nType: Text\nLength: 80"
+],
+[
+"TAXM5",
+"ETE;80;0;C;80;0",
+"Tax Classification 5\n\nType: Text\nLength: 80"
+],
+[
+"TATYP6",
+"ETE;80;0;C;80;0",
+"Tax Category 6\n\nType: Text\nLength: 80"
+],
+[
+"TAXM6",
+"ETE;80;0;C;80;0",
+"Tax Classification 6\n\nType: Text\nLength: 80"
+],
+[
+"TATYP7",
+"ETE;80;0;C;80;0",
+"Tax Category 7\n\nType: Text\nLength: 80"
+],
+[
+"TAXM7",
+"ETE;80;0;C;80;0",
+"Tax Classification 7\n\nType: Text\nLength: 80"
+],
+[
+"TATYP8",
+"ETE;80;0;C;80;0",
+"Tax Category 8\n\nType: Text\nLength: 80"
+],
+[
+"TAXM8",
+"ETE;80;0;C;80;0",
+"Tax Classification 8\n\nType: Text\nLength: 80"
+],
+[
+"TATYP9",
+"ETE;80;0;C;80;0",
+"Tax Category 9\n\nType: Text\nLength: 80"
+],
+[
+"TAXM9",
+"ETE;80;0;C;80;0",
+"Tax Classification 9\n\nType: Text\nLength: 80"
+]
+],
+"n": 0
+},
+{
+"sheet": "Store Replenishment",
+"struct": "S_WRPP",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"RQGRP",
+"ETE;80;0;C;80;0",
+"Requirement Group*\n\nClassification of recipients for the purposes of Replenishment. Requirement groups are created for every product group. They consist of all the customers (or plants) that have the same replenishment requirements for the product group assigned to it.\nRequirement groups can simplify the maintenance of replenishment data when the number of recipients or the number of products is very high, since you do not have to maintain data for every combination of recipient and product.\n\n\nType: Text\nLength: 80"
+],
+[
+"SOBST",
+"ENU;13;3;P;13;3",
+"Target Stock\n\nQuantity of a product at a recipient for which stock is to be replenished.\nThe target stock can be entered manually by the user or calculated at runtime during the planning run from forecast sales value. You decide how you want to calculate the target stock by configuring the forecast indicator in the MRP type. If you have the system calculate the target stock dynamically, it adds up all future requirements during the target range of coverage, as of the end of the replenishment lead time defined in replenishment planning, plus safety stock. This value is limited by any minimum or maximum target stock maintained.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"MINBE",
+"ENU;13;3;P;13;3",
+"Reorder Point\n\nQuantity below which the replenishment process triggers procurement of merchandise. If no reorder point has been defined, procurement is triggered as soon as the stock on-hand falls short of the target stock.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"EISBE",
+"ENU;13;3;P;13;3",
+"Safety Stock\n\nLower limit for the target stock. The target stock calculated by the forecast cannot be any lower than this value.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"PRWUG",
+"ENU;13;3;P;13;3",
+"Minimum Target Stock\n\nLower limit for the target stock.\nIf the target stock is calculated dynamically in the replenishment run from forecast values, this is the minimum target stock possible. If you enter a target stock manually, the minimum target stock has no relevance.\n\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"PRWOG",
+"ENU;13;3;P;13;3",
+"Maximum Target Stock\n\nUpper limit for the target stock.\nIf the target stock is calculated dynamically in the replenishment run from forecast values, this is the maximum target stock possible. If you enter a target stock manually, the maximum target stock has no relevance.\n\nType: Number\nLength: 13\nDecimal: 3"
+]
+],
+"n": 0
+},
+{
+"sheet": "Plant Data",
+"struct": "S_MARC",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"WERKS",
+"ETE;80;0;C;80;0",
+"Plant*\n\nKey uniquely identifying a plant.\nIn Logistics a plant is an organizational unit for dividing an enterprise according to production, procurement, maintenance, and products planning.\n\nType: Text\nLength: 80"
+],
+[
+"DISMM",
+"ETE;80;0;C;80;0",
+"MRP Type\n\nKey that determines whether and how the product is planned. This field becomes mandatory if MRP data should be migrated.\nDepending on the MRP type other fields are becomming mandatory eg if you choose 'VB' for reorder-point planning you also have to specify the Reorder Point, MRP controller, Lot Sizing Procedure ...\n\nType: Text\nLength: 80"
+],
+[
+"DISPO",
+"ETE;80;0;C;80;0",
+"MRP Controller\n\nSpecifies the number of the MRP controller or group of MRP controllers responsible for product planning for the product.\n\nType: Text\nLength: 80"
+],
+[
+"MTVFP",
+"ETE;80;0;C;80;0",
+"Availability Check\n\nEvery product that is to take part in the availability check must be assigned to a checking group.\nUsing the checking group you can define:\n- Whether the products to be checked are locked during the availability check\n- Whether the normal ATP quantity or the cumulated ATP quantity is used.\n\nType: Text\nLength: 80"
+],
+[
+"MMSTA",
+"ETE;80;0;C;80;0",
+"Plant-Specific Product Status\n\nThe product status determines how a product is handled in different applications and in business operations (for example, purchasing, products planning, usage in bills of material ..). If a product has a product status, the system will issue either a warning or an error message (depending on which status you have chosen) if the product is used.\nNote: The plant-specific product status restricts the usability of the product for this specific plant.\nPlease see further information in the migration object documentation under Mapping instructions.\n\nType: Text\nLength: 80"
+],
+[
+"MMSTD",
+"EDA;8;0;D;8;0",
+"Valid From Date for Status\n\nDate from which the plant-specific product status is valid.\n\nType: Date"
+],
+[
+"KOKRS",
+"ETE;80;0;C;80;0",
+"Controlling Area\n\nThe controlling area is the highest organizational unit in Controlling.\n\nType: Text\nLength: 80"
+],
+[
+"PRCTR",
+"ETE;80;0;C;80;0",
+"Profit Center\n\nAn organizational unit in Accounting that reflects a management-oriented structure of the organization for the purpose of internal control.\nOperating results for a profit center can be analyzed using either the cost of sales approach or the period accounting approach.\nBy analyzing the fixed capital as well, you can expand your profit center for use as an investment center.\n\nType: Text\nLength: 80"
+],
+[
+"AUSME",
+"ETE;80;0;C;80;0",
+"Unit of Issue (ISO Format)\n\nEnter a value in this field only if you want to use a unit of measure differing from the base unit of measure.\n\nType: Text\nLength: 80"
+],
+[
+"XCHPF",
+"ETE;1;0;C;1;0",
+"Batch Management Req. Indicator\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nSpecifies whether the product is managed in batches ('X') or not (<blank>) in the specified plant.\nPlease consider the settings in configuration defined for 'Specify Batch Management Default by Plant'.\nNote: to assign the batch class to your product please use migration object 'Material classification'.\n\nType: Text\nLength: 1"
+],
+[
+"SERNP",
+"ETE;80;0;C;80;0",
+"Serial Number Profile\n\nNote: Serial number management is not possible with backflushing.\n\nType: Text\nLength: 80"
+],
+[
+"XMCNG",
+"ETE;1;0;C;1;0",
+"Negative Stocks Allowed in Plant\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"EPRIO",
+"ETE;80;0;C;80;0",
+"Stock Determination Group\n\nThe stock determination group combined with the stock determination rule at plant level create a key for the stock determination strategy.\n\nType: Text\nLength: 80"
+],
+[
+"LADGR",
+"ETE;80;0;C;80;0",
+"Loading Group\n\nA grouping of products that share the same loading requirements.\nThe system uses the loading group as well as the ' Shipping conditions' and 'Delivering plant' to automatically determine the shipping point for the item in sales and transfer documents (for example Sales Order, outbound delivery).\n\nType: Text\nLength: 80"
+],
+[
+"KZKUP",
+"ETE;1;0;C;1;0",
+"Co-Product\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\nIndicator you can use to specify that the product can also be used as a co-product.\n\nType: Text\nLength: 1"
+],
+[
+"KZECH",
+"ETE;80;0;C;80;0",
+"Batch Entry in Production\n\nThis indicator refers to the components of an order, not to the finished product to be manufactured. You have the following options:\n\u2022The batches can be determined when the goods issue is posted.\n\u2022The batches must be entered in the order before it is released.\n\u2022The batches must be entered in the order before the goods issue is posted, but not necessarily before the order is released.\n\u2022The batches are determined automatically when the order is released.\n\nType: Text\nLength: 80"
+],
+[
+"KZKRI",
+"ETE;1;0;C;1;0",
+"Indicator: Critical Part\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"QMATA",
+"ETE;80;0;C;80;0",
+"Authorization Group for Activities in QM\n\nAuthorization Group for Activities in QM.\n\nType: Text\nLength: 80"
+],
+[
+"KZDKZ",
+"ETE;1;0;C;1;0",
+"Documentation Required Indicator\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"PRFRQ",
+"ENU;5;0;P;5;0",
+"Inspection Interval in Days\n\nSpecifies the interval between different quality inspections.\n\nType: Number\nLength: 5"
+],
+[
+"SSQSS",
+"ETE;80;0;C;80;0",
+"Quality Management Control Key\n\nThis key determines which conditions are valid for quality management in procurement.\nNote: This field must only be filled if there will be a related Quality Info record existing in the system. If the fields are filled and the QIR is missing, the business process will run into an error.\n\nType: Text\nLength: 80"
+],
+[
+"QZGTP",
+"ETE;80;0;C;80;0",
+"Certificate Type\n\nDefines the content of a quality certificate.\n\n\nType: Text\nLength: 80"
+],
+[
+"QSSYS",
+"ETE;80;0;C;80;0",
+"Target QM System\n\nAs a customer in a supply relationship, you can define the requirements for the supplier's QM system using this identifier and the accompanying description.\n\nType: Text\nLength: 80"
+],
+[
+"MTVER",
+"ETE;80;0;C;80;0",
+"Export/Import Group\n\nA grouping of products for export and import.\n\nType: Text\nLength: 80"
+],
+[
+"HERKL",
+"ETE;80;0;C;80;0",
+"Country/Region of Origin\n\nKey of the country/region in which the product has been produced.\n\nType: Text\nLength: 80"
+],
+[
+"HERKR",
+"ETE;80;0;C;80;0",
+"Region of Origin\n\nYou can enter a region of the country/region from which the goods originate.\n\nType: Text\nLength: 80"
+],
+[
+"STEUC",
+"ETE;80;0;C;80;0",
+"Taxes in International Trade\n\nControl code for consumption taxes in foreign trade.\n\nType: Text\nLength: 80"
+],
+[
+"INDUS",
+"ETE;80;0;C;80;0",
+"Material CFOP Category\n\nUse for BRAZIL only !\nThe CFOP category is used to determine the proper CFOP.\n\n\nType: Text\nLength: 80"
+],
+[
+"EKGRP",
+"ETE;80;0;C;80;0",
+"Purchasing Group\n\nInternally, the purchasing group is responsible for the procurement of a product or a class of products.\nExternally, it is the medium through which contacts with the supplier are maintained.\n\nType: Text\nLength: 80"
+],
+[
+"INSMK",
+"ETE;1;0;C;1;0",
+"Post to Inspection Stock\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"KORDB",
+"ETE;1;0;C;1;0",
+"Source List Required\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"KAUTB",
+"ETE;1;0;C;1;0",
+"Automatic Purchase Oder Allowed\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"TAXIM",
+"ETE;80;0;C;80;0",
+"Tax Indicator\n\nPlease enter the Tax indicator for product (Purchasing) for the related country/region of your plant.\n\nType: Text\nLength: 80"
+],
+[
+"MAABC",
+"ETE;80;0;C;80;0",
+"ABC Indicator\n\nIndicator that classifies a product as an A, B, or C part according to its consumption value. This classification process is known as the ABC analysis.\nThe three indicators have the following meanings:\n\u2022A - important part, high consumption value\n\u2022B - less important part, medium consumption value\n\u2022C - relatively unimportant part, low consumption value\n\nType: Text\nLength: 80"
+],
+[
+"DISGR",
+"ETE;80;0;C;80;0",
+"MRP Group\n\nThe MRP group contains all the products from the point of view of MRP for assigning special control parameters for the total planning run. These control parameters include, for example, the strategy group, the consumption mode, and the planning horizon.\n\nType: Text\nLength: 80"
+],
+[
+"STRGR",
+"ETE;80;0;C;80;0",
+"Strategy Group\n\nThe strategy group groups all the planning strategies that can be used for a particular product. The planning strategy represents the procedure used for planning a product and is (technically speaking) controlled by the MRP types.\n\nType: Text\nLength: 80"
+],
+[
+"MINBE",
+"ENU;13;3;P;13;3",
+"Reorder Point\n\nFor MRP Type 'VB' (Reorder-Point-Planning) you have to specify the reorder point for reorder planning. In this case this field becomes mandatory. If the stock falls below this quantity, the system flags the product for requirements planning.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"FXHOR",
+"ENU;3;0;N;3;0",
+"Planning Time Fence\n\nThe planning fence time becomes required if you are working with MRP type which includes a firming type. This is for example the case for MRP type P1-P4 (Forecast Consumption, Auto/Manual Firming).\nThe planning time fence specifies a period within which no automatic changes are to be made to the master plan.\nThe planning time fence is maintained in workdays.\n\n\nType: Number\nLength: 3"
+],
+[
+"LFRHY",
+"ETE;80;0;C;80;0",
+"Planning Cycle\n\nKey that determines the day on which the product is planned and ordered.\n\nType: Text\nLength: 80"
+],
+[
+"VRMOD",
+"ETE;80;0;C;80;0",
+"Consumption Mode\n\nThe consumption mode controls the direction on the time axis in which the system consumes requirements.\n\nType: Text\nLength: 80"
+],
+[
+"VINT1",
+"ENU;3;0;N;3;0",
+"Consumption Period: Backward\n\nDetermines the consumption period (in workdays) for backward consumption.\n\nType: Number\nLength: 3"
+],
+[
+"VINT2",
+"ENU;3;0;N;3;0",
+"Consumption Period: Forward\n\nDetermines the consumption period (in workdays) for forward consumption.\n\nType: Number\nLength: 3"
+],
+[
+"MISKZ",
+"ETE;80;0;C;80;0",
+"Mixed MRP Indicator\n\nDefines the indicator for planning assemblies.\n\nType: Text\nLength: 80"
+],
+[
+"PRGRP",
+"ETE;80;0;C;80;0",
+"Planning Product\n\nType: Text\nLength: 80"
+],
+[
+"PRWRK",
+"ETE;80;0;C;80;0",
+"Planning Plant\n\nPlanning plant which specifically identifies the plant from which the planned independent requirements of the reference product comes from.\n\nType: Text\nLength: 80"
+],
+[
+"UMREF",
+"ETE;10;0;C;10;0",
+"Plng. Conv. Factor\n\nFactor that the system uses to convert the quantity of the current product, measured in the base unit of measure, to the base unit quantity of the planning product.\n\nExample:\n\nBase unit of measure for Planning product: to\nBase unit of measure for Current product: kg\n\n--> Conversion factor = 0.001 because 1 kg = 0.001 to\n\n\nType: Text\nLength: 10"
+],
+[
+"DISLS",
+"ETE;80;0;C;80;0",
+"Lot Sizing Procedure\n\nKey that determines which lot-sizing procedure the system uses within products planning to calculate the quantity to be procured or produced.\n\nType: Text\nLength: 80"
+],
+[
+"BSTMI",
+"ENU;13;3;P;13;3",
+"Minimum Lot Size\n\nMinimum procurement quantity.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"BSTMA",
+"ENU;13;3;P;13;3",
+"Maximum Lot Size\n\nQuantity that is not allowed to be exceeded during procurement.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"BSTFE",
+"ENU;13;3;P;13;3",
+"Fixed Lot Size\n\nPlease enter a value if you are working with Lot Sizing Procedure 'Fixed order quantity'. The fixed lot size is then a required field.\nNote: In this case entries in fields: Minimum Lot Size, Maximum Lot Size and Rounding value will be reset.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"LAGPR",
+"ETE;80;0;C;80;0",
+"Storage Cost Indicator\n\nIndicator that specifies the storage costs percentage the system uses when calculating the lot size to determine storage costs.\n\nType: Text\nLength: 80"
+],
+[
+"LOSFX",
+"ENU;13;2;P;13;2",
+"Lot Size Independant Cost\n\nCosts that are incurred, irrespective of lot size, for each purchase order or production order over and above the purchase order price or production costs.\n\nType: Number\nLength: 13\nDecimal: 2"
+],
+[
+"WAERS",
+"ETE;80;0;C;80;0",
+"Currency for Lot Size Ind. Cost\n\nYou must specify the currency for the Lot Size Independent Cost (currency of the company code belonging to the plant).\n\nType: Text\nLength: 80"
+],
+[
+"AUSSS",
+"ENU;5;2;P;5;2",
+"Assembly Scrap (%)\n\nPercentage scrap that occurs during production of the product if the product is an assembly.\nThe assembly scrap is used in products planning to calculate the lot size of the assembly. The system increases the quantity to be produced by the scrap quantity calculated.\n\nType: Number\nLength: 5\nDecimal: 2"
+],
+[
+"MABST",
+"ENU;13;3;P;13;3",
+"Maximum Stock Level\n\nQuantity of the product in this plant that may not be exceeded.\nIn products planning, the maximum stock level is used only if you have chosen Replenish to maximum stock level as the lot-sizing procedure; that is, you have entered HB as the lot size key.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"BSTRF",
+"ENU;13;3;P;13;3",
+"Rounding Value\n\nValue to a multiple of which the system rounds up the procurement quantity.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"TAKZT",
+"ENU;3;0;P;3;0",
+"Takt Time\n\nIf a requirement quantity (for example, for capacity reasons) cannot be procured in a single lot, you have to schedule several receipts. In conjunction with the overlap indicator in the lot size, you can use the takt time to specify that these receipts are offset, that is, that they are delayed by the takt time.\nYou enter the takt time in workdays.\n\n\nType: Number\nLength: 3"
+],
+[
+"RDPRF",
+"ETE;80;0;C;80;0",
+"Rounding Profile\n\nKey that the system uses to adjust the order proposal quantity to deliverable units.\n\nType: Text\nLength: 80"
+],
+[
+"MEGRU",
+"ETE;80;0;C;80;0",
+"Unit of Measure Group\n\nKey that you can use for grouping several units of measure.You can use the unit of measure group, for example, to define allowed units of measure for a particular product for a vendor or a recipient. This can be taken into account when working with rounding profiles.\n\nType: Text\nLength: 80"
+],
+[
+"EISBE",
+"ENU;13;3;P;13;3",
+"Safety Stock\n\nSpecifies the quantity whose purpose is to satisfy unexpectedly high demand in the coverage period.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"EISLO",
+"ENU;13;3;P;13;3",
+"Minimum Safety Stock\n\nThe quantity that defines the lower limit for safety stock.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"SHZET",
+"ENU;2;0;N;2;0",
+"Safety Time (in Workdays)\n\nIn this field, you define the number of workdays for the safety time/actual range of coverage. If you define a safety time, the requirements in MRP are brought forward on the time axis by the number of workdays you define here.\n\nType: Number\nLength: 2"
+],
+[
+"LGRAD",
+"ENU;3;1;P;3;1",
+"Service Level Warehouse\n\nPercentage specifying what proportion of the requirement is to be covered by the warehouse stock.\n\nType: Number\nLength: 3\nDecimal: 1"
+],
+[
+"RWPRO",
+"ETE;80;0;C;80;0",
+"Coverage Profile\n\nThe range of coverage profile contains the parameters for calculating the dynamic safety stock. This is a statistical calculation on the basis of average daily requirements.\n\nType: Text\nLength: 80"
+],
+[
+"SHFLG",
+"ETE;80;0;C;80;0",
+"Safety Time Indicator\n\nYou use this indicator to switch on the safety time actual range of coverage for a product in MRP.\nIf you define a safety time, the requirements in MRP are brought forward on the time axis by the number of workdays you define here. The actual range of coverage corresponds to the number of days, by which the requirements are brought forward. Using this indicator you can activate the safety time and you can set whether all requirements or only independent requirements (sales order, planned independent requirements, and so on) are to be brought forward.\n\nType: Text\nLength: 80"
+],
+[
+"SHPRO",
+"ETE;80;0;C;80;0",
+"Safety Time Period Profile\n\nThe period profile for the safety time / actual range of coverage contains the periods (stating to/from date) with the safety time/actual range of coverage that is valid for each period.\n\nType: Text\nLength: 80"
+],
+[
+"AHDIS",
+"ETE;80;0;C;80;0",
+"MRP Relevancy for Dependent Requirements\n\nMRP relevancy (Materials Requirements Planning) for dependent requirements:\nThis indicator controls whether dependent requirements are relevant to MRP or not. Dependent requirements include dependent reservations and stock transfer requirements. You only use this indicator in connection with planning strategies for make-to-stock production, assembly planning.\n\nType: Text\nLength: 80"
+],
+[
+"SFTY_STK_METH",
+"ETE;80;0;C;80;0",
+"Safety Stock Method\n\nThe MRP Safety Stock Method provides different options to introduce a safety buffer.\n\nType: Text\nLength: 80"
+],
+[
+"SBDKZ",
+"ETE;80;0;C;80;0",
+"Individual / Collective Requirements\n\nDependent requirements indicator for individual and coll. requirements.\n\nType: Text\nLength: 80"
+],
+[
+"KAUSF",
+"ENU;5;2;P;5;2",
+"Component Scrap in Percent\n\nComponent scrap is used in product requirements planning (MRP) to determine the quantities of components required. When exploding the bill of material (BOM), the system increases the required quantities of the components by the calculated scrap quantity.\n\nType: Number\nLength: 5\nDecimal: 2"
+],
+[
+"KZBED",
+"ETE;80;0;C;80;0",
+"Requirements Group\n\nDefines whether the system groups together dependent requirements for the product on a daily basis when analyzing requirements planning.\nDefines whether additional individual/dependent requirements are written for components whose assembly is set such that total dependent requirements are created.\n\nType: Text\nLength: 80"
+],
+[
+"KZAUS",
+"ETE;80;0;C;80;0",
+"Discontinuation Ind.\n\nIdentifies the product as a part to be discontinued and includes it in the discontinued parts procedure in products planning.\n\nType: Text\nLength: 80"
+],
+[
+"AUSDT",
+"EDA;8;0;D;8;0",
+"Effective-Out Date\n\nDate from which the stocks of the product are to be used up. As soon as no more stock exists for this product, it is to be replaced by the follow-up product.\n\nType: Date"
+],
+[
+"NFMAT",
+"ETE;80;0;C;80;0",
+"Follow-Up Product\n\nNumber of the product that the system uses in products planning to replace the product to be discontinued once its warehouse stock is depleted.\n\nType: Text\nLength: 80"
+],
+[
+"SAUFT",
+"ETE;1;0;C;1;0",
+"Indicator: Repetitive Manufa. Allow\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty. The repetitive manufacturing profile also determines;\n\u2022how the system deals with activities when backflushing\n\u2022which movement type is used to post goods receipts and goods issues\n\u2022how planned order and run schedule quantities are reduced in the backflush transaction\n\u2022how BOM corrections are made - if errors should occur when posting quantities to be backflushed\n\nType: Text\nLength: 1"
+],
+[
+"SFEPR",
+"ETE;80;0;C;80;0",
+"Repetitive Manufacturing Profile\n\nControls, via order type, whether you are working with make-to-order repetitive manufacturing, based on sales orders, or with make-to-stock repetitive manufacturing, based on no specific orders.\n\nType: Text\nLength: 80"
+],
+[
+"BESKZ",
+"ETE;80;0;C;80;0",
+"Procurement Type\n\nIndicator that defines how the product is procured. The following procurements types are possible:\n\u2022 E = The product is produced in-house.\n\u2022 F = The product is procured externally.\n\u2022 X = The product can be both produced in-house and procured externally.\n\n\nType: Text\nLength: 80"
+],
+[
+"SOBSL",
+"ETE;80;0;C;80;0",
+"Special Procurement Type\n\nThe special procurement type is used to precisely define how in-house production and external procurement is to be carried out. Example: Special Procurement for External Procurement can be Consignment, Subcontracting ...\n\nType: Text\nLength: 80"
+],
+[
+"LGPRO",
+"ETE;80;0;C;80;0",
+"Issue Storage Location\n\nDefault storage location for produced inhouse.\nIn the case of a product produced in-house, this is the key of the storage location that is copied to the planned order, production order, or run schedule quantity. If the product is a component, it is the issuing storage location to which a backflush is posted.\n\nType: Text\nLength: 80"
+],
+[
+"WZEIT",
+"ENU;3;0;P;3;0",
+"Replenishment Lead Time\n\nThe total replenishment lead time is the time needed before the product is completely available again, that is, after all BOM levels have been procured or produced. It is not calculated by the system, but defined in this field as the total of the in-house production time(s) and/or the planned delivery time(s) of the longest production path.\nThis time is necessary if, for products produced in-house, the replenishment lead time is to be taken into consideration in the availability check.\n\n\nType: Number\nLength: 3"
+],
+[
+"KZPSP",
+"ETE;80;0;C;80;0",
+"Cross-Project\n\nDetermines if the system takes all stock and MRP-relevant units (inward/outward movement) in the project stock segments for all documents without account assignment into consideration.\n\nType: Text\nLength: 80"
+],
+[
+"LGFSB",
+"ETE;80;0;C;80;0",
+"Default Storage Loc. for Ext. Procuremet\n\nDefault storage location for external procurement.\nStorage location that is proposed in the purchase requisition in products planning for subsequent storage of the product. In the case of a product procured externally, this storage location is proposed in the planned order in products planning.\n\nType: Text\nLength: 80"
+],
+[
+"MRPPP",
+"ETE;80;0;C;80;0",
+"Planning Calendar\n\nThree character number (numeric or using letters) that specifically identifies a PPS-planning calendar.\n\nType: Text\nLength: 80"
+],
+[
+"DZEIT",
+"ENU;3;0;P;3;0",
+"In-House Production Time\n\nSpecifies the time in workdays needed to produce the product in-house.\nIn-house production time is independent of the order quantity.\n\n\nType: Number\nLength: 3"
+],
+[
+"PLIFZ",
+"ENU;3;0;P;3;0",
+"Planned Delivery Time\n\nNumber of calendar days needed to obtain the product or service if it is procured externally.\n\nType: Number\nLength: 3"
+],
+[
+"WEBAZ",
+"ENU;3;0;P;3;0",
+"Goods Receipt Processing Time\n\nNumber of workdays required after receiving the product for inspection and placement into storage.\n\nType: Number\nLength: 3"
+],
+[
+"RGEKZ",
+"ETE;80;0;C;80;0",
+"Backflush\n\nDetermines whether the backflush indicator is set in the production order. Here, a 3-level hierarchy logic is applied:\n1. In the routing, the backflush indicator is set in the component assignment.\n2. In the product master record, the backflush indicator is set to \"Always Backflush\".\n3. In the product master record, the backflush indicator is set to \"Work Center Decides\", and the indicator is set in the work center.\n\nEach product component is assigned to an operation in the production order. If a product component is backflushed, the system posts the withdrawal only upon confirmation of the operation. The withdrawal is then posted automatically.\n\nType: Text\nLength: 80"
+],
+[
+"VSPVB",
+"ETE;80;0;C;80;0",
+"Default Supply Area\n\nThe supply area is used as an interim storage area on the shop floor which is used to provide products directly at the production line.\n\nType: Text\nLength: 80"
+],
+[
+"FABKZ",
+"ETE;80;0;C;80;0",
+"JIT Delivery Sched.\n\nDetermines whether it is possible to generate JIT delivery schedules in addition to forecast schedules for a product specified in a purchase scheduling agreement.\nIf you set this indicator, it will be copied into the additional data for the item when a scheduling agreement is created.\n\nType: Text\nLength: 80"
+],
+[
+"SCHGT",
+"ETE;1;0;C;1;0",
+"Indicator: Bulk Material\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\nThis indicator defines a BOM item as a bulk product, which is available directly at the work center (for example, washers or grease).\n\nType: Text\nLength: 1"
+],
+[
+"FHORI",
+"ETE;80;0;C;80;0",
+"Scheduling Margin Key\n\nKey that the system uses to determine the floats required for scheduling an order. You define the following floats with the scheduling margin key:\n\u2022 opening period\n\u2022 float after production (only in the case of in-house production)\n\u2022 float before production (only in the case of in-house production)\n\u2022 release period (only in the case of production order management)\n\n\nType: Text\nLength: 80"
+],
+[
+"SCM_RRP_TYPE",
+"ETE;80;0;C;80;0",
+"PP Planning Procedure\n\nDefines for each planning-relevant event that can occur for a location product, which action is executed by Production Planning and Detailed Scheduling (PP/DS) in SAP APO if this event occurs.\n\nType: Text\nLength: 80"
+],
+[
+"SCM_HEUR_ID",
+"ETE;80;0;C;80;0",
+"PPC Heuristics\n\nType: Text\nLength: 80"
+],
+[
+"SCM_RRP_SEL_GROUP",
+"ETE;80;0;C;80;0",
+"Planning Group\n\nType: Text\nLength: 80"
+],
+[
+"SCM_PACKAGE_ID",
+"ETE;80;0;C;80;0",
+"Planning Package\n\nThis field displays the planning package to which the location product belongs.\n\nType: Text\nLength: 80"
+],
+[
+"SCM_LSUOM",
+"ETE;80;0;C;80;0",
+"Lot Size Unit (ISO Format)\n\nIndicates the valid unit of measure of lot size.\n\nType: Text\nLength: 80"
+],
+[
+"SCM_TARGET_DUR",
+"ENU;11;0;P;11;0",
+"Target Days' Supply\n\nTarget Days' Supply in Workdays.\nEnter the value for this field in the \"HHMMSS\" (hours, minutes, seconds) format.\nExample:\nFor 3 workdays, enter 720000 (HHMMSS \u2013 hours, minutes, seconds).\nFor 3.5 workdays, enter 840000 (HHMMSS \u2013 hours, minutes, seconds).\nFor 150 workdays, enter 36000000 (HHHHMMSS \u2013 hours, minutes, seconds).\nFor 9999 workdays, enter 2399760000 (HHHHHHMMSS \u2013 hours, minutes, sec.); this is the maximum field length for hours).\n\nType: Number\nLength: 11"
+],
+[
+"SCM_REORD_DUR",
+"ENU;11;0;P;11;0",
+"Reorder Days' Supply\n\nReorder Days' Supply in Workdays.\nEnter the value for this field in the \"HHMMSS\" (hours, minutes, seconds) format.\nExample:\nFor 3 workdays, enter 720000 (HHMMSS \u2013 hours, minutes, seconds).\nFor 3.5 workdays, enter 840000 (HHMMSS \u2013 hours, minutes, seconds).\nFor 150 workdays, enter 36000000 (HHHHMMSS \u2013 hours, minutes, seconds).\nFor 9999 workdays, enter 2399760000 (HHHHHHMMSS \u2013 hours, minutes, sec.); this is the maximum field length for hours).\n\nType: Number\nLength: 11"
+],
+[
+"SCM_TSTRID",
+"ETE;10;0;C;10;0",
+"Period Lot Sizing Planning Calendar\n\nFor the periodic lot-sizing procedure, use an APO standard time stream as a planning calendar.\n\nType: Text\nLength: 10"
+],
+[
+"SCM_GRPRT",
+"ENU;11;0;P;11;0",
+"Goods Receipt Processing Time\n\nThe time between the delivery or the production of a product and its availability as stock. This time is used, for example, as handling time or time for quality checks, and is added to the transportation duration or the production time of a product.\nEnter the value for this field in the \"HHMMSS\" (hours, minutes, seconds) format.\nExample:\nFor 3 workdays, enter 720000 (HHMMSS \u2013 hours, minutes, seconds).\nFor 3.5 workdays, enter 840000 (HHMMSS \u2013 hours, minutes, seconds).\nFor 150 workdays, enter 36000000 (HHHHMMSS \u2013 hours, minutes, seconds).\nFor 9999 workdays, enter 2399760000 (HHHHHHMMSS \u2013 hours, minutes, sec.); this is the maximum field length for hours).\n\nType: Number\nLength: 11"
+],
+[
+"SCM_CONHAP",
+"ENU;13;3;P;13;3",
+"GR Handling Capacity Bucket Consumption\n\nUsed by the Heuristic and Optimizer to calculate how much handling resource capacity is consumed by the product for a particular plan.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"SCM_HUNIT",
+"ETE;80;0;C;80;0",
+"UoM:Handling Capacity in GR (ISO Format)\n\nType: Text\nLength: 80"
+],
+[
+"SCM_GIPRT",
+"ENU;11;0;P;11;0",
+"Goods Issue Processing Time\n\nThe time between issuing the product from storage and transporting it. This time is used as handling time or time for quality control, and is added to the transport duration (Supply Network Planning and PP/DS) of a product.\nEnter the value for this field in the \"HHMMSS\" (hours, minutes, seconds) format.\nExample:\nFor 3 workdays, enter 720000 (HHMMSS \u2013 hours, minutes, seconds).\nFor 3.5 workdays, enter 840000 (HHMMSS \u2013 hours, minutes, seconds).\nFor 150 workdays, enter 36000000 (HHHHMMSS \u2013 hours, minutes, seconds).\nFor 9999 workdays, enter 2399760000 (HHHHHHMMSS \u2013 hours, minutes, sec.); this is the maximum field length for hours).\n\nType: Number\nLength: 11"
+],
+[
+"SCM_CONHAP_OUT",
+"ENU;13;3;P;13;3",
+"GI Handling Capacity Bucket Consumption\n\nUsed by the Heuristic and Optimizer to calculate how much handling resource capacity is consumed by the product for a particular plan.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"SCM_HUNIT_OUT",
+"ETE;80;0;C;80;0",
+"UoM:Handling Capacity in GI (ISO Format)\n\nType: Text\nLength: 80"
+],
+[
+"PERKZ",
+"ETE;80;0;C;80;0",
+"Period Type\n\nIndicator specifying the periods in which the product's consumption values and forecast values are managed.\n\nType: Text\nLength: 80"
+],
+[
+"PERIV",
+"ETE;80;0;C;80;0",
+"Fiscal Year Variant\n\nThe fiscal year variant is used to define the fiscal year.\nYou can define the following using a fiscal year variant:\n\u2022How many posting periods are in a fiscal year\n\u2022How many special periods you require\n\u2022How the system determines the posting periods when posting.\n\nType: Text\nLength: 80"
+],
+[
+"AUFTL",
+"ETE;80;0;C;80;0",
+"Splitting Indicator\n\nIndicator that defines how the system splits forecast requirements into smaller time intervals where the MRP type is forecast-based planning and the period indicator is not \"day\".\n\nType: Text\nLength: 80"
+],
+[
+"VRBWK",
+"ETE;80;0;C;80;0",
+"Reference Plant for Consumption\n\nPlant of the reference product on whose consumption data the product forecast is based.\n\nType: Text\nLength: 80"
+],
+[
+"VRBMT",
+"ETE;80;0;C;80;0",
+"Reference Product for Consumption\n\nThe system uses the consumption data of this product for the forecast.\n\n\nType: Text\nLength: 80"
+],
+[
+"VRBDT",
+"EDA;8;0;D;8;0",
+"Use Referenced Consumption Data Until\n\nDate until which the consumption data of the reference product is used for the product forecast.\n\nType: Date"
+],
+[
+"VRBFK",
+"ENU;4;2;P;4;2",
+"Multiplier for Reference Product\n\nDetermines how much of the consumption quantity of the reference product should be used for the product forecast.\n\nType: Number\nLength: 4\nDecimal: 2"
+],
+[
+"AUTRU",
+"ETE;1;0;C;1;0",
+"Ind. Reset Forecast Model Auto\n\nCauses that system to reset the forecast model automatically if the tracking limit is exceeded. Furthermore, the system carries out a new model selection during the next forecast.\n\nType: Text\nLength: 1"
+],
+[
+"KZKFK",
+"ETE;1;0;C;1;0",
+"Ind. Correction Factors\n\nYou set this indicator if you want the correction factors to be used in the calculation of the forecast values.\n\nType: Text\nLength: 1"
+],
+[
+"BASMG",
+"ENU;13;3;P;13;3",
+"Base Quantity\n\nQuantity to which the in-house production time and the processing time of the product relate.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"UEETO",
+"ENU;3;1;P;3;1",
+"Overdelivery Tolerance Limit\n\nPercentage rate by which the quantity that is posted to goods receipt may exceed the production order quantity.\n\nType: Number\nLength: 3\nDecimal: 1"
+],
+[
+"UNETO",
+"ENU;3;1;P;3;1",
+"Underdelivery Tolerance Limit\n\nPercentage rate that specifies the percent below which the quantity posted for a goods receipt may drop below the production order quantity.\n\nType: Number\nLength: 3\nDecimal: 1"
+],
+[
+"UEETK",
+"ETE;1;0;C;1;0",
+"Ind. Unlimited Overdelivery Allowed\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"FRTME",
+"ETE;80;0;C;80;0",
+"Production Unit (ISO Format)\n\nEnter a value in this field only if you want to use a unit of measure differing from the base unit of measure.\n\nType: Text\nLength: 80"
+],
+[
+"FEVOR",
+"ETE;80;0;C;80;0",
+"Production Supervisor\n\nGroup responsible for controlling the production of a product.\n\nType: Text\nLength: 80"
+],
+[
+"SFCPF",
+"ETE;80;0;C;80;0",
+"Production Scheduling Profile\n\nProfile that you can use to\n\u2022specify that certain business transactions are carried out in parallel in a production order / process order (you can, for example, create and release an order at the same time, or release an order and print the shop papers)\n\u2022trigger an automatic goods receipt\n\u2022specify an overall profile for capacity leveling\n\nType: Text\nLength: 80"
+],
+[
+"RUEZT",
+"ENU;5;2;P;5;2",
+"Setup and Teardown Time\n\nSpecifies the number of workdays needed to set up and tear down the various work centers where the product is processed. This value is the total of the setup and teardown times.\nThe setup and teardown time is independent of the order quantity.\n\nType: Number\nLength: 5\nDecimal: 2"
+],
+[
+"TRANZ",
+"ENU;5;2;P;5;2",
+"Interoperation Time\n\nSpecifies the number of workdays required for the transition of a produced product between work centers or work center groups.\n\nType: Number\nLength: 5\nDecimal: 2"
+],
+[
+"BEARZ",
+"ENU;5;2;P;5;2",
+"Processing Time\n\nSpecifies the time in workdays needed to process the product in the operations at the different work centers.\nThe processing time depends on the order quantity.\n\n\nType: Number\nLength: 5\nDecimal: 2"
+],
+[
+"ABCIN",
+"ETE;80;0;C;80;0",
+"Cycle Counting Indicator\n\nIndicates that the given product is subject to the cycle counting method of inventory.\n\nThe indicator also defines at which time intervals a physical inventory is to be carried out for the product.\n\n\nType: Text\nLength: 80"
+],
+[
+"CCFIX",
+"ETE;1;0;C;1;0",
+"Cycle Counting Indicator Fixed\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nSet this indicator if the product is always to remain in the specified cycle counting category.\n\nType: Text\nLength: 1"
+],
+[
+"NCOST",
+"ETE;80;0;C;80;0",
+"Do Not Cost\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nControls whether a cost estimate or a procurement alternative can be created for a product.\n<empty> => Cost\nX => Do Not Cost\n\nType: Text\nLength: 80"
+],
+[
+"AWSLS",
+"ETE;80;0;C;80;0",
+"Variance Key\n\nKey that controls variance calculation.\nVariances can only be calculated for the orders for which a variance key has been entered. This key is defaulted through the costing view in the product master record.\n\nType: Text\nLength: 80"
+],
+[
+"LOSGR",
+"ENU;13;3;P;13;3",
+"Costing Lot Size\n\nLot size of the costed object (such as a product or sales order) used in the product cost estimate.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"MAXLZ",
+"ENU;5;0;P;5;0",
+"Maximum Storage Period\n\nThe longest amount of time allowed for storing the product.\n\nType: Number\nLength: 5"
+],
+[
+"LZEIH",
+"ETE;80;0;C;80;0",
+"Unit for Maximum Storage Period\n\nUnit in which the maximum storage period of the product is measured.\n\nType: Text\nLength: 80"
+],
+[
+"VRVEZ",
+"ENU;5;2;P;5;2",
+"Shipping Setup Time\n\nThe time needed in shipping to set up the work centers where the product is processed. It is independent of quantity. Shipping setup time is used for capacity planning in shipping.\n\nType: Number\nLength: 5\nDecimal: 2"
+],
+[
+"VBEAZ",
+"ENU;5;2;P;5;2",
+"Shipping Processing Time\n\nTime that is needed in shipping to process a specific quantity of a product. It refers to the base quantity for capacity planning in shipping.\n\nType: Number\nLength: 5\nDecimal: 2"
+],
+[
+"VBAMG",
+"ENU;13;3;P;13;3",
+"Base Quantity for Capacity Planning\n\nQuantity to which the shipping processing time refers. It is measured in the base unit of measure.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"FPRFM",
+"ETE;80;0;C;80;0",
+"Distribution Profile\n\nControls the distribution of the materials among the individual recipients in a plant. Used processing methods can be cross-docking and flow-through, for example.\n\nType: Text\nLength: 80"
+],
+[
+"BWSCL",
+"ETE;80;0;C;80;0",
+"Source of Supply\n\nRestricts the search for sources of supply for this product to external (normal) or internal (stock transfer) sources of supply, and also allows you to define a search sequence.\n\nType: Text\nLength: 80"
+],
+[
+"CONS_PROCG",
+"ETE;80;0;C;80;0",
+"Consignment Control\n\nControls whether a product is preferably procured for own stock or consignment stock at a plant.\n\nType: Text\nLength: 80"
+],
+[
+"MULTIPLE_EKGRP",
+"ETE;1;0;C;1;0",
+"Purchasing Accross Purchasing Group\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"GI_PR_TIME",
+"ENU;3;0;P;3;0",
+"Goods Issue Processing Time\n\nGoods issue processing time in days.\n\nType: Number\nLength: 3"
+],
+[
+"SERVG",
+"ETE;80;0;C;80;0",
+"Service Level\n\nThe service level defines the present (or also future) level of provision of a product for the stores.\n\nType: Text\nLength: 80"
+],
+[
+"PSTATL",
+"ETE;1;0;C;1;0",
+"Indicator: Storage\n\nYou can use this indicator to set the storage view on plant level active. For further information please refer to the migration object documentation.\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"PSTATA",
+"ETE;1;0;C;1;0",
+"Indicator: Work Scheduling\n\nYou can use this indicator to set the work scheduling view on plant level active. For further information please refer to the migration object documentation.\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"PSTATE",
+"ETE;1;0;C;1;0",
+"Indicator: Purchasing\n\nYou can use this indicator to set the purchasing view on plant level active. For further information please refer to the migration object documentation.\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"PSTATQ",
+"ETE;1;0;C;1;0",
+"Indicator: Quality\n\nYou can use this indicator to set the quality view on plant level active. For further information please refer to the migration object documentation.\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"PSTATV",
+"ETE;1;0;C;1;0",
+"Indicator: Sales\n\nYou can use this indicator to set the sales view on plant level active. For further information please refer to the migration object documentation.\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+]
+],
+"n": 0
+},
+{
+"sheet": "Forecasting Data",
+"struct": "S_MPOP",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"WERKS",
+"ETE;80;0;C;80;0",
+"Plant*\n\nKey uniquely identifying a plant.\nIn Logistics a plant is an organizational unit for dividing an enterprise according to production, procurement, maintenance, and products planning.\n\nType: Text\nLength: 80"
+],
+[
+"PRMOD",
+"ETE;80;0;C;80;0",
+"Forecast Model\n\nIndicator that defines on which forecast model the system bases its calculation of future requirements of the product.\n\nType: Text\nLength: 80"
+],
+[
+"PERAN",
+"ENU;3;0;P;3;0",
+"Hist. Periods\n\nThe number of historical values the system uses for the forecast.\n\nType: Number\nLength: 3"
+],
+[
+"ANZPR",
+"ENU;3;0;P;3;0",
+"Forecast Periods\n\nNumber of period splits for which a forecast should be created.\n\nType: Number\nLength: 3"
+],
+[
+"PERIO",
+"ENU;3;0;P;3;0",
+"Periods Per Season\n\nNumber of periods that belong to a season.You only specify a number if the forecast model is a seasonal model or if you want the system to carry out a seasonal test.\n\n\nType: Number\nLength: 3"
+],
+[
+"PERIN",
+"ENU;3;0;P;3;0",
+"Initialization Periods\n\nNumber of historical values that you want to be used for initialization.\n\nType: Number\nLength: 3"
+],
+[
+"FIMON",
+"ENU;3;0;P;3;0",
+"Fixed Periods\n\nNumber of periods for which the system will not recalculate the forecast values in the next forecast. The fixed periods start with the initial forecast period.\n\nType: Number\nLength: 3"
+],
+[
+"KZINI",
+"ETE;80;0;C;80;0",
+"Initialization\n\nIndicator which specifies that the system should initialize a forecast model. The system also calculates the parameters that are needed for the model (such as basic value, trend value, and seasonal indices).\n\nType: Text\nLength: 80"
+],
+[
+"SIGGR",
+"ENU;5;3;P;5;3",
+"Tracking Limit\n\nValue that specifies the amount by which the forecast value may deviate from the actual value.\n\nType: Number\nLength: 5\nDecimal: 3"
+],
+[
+"MODAW",
+"ETE;80;0;C;80;0",
+"Model Selection\n\nIndicator used in forecast model selection that specifies whether the system checks the values:\n\nT Examine for trend\nS Examine for seasonal fluctuations\nA Examine for trend and seasonal fluctuations\n\n\nType: Text\nLength: 80"
+],
+[
+"MODAV",
+"ETE;80;0;C;80;0",
+"Selection Procedure\n\nThis procedure defines how the system selects the optimum forecast model.\n\nType: Text\nLength: 80"
+],
+[
+"KZPAR",
+"ETE;1;0;C;1;0",
+"Ind. Param. Optimization\n\nIndicator that causes the system to optimize the smoothing factors needed by the given forecast model.\n\nType: Text\nLength: 1"
+],
+[
+"OPGRA",
+"ETE;80;0;C;80;0",
+"Optimization Level\n\nBy determining the optimization level, you are specifying the increment with which the system is to carry out parameter optimization. The lower the increment, the more exact but also the more time consuming the optimization process will be.\n\nType: Text\nLength: 80"
+],
+[
+"GEWGR",
+"ETE;80;0;C;80;0",
+"Weighting Group\n\nKey used with the \"weighted moving average\" forecast model to specify\n\u2022how many historical values are used to calculate the forecast and\n\u2022what weighting is given to each of the historical values\n\n\nType: Text\nLength: 80"
+],
+[
+"ALPHA",
+"ENU;3;2;P;3;2",
+"Alpha Factor\n\nThe alpha factor is the smoothing factor for the basic value. The system uses this factor in the forecast to update the basic value.\n\nType: Number\nLength: 3\nDecimal: 2"
+],
+[
+"BETA1",
+"ENU;3;2;P;3;2",
+"Beta Factor\n\nThe beta factor is the smoothing factor for the trend value. The system uses this factor to update the trend value in forecasting.\n\nType: Number\nLength: 3\nDecimal: 2"
+],
+[
+"GAMMA",
+"ENU;3;2;P;3;2",
+"Gamma Factor\n\nThe gamma factor is the smoothing factor for the seasonal index. The system uses this factor to update the seasonal index.\n\nType: Number\nLength: 3\nDecimal: 2"
+],
+[
+"DELTA",
+"ENU;3;2;P;3;2",
+"Delta Factor\n\nThe delta factor is the smoothing factor for the mean absolute deviation (MAD). The system uses this factor to update the mean absolute deviation in forecasting.\n\nType: Number\nLength: 3\nDecimal: 2"
+]
+],
+"n": 0
+},
+{
+"sheet": "Storage Locations",
+"struct": "S_MARD",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"WERKS",
+"ETE;80;0;C;80;0",
+"Plant*\n\nKey uniquely identifying a plant.\nIn Logistics a plant is an organizational unit for dividing an enterprise according to production, procurement, maintenance, and products planning.\n\nType: Text\nLength: 80"
+],
+[
+"LGORT",
+"ETE;80;0;C;80;0",
+"Storage Location*\n\nNumber of the storage location in which the product is stored. A plant may contain one or more storage locations.\n\nType: Text\nLength: 80"
+],
+[
+"LGPBE",
+"ETE;10;0;C;10;0",
+"Storage Bin\n\nSpecifies the smallest addressable unit in a warehouse that is sometimes referred to as a slot. A storage bin identifies the exact location in the warehouse where goods can be stored.\nNote that the storage bin must already exist.\n\nType: Text\nLength: 10"
+]
+],
+"n": 0
+},
+{
+"sheet": "Production Resources Tools",
+"struct": "S_CRFH",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"WERKS",
+"ETE;80;0;C;80;0",
+"Plant*\n\nKey uniquely identifying a plant.\nIn Logistics a plant is an organizational unit for dividing an enterprise according to production, procurement, maintenance, and products planning.\n\nType: Text\nLength: 80"
+],
+[
+"PLANV",
+"ETE;80;0;C;80;0",
+"PRT Usage\n\nWith this key you control in which task lists the production resources/tools may be used.\n\nType: Text\nLength: 80"
+],
+[
+"FGRU1",
+"ETE;80;0;C;80;0",
+"Grouping Key 1\n\nAn open key, with which you can group together production resources/tools (for example, measurement instruments or test equipment).\n\nType: Text\nLength: 80"
+],
+[
+"FGRU2",
+"ETE;80;0;C;80;0",
+"Grouping Key 2\n\nAn open key, with which you can group together production resources/tools (for example, measurement instruments or test equipment).\n\nType: Text\nLength: 80"
+],
+[
+"STEUF",
+"ETE;80;0;C;80;0",
+"PRT Control Profile\n\nKey with which you can specify how production resources/tools should be handled in the task list or in the order.\n\nProduction resources/tools can be processed in the following ways:\n\u2022scheduling\n\u2022confirming\n\u2022costing\n\u2022printing\n\nType: Text\nLength: 80"
+],
+[
+"STEUF_REF",
+"ETE;1;0;C;1;0",
+"PRT Control Profile Is Referenced\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"KTSCH",
+"ETE;80;0;C;80;0",
+"Standard Text Key\n\nKey with which you allocate a text (standard text) to a production resource/tool. This text can contain different specifications, for example, information about using the production resource or tool.\n\nType: Text\nLength: 80"
+],
+[
+"KTSCH_REF",
+"ETE;1;0;C;1;0",
+"Standard Text Key Is Referenced\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"MGFORM",
+"ETE;80;0;C;80;0",
+"Quantity Formula\n\nFormula for Calculating the Total Quantity of PRT (production resources/tools)\n\nType: Text\nLength: 80"
+],
+[
+"MGFORM_REF",
+"ETE;1;0;C;1;0",
+"Quantity Formula Is Referenced\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"EWFORM",
+"ETE;80;0;C;80;0",
+"Usage Value Formula\n\nFormula for Calculating the Total Usage Value of PRT\n\nType: Text\nLength: 80"
+],
+[
+"EWFORM_REF",
+"ETE;1;0;C;1;0",
+"Usage Value Formula Is Referenced\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"BZOFFB",
+"ETE;80;0;C;80;0",
+"Start Date Reference\n\nType: Text\nLength: 80"
+],
+[
+"BZOFFB_REF",
+"ETE;1;0;C;1;0",
+"Start Reference of Usage Is Referenced\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"OFFSTB",
+"ENU;5;0;P;5;0",
+"Offset to Start\n\nOffset between the reference date and the start of production resource/tool (PRT) usage.\nThe offset and the reference date are needed to calculate the start date for PRT usage.\n\nType: Number\nLength: 5"
+],
+[
+"EHOFFB",
+"ETE;80;0;C;80;0",
+"Offset to Start Unit (ISO Format)\n\nUnit of time in which the offset to the reference date is expressed.\n\nType: Text\nLength: 80"
+],
+[
+"OFFSTB_REF",
+"ETE;1;0;C;1;0",
+"Offset to Start of Usage Is Referenced\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"BZOFFE",
+"ETE;80;0;C;80;0",
+"End Date Reference\n\nType: Text\nLength: 80"
+],
+[
+"BZOFFE_REF",
+"ETE;1;0;C;1;0",
+"End Reference of Usage Is Referenced\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"OFFSTE",
+"ENU;5;0;P;5;0",
+"Offset to End\n\nOffset between the reference date and the finish of the production resource/tool usage.\nThe offset and the reference date are needed to calculate the finish date of production resource usage.\n\nType: Number\nLength: 5"
+],
+[
+"EHOFFE",
+"ETE;80;0;C;80;0",
+"Offset to End Unit (ISO Format)\n\nUnit of time in which the offset to the reference date is expressed.\n\nType: Text\nLength: 80"
+],
+[
+"OFFSTE_REF",
+"ETE;1;0;C;1;0",
+"Offset to End of Usage Is Referenced\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+]
+],
+"n": 0
+},
+{
+"sheet": "Inspection Setup Data",
+"struct": "S_QMAT",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nType: Text\nLength: 80"
+],
+[
+"WERKS",
+"ETE;80;0;C;80;0",
+"Plant*\n\nType: Text\nLength: 80"
+],
+[
+"ART",
+"ETE;30;0;C;30;0",
+"Inspection Type*\n\nType: Text\nLength: 30"
+],
+[
+"APA",
+"ETE;1;0;C;1;0",
+"Preferred Inspection Type\n\nIf you set this indicator, the system creates preferred inspection lots with this inspection type for the corresponding inspection lot origins.\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"AKTIV",
+"ETE;1;0;C;1;0",
+"Active\n\nIf you set this indicator, inspection lots can be processed for this product and inspection type. This is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"INSMK",
+"ETE;1;0;C;1;0",
+"Post to Inspection Stock\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"EIN",
+"ETE;1;0;C;1;0",
+"Serial Numbers Possible\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"DYNREGEL",
+"ETE;80;0;C;80;0",
+"Dynamic Modification Rule\n\nContains the definition of inspection stages and the conditions that lead to changes in inspection stages.\n\nType: Text\nLength: 80"
+],
+[
+"DYN",
+"ETE;1;0;C;1;0",
+"Skips Allowed\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\nIf you set this indicator, skips are allowed for inspection characteristics during sample calculation.\nIf you do not set this indicator, the system chooses the next inspection stage in the dynamic modification rule that is not a skip, instead of the skip defined in the quality level during sample calculation.\n\nType: Text\nLength: 1"
+],
+[
+"CHG_ORIG",
+"ETE;80;0;C;80;0",
+"Inspection Lot Summary\n\nThis field is only relevant for inspections of warehouse-managed stock.\nYou can group goods that need to be inspected into one single inspection lot. For example, you can group delivered products by purchase order so that even if the products are delivered in multiple deliveries, the products are grouped into one inspection lot.\n\nType: Text\nLength: 80"
+],
+[
+"CHG",
+"ETE;80;0;C;80;0",
+"Control Lot Creation\n\nControl of Inspection Lot Creation (Lot Summary)\n\nType: Text\nLength: 80"
+],
+[
+"AFR",
+"ETE;1;0;C;1;0",
+"Inspection for Handling Unit\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"SPEZUEBER",
+"ETE;1;0;C;1;0",
+"Inspection with Material Specification\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"PPL",
+"ETE;1;0;C;1;0",
+"Inspection with Task List\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\nIf you set this indicator, the inspection is performed based on the task list\n\nType: Text\nLength: 1"
+],
+[
+"CONF",
+"ETE;1;0;C;1;0",
+"Inspection by Configuration\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"TLS",
+"ETE;1;0;C;1;0",
+"Inspect by Batch\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"APP",
+"ETE;1;0;C;1;0",
+"Automatic Specification Assignment\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\nIf this indicator is set, the system trys to assign a task list or a material specification automatically.\n\nType: Text\nLength: 1"
+],
+[
+"MER",
+"ETE;1;0;C;1;0",
+"Inspect Characteristics\n\nIf you set this indicator, characteristic-based results recording is performed for the inspection lot.\n\nType: Text\nLength: 1"
+],
+[
+"MS_FLAG",
+"ETE;1;0;C;1;0",
+"Multiple Specifications\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\n' ' Insp. Plan/Assignment for Dependent Char. Specifications\nX Inspection Plan/Assignment for Multiple Specifications\n\n\nType: Text\nLength: 1"
+],
+[
+"STICHPRVER",
+"ETE;80;0;C;80;0",
+"Sampling Procedure\n\nSampling Procedure by which the sample size for an inspection is determined.\n\nType: Text\nLength: 80"
+],
+[
+"HPZ",
+"ETE;1;0;C;1;0",
+"100% Inspection\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\nIf you set this indicator, the system treats the inspection lot size as the sample size.\nDependencies: If you define a 100% inspection for the product, you must manually valuate the inspection characteristics.\n\nType: Text\nLength: 1"
+],
+[
+"SPROZ",
+"ENU;3;0;P;3;0",
+"Inspection Percentage\n\nInspection Percentage\nThis field is only relevant, when you carry out an inspection without reference to a task list or material specification. In this case, the total sample size is calculated on the basis of the percentage rate taken from the lot size.\n\nType: Number\nLength: 3"
+],
+[
+"MST",
+"ETE;1;0;C;1;0",
+"Manual Sample Calculation\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\nIf you set this indicator, you must trigger the sample calculation manually in the inspection lot.\n\nType: Text\nLength: 1"
+],
+[
+"MPB",
+"ETE;1;0;C;1;0",
+"Manual Sample Entry\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\nIf you set this indicator, you must manually enter the sample size for the inspection lot.\n\nType: Text\nLength: 1"
+],
+[
+"KZPRFKOST",
+"ETE;1;0;C;1;0",
+"Individual QM Order\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"AUFNR_CO",
+"ETE;80;0;C;80;0",
+"QM Order\n\nThe number that uniquely identifies the QM order that is to be used for collecting costs.\n\nType: Text\nLength: 80"
+],
+[
+"MPDAU",
+"ENU;3;0;P;3;0",
+"Average Inspection Days\n\nAverage duration of an inspection (in days) for each inspection type.\n\nType: Number\nLength: 3"
+],
+[
+"AVE",
+"ETE;1;0;C;1;0",
+"Automatic Usage Decision\n\nIf you set this indicator, the system can automatically make usage decisions for inspection lots.\nThe inspection lots must meet the following conditions:\nAll characteristics have been completed.\nNone of the characteristics have been rejected.\nNo defects have been recorded, or quality notifications created.\nThe waiting time must have elapsed.\n\n\nType: Text\nLength: 1"
+],
+[
+"QKZVERF",
+"ETE;80;0;C;80;0",
+"Quality Score Procedure\n\nThe procedure used to calculate the quality score for the inspection lot.\n\nType: Text\nLength: 80"
+],
+[
+"QPMAT",
+"ENU;6;4;P;6;4",
+"Allowed Scrap Share\n\nAllowed Share of Scrap (Percent) in Inspection Lot.\n\nType: Number\nLength: 6\nDecimal: 4"
+]
+],
+"n": 0
+},
+{
+"sheet": "MRP Data - Store Replenishment",
+"struct": "S_WRPL",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"WERKS",
+"ETE;80;0;C;80;0",
+"Store*\n\nRecipient for which stocks are replenished.\n\nType: Text\nLength: 80"
+],
+[
+"SOBST",
+"ENU;13;3;P;13;3",
+"Target Stock at Recipient\n\nQuantity of a product at a recipient for which stock is to be replenished.\nThe target stock can be entered manually by the user or calculated at runtime during the planning run from forecast sales value. You decide how you want to calculate the target stock by configuring the forecast indicator in the MRP type. If you have the system calculate the target stock dynamically, it adds up all future requirements during the target range of coverage, as of the end of the replenishment lead time defined in replenishment planning, plus safety stock. This value is limited by any minimum or maximum target stock maintained.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"TRCOV",
+"ENU;3;0;P;3;0",
+"Target Range of Coverage\n\nThe target range of coverage states the range of coverage during which a product is to be available for customers. The target range of coverage is always stated in days and describes the time span between two goods receipts.\n\nType: Number\nLength: 3"
+],
+[
+"PRWUG",
+"ENU;13;3;P;13;3",
+"Minimum Target Stock\n\nLower limit for the target stock.\nIf the target stock is calculated dynamically in the replenishment run from forecast values, this is the minimum target stock possible. If you enter a target stock manually, the minimum target stock has no relevance.\n\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"PRWOG",
+"ENU;13;3;P;13;3",
+"Maximum Target Stock\n\nUpper limit for the target stock.\nIf the target stock is calculated dynamically in the replenishment run from forecast values, this is the maximum target stock possible. If you enter a target stock manually, the maximum target stock has no relevance.\n\nType: Number\nLength: 13\nDecimal: 3"
+]
+],
+"n": 0
+},
+{
+"sheet": "MRP Area",
+"struct": "S_MRP_AREA",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"BERID",
+"ETE;80;0;C;80;0",
+"MRP Area*\n\nNumber of the MRP area for which product requirements planning should be carried out separately.\n\nType: Text\nLength: 80"
+],
+[
+"WERKS",
+"ETE;80;0;C;80;0",
+"Plant*\n\nKey uniquely identifying a plant.\nIn Logistics a plant is an organizational unit for dividing an enterprise according to production, procurement, maintenance, and products planning.\n\nType: Text\nLength: 80"
+],
+[
+"DISMM",
+"ETE;80;0;C;80;0",
+"MRP Type\n\nKey that determines whether and how the product is planned. This field becomes mandatory if MRP data should be migrated.\nDepending on the MRP type other fields are becomming mandatory eg if you choose 'VB' for reorder-point planning you also have to specify the Reorder Point, MRP controller, Lot Sizing Procedure ...\n\nType: Text\nLength: 80"
+],
+[
+"DISPO",
+"ETE;80;0;C;80;0",
+"MRP Controller\n\nSpecifies the number of the MRP controller or group of MRP controllers responsible for product planning for the product.\n\nType: Text\nLength: 80"
+],
+[
+"DISGR",
+"ETE;80;0;C;80;0",
+"MRP Group\n\nThe MRP group contains all the products from the point of view of MRP for assigning special control parameters for the total planning run. These control parameters include, for example, the strategy group, the consumption mode, and the planning horizon.\n\nType: Text\nLength: 80"
+],
+[
+"MINBE",
+"ENU;13;3;P;13;3",
+"Reorder Point\n\nFor MRP Type 'VB' (Reorder-Point-Planning) you have to specify the reorder point for reorder planning. In this case this field becomes mandatory. If the stock falls below this quantity, the system flags the product for requirements planning.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"FXHOR",
+"ENU;3;0;N;3;0",
+"Planning Time Fence\n\nThe planning fence time becomes required if you are working with MRP type which includes a firming type. This is for example the case for MRP type P1-P4 (Forecast Consumption, Auto/Manual Firming).\nThe planning time fence specifies a period within which no automatic changes are to be made to the master plan.\nThe planning time fence is maintained in workdays.\n\n\nType: Number\nLength: 3"
+],
+[
+"LFRHY",
+"ETE;80;0;C;80;0",
+"Planning Cycle\n\nKey that determines the day on which the product is planned and ordered.\n\nType: Text\nLength: 80"
+],
+[
+"DISLS",
+"ETE;80;0;C;80;0",
+"Lot Sizing Procedure\n\nKey that determines which lot-sizing procedure the system uses within products planning to calculate the quantity to be procured or produced.\n\nType: Text\nLength: 80"
+],
+[
+"BSTMI",
+"ENU;13;3;P;13;3",
+"Minimum Lot Size\n\nMinimum procurement quantity.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"BSTMA",
+"ENU;13;3;P;13;3",
+"Maximum Lot Size\n\nQuantity that is not allowed to be exceeded during procurement.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"BSTFE",
+"ENU;13;3;P;13;3",
+"Fixed Lot Size\n\nPlease enter a value if you are working with Lot Sizing Procedure 'Fixed order quantity'. The fixed lot size is then a required field.\nNote: In this case entries in fields: Minimum Lot Size, Maximum Lot Size and Rounding value will be reset.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"LAGPR",
+"ETE;80;0;C;80;0",
+"Storage Cost Indicator\n\nIndicator that specifies the storage costs percentage the system uses when calculating the lot size to determine storage costs.\n\nType: Text\nLength: 80"
+],
+[
+"LOSFX",
+"ENU;13;2;P;13;2",
+"Lot Size Independent Cost\n\nCosts that are incurred, irrespective of lot size, for each purchase order or production order over and above the purchase order price or production costs.\n\nType: Number\nLength: 13\nDecimal: 2"
+],
+[
+"WAERS",
+"ETE;80;0;C;80;0",
+"Currency for Lot Size Ind. Cost\n\nYou must specify the currency for the Lot Size Independent Cost (currency of the company code belonging to the plant).\n\nType: Text\nLength: 80"
+],
+[
+"AUSSS",
+"ENU;5;2;P;5;2",
+"Assembly Scrap (%)\n\nPercentage scrap that occurs during production of the product if the product is an assembly.\nThe assembly scrap is used in products planning to calculate the lot size of the assembly. The system increases the quantity to be produced by the scrap quantity calculated.\n\nType: Number\nLength: 5\nDecimal: 2"
+],
+[
+"MABST",
+"ENU;13;3;P;13;3",
+"Maximum Stock Level\n\nQuantity of the product in this plant that may not be exceeded.\nIn products planning, the maximum stock level is used only if you have chosen Replenish to maximum stock level as the lot-sizing procedure; that is, you have entered HB as the lot size key.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"BSTRF",
+"ENU;13;3;P;13;3",
+"Rounding Value\n\nValue to a multiple of which the system rounds up the procurement quantity.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"TAKZT",
+"ENU;3;0;P;3;0",
+"Takt Time\n\nIf a requirement quantity (for example, for capacity reasons) cannot be procured in a single lot, you have to schedule several receipts. In conjunction with the overlap indicator in the lot size, you can use the takt time to specify that these receipts are offset, that is, that they are delayed by the takt time.\nYou enter the takt time in workdays.\n\n\nType: Number\nLength: 3"
+],
+[
+"RDPRF",
+"ETE;80;0;C;80;0",
+"Rounding Profile\n\nKey that the system uses to adjust the order proposal quantity to deliverable units.\n\nType: Text\nLength: 80"
+],
+[
+"EISBE",
+"ENU;13;3;P;13;3",
+"Safety Stock\n\nSpecifies the quantity whose purpose is to satisfy unexpectedly high demand in the coverage period.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"LGRAD",
+"ENU;3;1;P;3;1",
+"Service Level Warehouse\n\nPercentage specifying what proportion of the requirement is to be covered by the warehouse stock.\n\nType: Number\nLength: 3\nDecimal: 1"
+],
+[
+"RWPRO",
+"ETE;80;0;C;80;0",
+"Coverage Profile\n\nThe range of coverage profile contains the parameters for calculating the dynamic safety stock. This is a statistical calculation on the basis of average daily requirements.\n\nType: Text\nLength: 80"
+],
+[
+"SHFLG",
+"ETE;80;0;C;80;0",
+"Safety Time Indicator\n\nYou use this indicator to switch on the safety time actual range of coverage for a product in MRP.\nIf you define a safety time, the requirements in MRP are brought forward on the time axis by the number of workdays you define here. The actual range of coverage corresponds to the number of days, by which the requirements are brought forward. Using this indicator you can activate the safety time and you can set whether all requirements or only independent requirements (sales order, planned independent requirements, and so on) are to be brought forward.\n\nType: Text\nLength: 80"
+],
+[
+"SHZET",
+"ENU;2;0;N;2;0",
+"Safety Time (in Workdays)\n\nIn this field, you define the number of workdays for the safety time/actual range of coverage. If you define a safety time, the requirements in MRP are brought forward on the time axis by the number of workdays you define here.\n\nType: Number\nLength: 2"
+],
+[
+"SHPRO",
+"ETE;80;0;C;80;0",
+"Safety Time Period Profile\n\nThe period profile for the safety time / actual range of coverage contains the periods (stating to/from date) with the safety time/actual range of coverage that is valid for each period.\n\nType: Text\nLength: 80"
+],
+[
+"AHDIS",
+"ETE;80;0;C;80;0",
+"MRP Relevancy for Dep. Requirements\n\nMRP relevancy (Materials Requirements Planning) for dependent requirements:\nThis indicator controls whether dependent requirements are relevant to MRP or not. Dependent requirements include dependent reservations and stock transfer requirements. You only use this indicator in connection with planning strategies for make-to-stock production, assembly planning.\n\nType: Text\nLength: 80"
+],
+[
+"SFTY_STK_METH",
+"ETE;80;0;C;80;0",
+"MRP Safety Stock Method\n\nThe MRP Safety Stock Method provides different options to introduce a safety buffer.\n\nType: Text\nLength: 80"
+],
+[
+"SOBSL",
+"ETE;80;0;C;80;0",
+"Special Procurement Type\n\nThe special procurement type is used to precisely define how in-house production and external procurement is to be carried out. Example: Special Procurement for External Procurement can be Consignment, Subcontracting ...\n\nType: Text\nLength: 80"
+],
+[
+"LGFSB",
+"ETE;80;0;C;80;0",
+"Default Storage Loc. for Ext. Proc.\n\nDefault storage location for external procurement.\nStorage location that is proposed in the purchase requisition in products planning for subsequent storage of the product. In the case of a product procured externally, this storage location is proposed in the planned order in products planning.\n\nType: Text\nLength: 80"
+],
+[
+"MRPPP",
+"ETE;80;0;C;80;0",
+"Planning Calendar\n\nThree character number (numeric or using letters) that specifically identifies a PPS-planning calendar.\n\nType: Text\nLength: 80"
+],
+[
+"PLIFZX",
+"ETE;1;0;C;1;0",
+"Consider Planned Delivery Time\n\nThis is an indicator field. If you use Planned Delivery Time of the MRP Area, enter X. If you use Planned Delivery Time of the Plant, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"PLIFZ",
+"ENU;3;0;P;3;0",
+"Planned Delivery Time\n\nNumber of calendar days needed to obtain the product or service if it is procured externally.\n\nType: Number\nLength: 3"
+],
+[
+"LGPRO",
+"ETE;80;0;C;80;0",
+"Issue Storage Location\n\nDefault storage location for produced inhouse.\nIn the case of a product produced in-house, this is the key of the storage location that is copied to the planned order, production order, or run schedule quantity. If the product is a component, it is the issuing storage location to which a backflush is posted.\n\nType: Text\nLength: 80"
+],
+[
+"SCM_RRP_TYPE",
+"ETE;80;0;C;80;0",
+"PP Planning Procedure\n\nDefines for each planning-relevant event that can occur for a location product, which action is executed by Production Planning and Detailed Scheduling (PP/DS) in SAP APO if this event occurs.\n\nType: Text\nLength: 80"
+],
+[
+"SCM_HEUR_ID",
+"ETE;80;0;C;80;0",
+"PPC Heuristics\n\nType: Text\nLength: 80"
+],
+[
+"SCM_RRP_SEL_GROUP",
+"ETE;80;0;C;80;0",
+"Planning Group\n\nType: Text\nLength: 80"
+],
+[
+"SCM_PACKAGE_ID",
+"ETE;80;0;C;80;0",
+"Planning Package\n\nThis field displays the planning package to which the location product belongs.\n\nType: Text\nLength: 80"
+],
+[
+"SCM_LSUOM",
+"ETE;80;0;C;80;0",
+"Lot Size Unit (ISO Format)\n\nIndicates the valid unit of measure of lot size.\n\nType: Text\nLength: 80"
+],
+[
+"TARGET_STOCK_LEVEL_METH",
+"ETE;80;0;C;80;0",
+"Target Stock Level Method\n\nThe Target Stock Level Method is used in production planning and detailed scheduling.\n\nType: Text\nLength: 80"
+],
+[
+"SCM_TARGET_DUR",
+"ENU;11;0;P;11;0",
+"Target Days' Supply\n\nTarget Days' Supply in Workdays.\nEnter the value for this field in the \"HHMMSS\" (hours, minutes, seconds) format.\nExample:\nFor 3 workdays, enter 720000 (HHMMSS \u2013 hours, minutes, seconds).\nFor 3.5 workdays, enter 840000 (HHMMSS \u2013 hours, minutes, seconds).\nFor 150 workdays, enter 36000000 (HHHHMMSS \u2013 hours, minutes, seconds).\nFor 9999 workdays, enter 2399760000 (HHHHHHMMSS \u2013 hours, minutes, sec.); this is the maximum field length for hours).\n\nType: Number\nLength: 11"
+],
+[
+"SCM_REORD_DUR",
+"ENU;11;0;P;11;0",
+"Reorder Days' Supply\n\nReorder Days' Supply in Workdays.\nEnter the value for this field in the \"HHMMSS\" (hours, minutes, seconds) format.\nExample:\nFor 3 workdays, enter 720000 (HHMMSS \u2013 hours, minutes, seconds).\nFor 3.5 workdays, enter 840000 (HHMMSS \u2013 hours, minutes, seconds).\nFor 150 workdays, enter 36000000 (HHHHMMSS \u2013 hours, minutes, seconds).\nFor 9999 workdays, enter 2399760000 (HHHHHHMMSS \u2013 hours, minutes, sec.); this is the maximum field length for hours).\n\nType: Number\nLength: 11"
+],
+[
+"SCM_TSTRID",
+"ETE;10;0;C;10;0",
+"Period Lot Sizing Planning Calendar\n\nFor the periodic lot-sizing procedure, use an APO standard time stream as a planning calendar.\n\nType: Text\nLength: 10"
+],
+[
+"SCM_GRPRT",
+"ENU;11;0;P;11;0",
+"Goods Receipt Processing Time\n\nThe time between the delivery or the production of a product and its availability as stock. This time is used, for example, as handling time or time for quality checks, and is added to the transportation duration or the production time of a product.\nEnter the value for this field in the \"HHMMSS\" (hours, minutes, seconds) format.\nExample:\nFor 3 workdays, enter 720000 (HHMMSS \u2013 hours, minutes, seconds).\nFor 3.5 workdays, enter 840000 (HHMMSS \u2013 hours, minutes, seconds).\nFor 150 workdays, enter 36000000 (HHHHMMSS \u2013 hours, minutes, seconds).\nFor 9999 workdays, enter 2399760000 (HHHHHHMMSS \u2013 hours, minutes, sec.); this is the maximum field length for hours).\n\nType: Number\nLength: 11"
+],
+[
+"SCM_CONHAP",
+"ENU;13;3;P;13;3",
+"GR Handling Capacity Bucket Consumption\n\nUsed by the Heuristic and Optimizer to calculate how much handling resource capacity is consumed by the product for a particular plan.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"SCM_HUNIT",
+"ETE;80;0;C;80;0",
+"UoM:Handling Capacity in GR (ISO Format)\n\nType: Text\nLength: 80"
+],
+[
+"SCM_GIPRT",
+"ENU;11;0;P;11;0",
+"Goods Issue Processing Time\n\nThe time between issuing the product from storage and transporting it. This time is used as handling time or time for quality control, and is added to the transport duration (Supply Network Planning and PP/DS) of a product.\nEnter the value for this field in the \"HHMMSS\" (hours, minutes, seconds) format.\nExample:\nFor 3 workdays, enter 720000 (HHMMSS \u2013 hours, minutes, seconds).\nFor 3.5 workdays, enter 840000 (HHMMSS \u2013 hours, minutes, seconds).\nFor 150 workdays, enter 36000000 (HHHHMMSS \u2013 hours, minutes, seconds).\nFor 9999 workdays, enter 2399760000 (HHHHHHMMSS \u2013 hours, minutes, sec.); this is the maximum field length for hours).\n\nType: Number\nLength: 11"
+],
+[
+"SCM_CONHAP_OUT",
+"ENU;13;3;P;13;3",
+"GI Handling Capacity Bucket Consumption\n\nUsed by the Heuristic and Optimizer to calculate how much handling resource capacity is consumed by the product for a particular plan.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"SCM_HUNIT_OUT",
+"ETE;80;0;C;80;0",
+"UoM:Handling Capacity in GI (ISO Format)\n\nType: Text\nLength: 80"
+],
+[
+"SAFTYSTOCK_METHOD",
+"ETE;80;0;C;80;0",
+"Safety Stock Method\n\nMethod for Calculating Safety Stock.\n\nType: Text\nLength: 80"
+],
+[
+"DET_SFTYSTK_METH",
+"ETE;1;0;C;1;0",
+"Safety Stock Method Determination\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n'X' = Safety Stock Method is Automatically determined.\n' ' = Safety Stock Method is not Automatically determined.\n\nType: Text\nLength: 1"
+],
+[
+"PERIOD_FACTOR_VALUE",
+"ENU;4;3;P;4;3",
+"Period Factor\n\nFactor used by the system to calculate the availability date/time of a receipt element within a time period (bucket).\n\nType: Number\nLength: 4\nDecimal: 3"
+],
+[
+"USE_PERIOD_FACTOR",
+"ETE;1;0;C;1;0",
+"Use Period Factor\n\nYou use this indicator to define how the system determines the desired availability date/time of the receipts that should cover the requirements in a period.\n\n\nType: Text\nLength: 1"
+],
+[
+"PERIOD_FACTOR_TDS",
+"ENU;4;3;P;4;3",
+"Period Factor TDS\n\nPeriod Factor for Time-dependent Stock Levels is the factor used by the system to calculate the validity time of changes applied to time-dependent stock levels within a day.\n\n\nType: Number\nLength: 4\nDecimal: 3"
+]
+],
+"n": 0
+},
+{
+"sheet": "Warehouse Number Data",
+"struct": "S_MLGN",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"LGNUM",
+"ETE;80;0;C;80;0",
+"Warehouse Number*\n\nNumber that identifies a complex, physical warehouse structure within the Warehouse Management system.\n\nType: Text\nLength: 80"
+],
+[
+"LVSME_ISO",
+"ETE;80;0;C;80;0",
+"WM Unit (ISO Format)\n\nUnit of measure in which warehouse management manages the product.\n\nType: Text\nLength: 80"
+],
+[
+"VOMEM",
+"ETE;80;0;C;80;0",
+"Proposed UoM from Mat\n\nUnit of measure to be used for this product in the warehouse.\n\nType: Text\nLength: 80"
+],
+[
+"MKAPV",
+"ENU;11;3;P;11;3",
+"Capacity Usage\n\nUsing this neutral capacity usage indicator for a product, you can execute a capacity check in the Warehouse Management system (set for storage type level). You must make an entry for each procurement unit of measure.\n\nType: Number\nLength: 11\nDecimal: 3"
+],
+[
+"BEZME",
+"ETE;80;0;C;80;0",
+"UoM for Capacity Usage (ISO Format)\n\nThe procurement unit of measure indicates to which product unit of measure the consumption usage refers.\n\nType: Text\nLength: 80"
+],
+[
+"PLKPT",
+"ETE;80;0;C;80;0",
+"Picking Storage Type\n\nStorage type used in rough-cut planning and detailed planning.\n\nThe picking storage type is of no significance for the creation of transfer orders.\n\nType: Text\nLength: 80"
+],
+[
+"LTKZA",
+"ETE;80;0;C;80;0",
+"Stock Removal\n\nIndicator determining the storage types selected by the system when removing stock and the priority with which they are accessed. You can predefine up to ten storage types in hierarchical order.\n\nType: Text\nLength: 80"
+],
+[
+"LTKZE",
+"ETE;80;0;C;80;0",
+"Stock Replacement\n\nKey that determines the storage types to be selected by the system and the priority in which they are accessed for stock placements. You can predefine up to ten storage types when defining strategies for storage type searches.\n\nType: Text\nLength: 80"
+],
+[
+"LGBKZ",
+"ETE;80;0;C;80;0",
+"Storage Section Ind.\n\nKey used by the system to determine that a product is to be placed into one particular storage section in preference to another. It is possible to define up to ten storage sections in priority order when defining strategies for storage section searches.\n\nType: Text\nLength: 80"
+],
+[
+"BLOCK",
+"ETE;80;0;C;80;0",
+"Bulk Storage\n\nThe bulk storage indicator classifies products according to the way they are stored in a bulk storage area. It describes how the products are to be stacked. This indicator is a decisive factor in the definition of the structure of a block/row within a bulk storage area.\n\nType: Text\nLength: 80"
+],
+[
+"BSSKZ",
+"ETE;80;0;C;80;0",
+"Special Movement\n\nThis indicator is used to separate special posting procedures for Products Management documents from the standard processing method. You can enter it manually for each goods movement in the Product Management system. The system uses it to determine the movement type in the Warehouse Management system. In this way, different movement types in the Warehouse Management system as well as different interim storage types can be assigned to one movement type in the Inventory Management system.\n\nType: Text\nLength: 80"
+],
+[
+"KZMBF",
+"ETE;1;0;C;1;0",
+"Message to Inventory Management\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"L2SKR",
+"ETE;80;0;C;80;0",
+"Two-Step Picking\n\nKey that determines whether 2-step picking will be used or not for a product that is designated for 2-step picking in the product master record.\n\nType: Text\nLength: 80"
+],
+[
+"KZZUL",
+"ETE;1;0;C;1;0",
+"Allow Addition to Stock\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"LHMG1",
+"ENU;13;3;P;13;3",
+"Loading Equipment Quantity 1\n\nIn conjunction with the storage unit type, the system uses the loading equipment quantity to propose how to pack a quantity onto loading devices when placing a product into stock.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"LHME1",
+"ETE;80;0;C;80;0",
+"UoM for LE Quantity 1 (ISO Format)\n\nUnit of measure referring to the loading equipment quantity.\n\nType: Text\nLength: 80"
+],
+[
+"LETY1",
+"ETE;80;0;C;80;0",
+"1st Storage Unit Type\n\nKey that can be used to classify storage units.\n\nType: Text\nLength: 80"
+],
+[
+"LHMG2",
+"ENU;13;3;P;13;3",
+"Loading Equipment Quantity 2\n\nIn conjunction with the storage unit type, the system uses the loading equipment quantity to propose how to pack a quantity onto loading devices when placing a product into stock.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"LHME2",
+"ETE;80;0;C;80;0",
+"UoM for LE Quantity 2 (ISO Format)\n\nUnit of measure referring to the loading equipment quantity.\n\nType: Text\nLength: 80"
+],
+[
+"LETY2",
+"ETE;80;0;C;80;0",
+"2nd Storage Unit Type\n\nKey that can be used to classify storage units.\n\nType: Text\nLength: 80"
+],
+[
+"LHMG3",
+"ENU;13;3;P;13;3",
+"Loading Equipment Quantity 3\n\nIn conjunction with the storage unit type, the system uses the loading equipment quantity to propose how to pack a quantity onto loading devices when placing a product into stock.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"LHME3",
+"ETE;80;0;C;80;0",
+"UoM for LE Quantity 3 (ISO Format)\n\nUnit of measure referring to the loading equipment quantity.\n\nType: Text\nLength: 80"
+],
+[
+"LETY3",
+"ETE;80;0;C;80;0",
+"3rd Storage Unit Type\n\nKey that can be used to classify storage units.\n\nType: Text\nLength: 80"
+]
+],
+"n": 0
+},
+{
+"sheet": "Storage Type Data",
+"struct": "S_MLGT",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"LGNUM",
+"ETE;80;0;C;80;0",
+"Warehouse Number*\n\nNumber that identifies a complex, physical warehouse structure within the Warehouse Management system.\n\nType: Text\nLength: 80"
+],
+[
+"LGTYP",
+"ETE;80;0;C;80;0",
+"Storage Type*\n\nSpecifies a subdivision of a complex, physical warehouse. Different storage types are identified by their warehousing technique, form of organization, or their function.\n\nType: Text\nLength: 80"
+],
+[
+"LGPLA",
+"ETE;80;0;C;80;0",
+"Storage Bin\n\nSpecifies the smallest addressable unit in a warehouse that is sometimes referred to as a slot. A storage bin identifies the exact location in the warehouse where goods can be stored.\nNote that the storage bin must already exist.\n\nType: Text\nLength: 80"
+],
+[
+"LPMAX",
+"ENU;13;3;P;13;3",
+"Maximum Bin Quantity\n\nLargest quantity that can be stored in a storage bin of this storage type. This quantity is recorded in the base quantity unit.\nThis entry is used for checking storage bin capacity.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"LPMIN",
+"ENU;13;3;P;13;3",
+"Minimum Bin Quantity\n\nMinimum quantity which is stored in the bin location of this storage type. Quantity is recorded in the base quantity unit.\nThe system can use this entry for a product replenishment in this bin location.\n\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"MAMNG",
+"ENU;13;3;P;13;3",
+"Control Quantity\n\nThreshold value according to which the system decides whether or not it should propose a stock removal from this storage type for the quantity- dependent stock removal strategy or the large/small quantity picking strategy.\nThis quantity is managed in the base unit of measure.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"NSMNG",
+"ENU;13;3;P;13;3",
+"Replenishment Quantity\n\nQuantity of product to be replenished in the storage bin.\nThis quantity is managed in the base unit of measure.\n\nType: Number\nLength: 13\nDecimal: 3"
+],
+[
+"KOBER",
+"ETE;80;0;C;80;0",
+"Picking Area\n\nGroups storage bins together from the standpoint of picking strategies and is a symmetrical counterpart to the storage section, which groups bins from the standpoint of putaway strategies. The picking area is therefore parallel in nature to the storage section and is situated hierarchically between the storage type and storage bin.\n\nType: Text\nLength: 80"
+],
+[
+"RDMNG",
+"ENU;13;3;P;13;3",
+"Rounding Quantity\n\nWhen using the quantity-dependent picking strategy (large/small quantities), the requested quantity is rounded down to this quantity.\nThis quantity is managed in the base unit of measure.\n\nType: Number\nLength: 13\nDecimal: 3"
+]
+],
+"n": 0
+},
+{
+"sheet": "Valuation Data",
+"struct": "S_MBEW",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"BWKEY",
+"ETE;80;0;C;80;0",
+"Valuation Area*\n\nValuation area is the organizational level at which the product is valuated.\n\nType: Text\nLength: 80"
+],
+[
+"BWTAR",
+"ETE;10;0;C;10;0",
+"Valuation Type\n\nThis is a further subdivision of the valuation category. The valuation category defines the valuation types allowed for a product.\nIf a product is valuated by origin (for example, valuation category H), you can define the possible countries of origin as valuation types.\nFor valuation category 'Single batch Valuation' you have to provide for each batch an own valuation type with the detailed price information.\nNote: you have to define one valuation header record with specified valuation category and initial valuation type and one dependent record for each valuation type. Further information can be found in the migration object documentation under Mapping instructions - Single Batch Valuation and Split Valuation.\n\nType: Text\nLength: 10"
+],
+[
+"BWTTY",
+"ETE;80;0;C;80;0",
+"Valuation Category\n\nDetermines whether stocks of the material are valuated together or separately.\nIn the case of split valuation, this indicator also determines which valuation types are allowed, that is, the criteria by which stocks can be valuated.\nFurther information can be found the migration object documentation under Mapping instructions - Single Batch Valuation and Split Valuation.\n\nType: Text\nLength: 80"
+],
+[
+"MLAST",
+"ETE;80;0;C;80;0",
+"Price Control Determination\n\nThe Price determination indicator determines whether price determination is:\n\u2022Transaction-based\n\u2022Single-level / multilevel\n\n\n\n\nType: Text\nLength: 80"
+],
+[
+"BKLAS",
+"ETE;80;0;C;80;0",
+"Valuation Class*\n\nAssignment of a product to a group of G/L accounts\n\nWith other factors, the valuation class determines the G/L accounts that are updated as a result of a valuation-relevant transaction or event such as a goods movement.\nThe valuation class makes it possible to:\n\u2022Post the stock values of products of the same product type to different G/L accounts\n\u2022Post the stock values of products of different product types to the same G/L account\n\nType: Text\nLength: 80"
+],
+[
+"EKLAS",
+"ETE;80;0;C;80;0",
+"Valuation Class for Sales Order\n\nDefault value for the valuation class for valuated sales order stocks of the product.\nYou need specify a valuation class here only if you want to assign a different valuation class to this type of stock than that assigned to other valuated stocks of the product. This makes it possible to define other allowed G/L accounts for these stocks.\n\nType: Text\nLength: 80"
+],
+[
+"QKLAS",
+"ETE;80;0;C;80;0",
+"Valuation Class for Project Stock\n\nDefault value for the valuation class for valuated project stocks of the product.\nYou need specify a valuation class here only if you want to assign a different valuation class to this type of stock than that assigned to other valuated stocks of the product. This makes it possible to define other allowed G/L accounts for these stocks.\n\nType: Text\nLength: 80"
+],
+[
+"VPRSV",
+"ETE;80;0;C;80;0",
+"Price Control*\n\nIndicates the price control used to valuate the stock of a product. You have the following options:\n\u2022 S - Standard price\n\u2022 V - Moving average price\n\n\nType: Text\nLength: 80"
+],
+[
+"WAERS",
+"ETE;80;0;C;80;0",
+"Currency*\n\nYou must specify the company code currency belonging to the valuation area.\n\nType: Text\nLength: 80"
+],
+[
+"VERPR",
+"ENU;13;2;P;13;2",
+"Inventory Price Moving Average\n\nMoving average price if the product has price control indicator 'V' for moving average price.\nThe system calculates the moving average price automatically by dividing the product value in the stock account by the total of all storage location stocks in the plant concerned. It changes the price with each valuation-relevant movement.\n\nType: Number\nLength: 13\nDecimal: 2"
+],
+[
+"STPRS",
+"ENU;13;2;P;13;2",
+"Inventory Price Standard Price\n\nStandard price of the product if the product has price control indicator 'S' for standard price.\nThe valuation of product stocks at standard prices means that all goods movements are valuated at the same price over an extended period.\n\nType: Number\nLength: 13\nDecimal: 2"
+],
+[
+"PEINH",
+"ENU;5;0;P;5;0",
+"Price Unit\n\nNumber of units to which the price refers.\n\nType: Number\nLength: 5"
+],
+[
+"ZKPRS",
+"ENU;13;2;P;13;2",
+"Future Price\n\nPrice at which the product will be valuated as from a precise date in the future.\nThe future price is valid as of the date you enter in the relevant field.\n\n\n\nType: Number\nLength: 13\nDecimal: 2"
+],
+[
+"ZKDAT",
+"EDA;8;0;D;8;0",
+"Date of Which Future Price Is Valid From\n\nType: Date"
+],
+[
+"ZPLP1",
+"ENU;13;2;P;13;2",
+"Planned Price 1\n\nPrice that the system can take as a basis for product costing.\n\nType: Number\nLength: 13\nDecimal: 2"
+],
+[
+"ZPLD1",
+"EDA;8;0;D;8;0",
+"Planned Price Date 1\n\nDate as from which planned price 1 is valid for the product.\n\nType: Date"
+],
+[
+"ZPLP2",
+"ENU;13;2;P;13;2",
+"Planned Price 2\n\nPrice that the system can take as a basis for product costing.\n\nType: Number\nLength: 13\nDecimal: 2"
+],
+[
+"ZPLD2",
+"EDA;8;0;D;8;0",
+"Planned Price Date 2\n\nDate as from which planned price 2 is valid for the product.\n\nType: Date"
+],
+[
+"ZPLP3",
+"ENU;13;2;P;13;2",
+"Planned Price 3\n\nPrice that the system can take as a basis for product costing.\n\nType: Number\nLength: 13\nDecimal: 2"
+],
+[
+"ZPLD3",
+"EDA;8;0;D;8;0",
+"Planned Price Date 3\n\nDate as from which planned price 3 is valid for the product.\n\nType: Date"
+],
+[
+"BWPRS",
+"ENU;13;2;P;13;2",
+"Tax Price 1\n\nPrice at which the product is valuated for tax purposes.\n\nType: Number\nLength: 13\nDecimal: 2"
+],
+[
+"BWPS1",
+"ENU;13;2;P;13;2",
+"Tax Price 2\n\nPrice at which the product is valuated for tax purposes, and which is derived in the determination of lowest value. It relates to the price unit of the previous year.\n\nType: Number\nLength: 13\nDecimal: 2"
+],
+[
+"VJBWS",
+"ENU;13;2;P;13;2",
+"Tax Price 3\n\nPrice at which the product is valuated for reasons of tax law.\n\nType: Number\nLength: 13\nDecimal: 2"
+],
+[
+"BWPEI",
+"ENU;5;0;P;5;0",
+"Price Unit\n\nNumber of units to which the price refers.\n\nType: Number\nLength: 5"
+],
+[
+"BWPRH",
+"ENU;13;2;P;13;2",
+"Commercial Price 1\n\nPrice at which the product is valuated for commercial purposes.\n\nType: Number\nLength: 13\nDecimal: 2"
+],
+[
+"BWPH1",
+"ENU;13;2;P;13;2",
+"Commercial Price 2\n\nPrice at which the product is valuated from the commercial viewpoint, and which is derived in the determination of lowest value.\n\nType: Number\nLength: 13\nDecimal: 2"
+],
+[
+"VJBWH",
+"ENU;13;2;P;13;2",
+"Commercial Price 3\n\nPrice at which the product is valuated for reasons of commercial law. This price is given by the FIFO valuation.\n\nType: Number\nLength: 13\nDecimal: 2"
+],
+[
+"XLIFO",
+"ETE;80;0;C;80;0",
+"LIFO/FIFO Relevant\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 80"
+],
+[
+"MYPOL",
+"ETE;80;0;C;80;0",
+"LIFO Pool\n\nAlphanumeric key uniquely identifying the document. Products to be valuated together are grouped under a pool number.\n\nType: Text\nLength: 80"
+],
+[
+"ABWKZ",
+"ENU;2;0;N;2;0",
+"Devaluation Indicator\n\nA devaluation indicator representing the number of years a product has already been classed as \"slow or non-moving\".\n\nType: Number\nLength: 2"
+],
+[
+"MTUSE",
+"ETE;80;0;C;80;0",
+"Usage of the Product\n\nUse for BRAZIL only !\n\nThis indicator shows the intended usage of a particular product in inventory. Please note that each usage of a product must have a separate valuation. As soon as a product has more than one usage in a valuation area then valuation types can be used.\n\n\nType: Text\nLength: 80"
+],
+[
+"MTORG",
+"ETE;80;0;C;80;0",
+"Origin of the Product\n\nUse for BRAZIL only !\nThis indicator shows whether the products were produced inside Brazil or were imported. If the goods were imported, it also indicates whether they were imported directly by the company or not.\n\nType: Text\nLength: 80"
+],
+[
+"OWPNR",
+"ETE;1;0;C;1;0",
+"Produced In-House\n\nUse for BRAZIL only !\n\nThis indicator shows whether the product was produced by the company or another one. It is used for purpose of CFOP determination.\nIf the indicator is set the product was produced by the company. If the indicator is not set the product was produced by another company.\n\n\nType: Text\nLength: 1"
+],
+[
+"HKMAT",
+"ETE;80;0;C;80;0",
+"Product-Related Origin\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\nIf this indicator is set, the product number will be written to the cost element itemization in the Controlling module.\n\nType: Text\nLength: 80"
+],
+[
+"EKALR",
+"ETE;1;0;C;1;0",
+"With Qty Structure\n\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"KOSGR",
+"ETE;80;0;C;80;0",
+"Overhead Group\n\nKey that groups products to which the same overhead is applied.\n\nType: Text\nLength: 80"
+],
+[
+"BWSPA",
+"ENU;6;2;P;6;2",
+"Valuation Margin\n\nThe valuation margin is the difference in percent between the retail value and the cost value of a material in relation to the retail value. It is used to determine the cost value of a value-only material at retail if no stock exists at retail.\nValuation margin = (total retail - total cost) / total retail x 100\n\n\nType: Number\nLength: 6\nDecimal: 2"
+],
+[
+"PSTATB",
+"ETE;1;0;C;1;0",
+"Indicator: Accounting\n\nYou can use this indicator to set the accounting view on valuation level active. For further information please refer to the migration object documentation.\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+],
+[
+"PSTATG",
+"ETE;1;0;C;1;0",
+"Indicator: Costing\n\nYou can use this indicator to set the costing view on valuation level active. For further information please refer to the migration object documentation.\nThis is an indicator field. If the criterion is met, enter X. If not, leave the field empty.\n\nType: Text\nLength: 1"
+]
+],
+"n": 0
+},
+{
+"sheet": "Valuation Current Period",
+"struct": "S_MBEW_CURRENT",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"BWKEY",
+"ETE;80;0;C;80;0",
+"Valuation Area*\n\nValuation area is the organizational level at which the product is valuated.\n\nType: Text\nLength: 80"
+],
+[
+"BWTAR",
+"ETE;10;0;C;10;0",
+"Valuation Type\n\nThis is a further subdivision of the valuation category. The valuation category defines the valuation types allowed for a product.\nIf a product is valuated by origin (for example, valuation category H), you can define the possible countries of origin as valuation types.\nFor valuation category 'Single batch Valuation' you have to provide for each batch an own valuation type with the detailed price information.\nNote: you have to define one valuation header record with specified valuation category and initial valuation type and one dependent record for each valuation type. Further information can be found in the migration object documentation under Mapping instructions - Single Batch Valuation and Split Valuation.\n\nType: Text\nLength: 10"
+],
+[
+"BWTTY",
+"ETE;80;0;C;80;0",
+"Valuation Category\n\nDetermines whether stocks of the material are valuated together or separately.\nIn the case of split valuation, this indicator also determines which valuation types are allowed, that is, the criteria by which stocks can be valuated.\nFurther information can be found the migration object documentation under Mapping instructions - Single Batch Valuation and Split Valuation.\n\nType: Text\nLength: 80"
+],
+[
+"CURTP",
+"ETE;80;0;C;80;0",
+"Currency Type*\n\nThe currency type specifies the role of a currency in the system. In addition to the local currency (company code currency), you can use parallel currencies per company code.\n\nType: Text\nLength: 80"
+],
+[
+"VPRSV",
+"ETE;80;0;C;80;0",
+"Price Control*\n\nIndicates the price control used to valuate the stock of a product. You have the following options:\n\u2022 S - Standard price\n\u2022 V - Moving average price\n\n\nType: Text\nLength: 80"
+],
+[
+"WAERS",
+"ETE;80;0;C;80;0",
+"Currency*\n\nYou must specify the currency belonging to the provided currency type.\n\nType: Text\nLength: 80"
+],
+[
+"VERPR",
+"ENU;13;2;P;13;2",
+"Inventory Price Moving Average\n\nMoving average price if the product has price control indicator 'V' for moving average price.\nThe system calculates the moving average price automatically by dividing the product value in the stock account by the total of all storage location stocks in the plant concerned. It changes the price with each valuation-relevant movement.\n\nType: Number\nLength: 13\nDecimal: 2"
+],
+[
+"STPRS",
+"ENU;13;2;P;13;2",
+"Inventory Price Standard Price\n\nStandard price of the product if the product has price control indicator 'S' for standard price.\nThe valuation of product stocks at standard prices means that all goods movements are valuated at the same price over an extended period.\n\nType: Number\nLength: 13\nDecimal: 2"
+],
+[
+"PEINH",
+"ENU;5;0;P;5;0",
+"Price Unit\n\nNumber of units to which the price refers.\n\nType: Number\nLength: 5"
+]
+],
+"n": 0
+},
+{
+"sheet": "Valuation Future Price",
+"struct": "S_MBEW_FUTURE",
+"row": 4,
+"fields": [
+[
+"PRODUCT",
+"ETE;80;0;C;80;0",
+"Product Number*\n\nA key that uniquely identifies the product.\n\nType: Text\nLength: 80"
+],
+[
+"BWKEY",
+"ETE;80;0;C;80;0",
+"Valuation Area*\n\nValuation area is the organizational level at which the product is valuated.\n\nType: Text\nLength: 80"
+],
+[
+"BWTAR",
+"ETE;10;0;C;10;0",
+"Valuation Type\n\nThis is a further subdivision of the valuation category. The valuation category defines the valuation types allowed for a product.\nIf a product is valuated by origin (for example, valuation category H), you can define the possible countries of origin as valuation types.\nFor valuation category 'Single batch Valuation' you have to provide for each batch an own valuation type with the detailed price information.\nNote: you have to define one valuation header record with specified valuation category and initial valuation type and one dependent record for each valuation type. Further information can be found in the migration object documentation under Mapping instructions - Single Batch Valuation and Split Valuation.\n\nType: Text\nLength: 10"
+],
+[
+"BWTTY",
+"ETE;80;0;C;80;0",
+"Valuation Category\n\nDetermines whether stocks of the material are valuated together or separately.\nIn the case of split valuation, this indicator also determines which valuation types are allowed, that is, the criteria by which stocks can be valuated.\nFurther information can be found the migration object documentation under Mapping instructions - Single Batch Valuation and Split Valuation.\n\nType: Text\nLength: 80"
+],
+[
+"CURTP",
+"ETE;80;0;C;80;0",
+"Currency Type*\n\nThe currency type specifies the role of a currency in the system. In addition to the local currency (company code currency), you can use parallel currencies per company code.\n\nType: Text\nLength: 80"
+],
+[
+"WAERS",
+"ETE;80;0;C;80;0",
+"Currency*\n\nYou must specify the currency belonging to the provided currency type.\n\nType: Text\nLength: 80"
+],
+[
+"ZKPRS_1",
+"ENU;13;2;P;13;2",
+"Future Price*\n\nPrice at which the product will be valuated as from a precise date in the future.\nThe future price is valid as of the date you enter in the relevant field.\n\n\n\nType: Number\nLength: 13\nDecimal: 2"
+],
+[
+"ZPRSDAT_1",
+"EDA;8;0;D;8;0",
+"Future Price From*\n\nDate from which a Future Price is to be valid.\n\nType: Date"
+],
+[
+"PEINH",
+"ENU;5;0;P;5;0",
+"Price Unit for Future Price\n\nNumber of units to which the price refers.\n\nType: Number\nLength: 5"
+]
+],
+"n": 0
+}
+]

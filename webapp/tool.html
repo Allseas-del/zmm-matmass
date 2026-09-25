@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Material Master Mass Upload</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --ink:#1d2330; --muted:#667085; --line:#d9dde5; --acc:#0a6ed1; --ok:#107e3e; --err:#bb0000; --warn:#b36b00; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 "72", Arial, sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:#354a5f; color:#fff; padding:12px 20px; }
+  header h1 { margin:0; font-size:18px; font-weight:600; }
+  header small { opacity:.75; }
+  main { padding:16px 20px; display:grid; gap:14px; }
+  main > section { min-width:0; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:6px; padding:14px 16px; }
+  section h2 { margin:0 0 10px; font-size:15px; }
+  label { display:inline-flex; gap:6px; align-items:center; margin-right:14px; }
+  input[type=text] { padding:5px 7px; border:1px solid var(--line); border-radius:4px; font:inherit; }
+  select { padding:4px 6px; border:1px solid var(--line); border-radius:4px; font:inherit; }
+  #svcUrl { width:min(720px,70vw); }
+  button { padding:6px 12px; border:1px solid var(--acc); background:var(--acc); color:#fff; border-radius:4px; font:inherit; cursor:pointer; }
+  button.sec { background:#fff; color:var(--acc); }
+  button:disabled { opacity:.45; cursor:default; }
+  .row { display:flex; flex-wrap:wrap; gap:8px 4px; align-items:center; margin-bottom:8px; }
+  .muted { color:var(--muted); }
+  .tabs { display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--line); margin-bottom:8px; }
+  .tabs button { background:#fff; color:var(--ink); border:1px solid var(--line); border-bottom:none; border-radius:4px 4px 0 0; }
+  .tabs button.on { background:var(--acc); color:#fff; border-color:var(--acc); }
+  .tabs button.empty { color:var(--muted); }
+  .grid { overflow:auto; max-height:420px; border:1px solid var(--line); }
+  table { border-collapse:collapse; font-size:12.5px; }
+  th, td { border:1px solid var(--line); padding:2px 4px; white-space:nowrap; }
+  th { position:sticky; top:0; background:#eef1f5; z-index:1; text-align:left; }
+  th .api { display:block; font-weight:400; color:var(--muted); font-size:11px; }
+  th.unmapped { background:#f7efe3; }
+  td input { border:none; background:transparent; font:inherit; width:100%; min-width:60px; padding:2px; }
+  td input.dirty { background:#fff4c2; }
+  td.st { font-weight:600; }
+  .ok { color:var(--ok); } .err { color:var(--err); } .warn { color:var(--warn); }
+  #log { font:12px/1.4 Consolas, monospace; background:#0f1720; color:#d7e0ea; padding:10px; border-radius:4px; max-height:380px; overflow:auto; white-space:pre-wrap; }
+  #log .ok { color:#6fdc8c; } #log .err { color:#ff8a8a; } #log .warn { color:#ffd479; }
+  details summary { cursor:pointer; color:var(--acc); }
+  .pill { display:inline-block; padding:1px 7px; border-radius:10px; background:#eef1f5; margin:2px 4px 2px 0; font-size:12px; }
+  .pill.none { background:#f7efe3; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Material Master Mass Upload</h1>
+  <small>Migration Cockpit template "Product" &rarr; OData V4 Product API (API_PRODUCT_2)</small>
+</header>
+<main>
+
+<section>
+  <h2>1. Connection</h2>
+  <div class="row">
+    <label>Service path <input type="text" id="svcUrl" value="/sap/opu/odata4/sap/api_product_2/srvd_a2x/sap/product/0001/"></label>
+    <label>sap-client <input type="text" id="client" size="4" placeholder="session"></label>
+  </div>
+  <div class="row">
+    <button id="btnTest" class="sec">Test connection</button>
+    <span id="connState" class="muted">not tested</span>
+  </div>
+  <details>
+    <summary>Details</summary>
+    <ul class="muted">
+      <li>The app runs inside the Fiori launchpad of the same SAP system; requests use your launchpad session. No password is entered or stored.</li>
+      <li>Service path: /IWFND/V4_ADMIN &rarr; service group of the Product API &rarr; "Service Test". The field is editable in case the path differs.</li>
+      <li>sap-client: leave empty to use the client of the launchpad session.</li>
+      <li>Authorization: S_START for the service group (R3TR G4BA) plus the normal material master authorizations; see the design document, chapter 8.</li>
+    </ul>
+  </details>
+</section>
+
+<section>
+  <h2>2. File</h2>
+  <div class="row">
+    <input type="file" id="file" accept=".xml">
+    <button id="btnExport" class="sec" disabled>Save changed file (XML)</button>
+  </div>
+  <div id="fileInfo" class="muted">No file loaded yet.</div>
+</section>
+
+<section>
+  <h2>3. Data (editable)</h2>
+  <div class="row">
+    <label>Filter (product) <input type="text" id="gridFilter" size="14"></label>
+    <button id="btnSelAll" class="sec">Select all</button>
+    <button id="btnSelNone" class="sec">Select none</button>
+    <span id="gridInfo" class="muted"></span>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="grid" id="grid"><div class="muted" style="padding:8px">Load a file first.</div></div>
+  <div class="muted" style="margin-top:6px">Selection applies per product (tab Basic Data). Yellow cells differ from the file. Orange columns have no property in the API and are not sent.</div>
+</section>
+
+<section>
+  <h2>4. Execute</h2>
+  <div class="row">
+    <label><input type="radio" name="mode" value="create" checked> Create</label>
+    <label><input type="radio" name="mode" value="change"> Change (existing products in SAP)</label>
+  </div>
+  <div class="row">
+    <label><input type="checkbox" id="extNum" checked> Send product number from the file (external numbering)</label>
+    <label>Create method <select id="createMethod">
+      <option value="deep" selected>deep insert (product with all views in one request)</option>
+      <option value="step">product first, then views in one change set</option>
+    </select></label>
+  </div>
+  <div class="row">
+    <button id="btnDry" class="sec" disabled>Show payload (dry run)</button>
+    <button id="btnRun" disabled>Execute in SAP</button>
+    <button id="btnStop" class="sec" disabled>Stop</button>
+    <button id="btnClear" class="sec">Clear log</button>
+  </div>
+  <div class="row">
+    <label>Parallel requests <input type="text" id="parallel" size="3" value="4"></label>
+    <label>Products per $batch <input type="text" id="batchSize" size="4" value="20"></label>
+    <span class="muted">(split: the selection is cut into $batch packages of this size)</span>
+  </div>
+  <div class="row">
+    <button id="btnResults" class="sec" disabled>Download results (CSV)</button>
+    <label>Resume from results <input type="file" id="resFile" accept=".csv"></label>
+    <button id="btnLog" class="sec">Download full log</button>
+  </div>
+  <div id="progress" class="muted" style="font-weight:600"></div>
+  <div class="muted">"Change" mode uses the column <b>SAP product</b> (tab Basic Data): filled automatically after a create, from a results file, or with the product number from the file.</div>
+</section>
+
+<section>
+  <h2>Log</h2>
+  <div id="log"></div>
+</section>
+
+</main>
+
+<script>
+'use strict';
+
+/* ------------------------------------------------------------------ */
+/* API tree: template sheet/field -> entity / navigation / property    */
+/* sameRow: node is filled from the parent's template row              */
+/* link:    template fields (besides PRODUCT) that tie a child row to  */
+/*          its parent row                                             */
+/* match:   API properties that identify an existing child in SAP      */
+/* ------------------------------------------------------------------ */
+const SS = 'urn:schemas-microsoft-com:office:spreadsheet';
+
+const TREE = [
+  { id: 'Product', type: 'Product_Type', set: 'Product', sheet: 'S_MARA', keys: ['Product'], fields: {
+      PRODUCT: 'Product', MTART: 'ProductType', ATTYP: 'ArticleCategory', MATKL: 'ProductGroup', MBRSH: 'IndustrySector',
+      MEINS: 'BaseISOUnit', EAN11: 'ProductStandardID', NUMTP: 'InternationalArticleNumberCat', SPART: 'Division',
+      BISMT: 'ProductOldID', PRDHA: 'ProductHierarchy', XCHPF: 'IsBatchManagementRequired', KUNNR: 'ProdCompetitorCustomerNumber',
+      NORMT: 'IndustryStandardName', GROES: 'SizeOrDimensionText', LABOR: 'LaboratoryOrDesignOffice', EXTWG: 'ExternalProductGroup',
+      MTPOS_MARA: 'ItemCategoryGroup', BEGRU: 'AuthorizationGroup', MSTAE: 'CrossPlantStatus', MSTDE: 'CrossPlantStatusValidityDate',
+      SERLV: 'SerialNoExplicitnessLevel', ANP: 'ANPCode', BRGEW: 'GrossWeight', NTGEW: 'NetWeight', GEWEI: 'WeightISOUnit',
+      LAENG: 'BaseUnitSpecificProductLength', BREIT: 'BaseUnitSpecificProductWidth', HOEHE: 'BaseUnitSpecificProductHeight',
+      MEABM: 'ProductMeasurementISOUnit', VOLUM: 'ProductVolume', VOLEH: 'VolumeISOUnit',
+      CHML_CMPLNC_RLVNCE_IND: 'ProdChmlCmplncRelevanceCode', KZKFG: 'ProductIsConfigurable', BMATN: 'OwnInventoryManagedProduct',
+      MFRPN: 'ProductManufacturerNumber', MFRNR: 'ManufacturerNumber', MPROF: 'ManufacturerPartProfile', MAGRV: 'PackagingProductGroup',
+      XGCHP: 'IsApprovedBatchRecordReqd', HNDLCODE: 'HandlingIndicator', WHMATGR: 'WarehouseProductGroup', WHSTC: 'WarehouseStorageCondition',
+      HUTYP_DFLT: 'StandardHandlingUnitType', SERIAL: 'SerialNumberProfile', PILFERABLE: 'IsPilferable', HAZMAT: 'IsRelevantForHzdsSubstances',
+      QQTIME: 'QuarantinePeriod', QQTIMEUOM: 'QuarantinePeriodISOUnit', QGRP: 'QualityInspectionGroup', HUTYP: 'HandlingUnitType',
+      MAXC: 'MaximumCapacity', MAXC_TOL: 'OvercapacityTolerance', TARE_VAR: 'HasVariableTareWeight', MAXL: 'MaximumPackagingLength',
+      MAXB: 'MaximumPackagingWidth', MAXH: 'MaximumPackagingHeight', MAXDIM_UOM: 'MaxPackggDimensionISOUnit',
+      ZEINR: 'ProductDocumentNumber', BLATT: 'ProductDocumentPageNumber',
+      ZZ1_CROSS_REF_PRD: 'ZZ1_CROSS_REF_PRD', ZZ1_MAKERSUPPLIER_PRD: 'ZZ1_MakerSupplier_PRD', ZZ1_MATRL_PRD: 'ZZ1_MATRL_PRD',
+      ZZ1_MFRPN_PRD: 'ZZ1_MFRPN_PRD', ZZ1_NMOD_PRD: 'ZZ1_NMOD_PRD', ZZ1_SERNP_PRD: 'ZZ1_SERNP_PRD', ZZ1_WNFI_PRD: 'ZZ1_WNFI_PRD' } },
+  { id: 'Descr', parent: 'Product', nav: '_ProductDescription', many: true, sheet: 'S_MARA', sameRow: true,
+    fields: { SPRAS: 'Language', MAKTX: 'ProductDescription' }, match: ['Language'] },
+  { id: 'Descr2', parent: 'Product', nav: '_ProductDescription', many: true, sheet: 'S_MAKT',
+    fields: { SPRAS: 'Language', MAKTX: 'ProductDescription' }, match: ['Language'] },
+  { id: 'Procurement', parent: 'Product', nav: '_ProductProcurement', sheet: 'S_MARA', sameRow: true,
+    fields: { BSTME: 'PurchaseOrderQuantityISOUnit', VABME: 'VarblPurOrdUnitStatus', EKWSL: 'PurchasingAcknProfile' } },
+  { id: 'Sales', parent: 'Product', nav: '_ProductSales', sheet: 'S_MARA', sameRow: true,
+    fields: { TRAGR: 'TransportationGroup', MSTAV: 'SalesStatus', MSTDV: 'SalesStatusValidityDate', VHIART: 'PackagingProductType',
+      ERGEW: 'AllowedPackagingWeightQty', ERGEI: 'AllwdPackagingWeightQtyISOUnit', GEWTO: 'ExcessWeightToleranceValue',
+      ERVOL: 'AllowedPackagingVolumeQty', ERVOE: 'AllwdPackagingVolumeQtyISOUnit', KZGVH: 'PackggProductIsClosedPackaging',
+      VOLTO: 'ProdExcessVolumeToleranceValue' } },
+  { id: 'Storage', parent: 'Product', nav: '_ProductStorage', sheet: 'S_MARA', sameRow: true,
+    fields: { RAUBE: 'StorageConditions', TEMPB: 'ProdTemperatureConditionCode', BEHVO: 'StorageBinInstruction', STOFF: 'HazardousProduct',
+      ETIAR: 'LabelType', ETIFO: 'LabelForm', WESCH: 'NmbrOfGROrGISlipsToPrintQty', MHDHB: 'TotalShelfLife', MHDRZ: 'MinRemainingShelfLife',
+      SLED_BBD: 'ProductExpirationDateType', MHDLP: 'TotalShelfLifeStoragePercent', RDMHD: 'ShelfLifeExprtnDateRndngRule',
+      IPRKZ: 'ShelfLifeExpirationDatePeriod' } },
+  { id: 'QM', parent: 'Product', nav: '_ProductQualityManagement', sheet: 'S_MARA', sameRow: true,
+    fields: { QMPUR: 'QltyMgmtInProcmtIsActive', RBNRM: 'CatalogProfile' } },
+  { id: 'UoM', parent: 'Product', nav: '_ProductUnitOfMeasure', many: true, sheet: 'S_MARM',
+    fields: { MEINH: 'AlternativeISOUnit', UMREN: 'QuantityDenominator', UMREZ: 'QuantityNumerator', EAN11: 'GlobalTradeItemNumber',
+      NUMTP: 'GlobalTradeItemNumberCategory', LAENG: 'UnitSpecificProductLength', BREIT: 'UnitSpecificProductWidth',
+      HOEHE: 'UnitSpecificProductHeight', MEABM: 'ProductMeasurementISOUnit', BRGEW: 'GrossWeight', GEWEI: 'WeightISOUnit',
+      VOLUM: 'ProductVolume', VOLEH: 'VolumeISOUnit', CAPAUSE: 'CapacityUsage' }, match: ['AlternativeISOUnit'] },
+  { id: 'EAN', parent: 'UoM', nav: '_ProductUnitOfMeasureEAN', many: true, sheet: 'S_MEAN', link: ['MEINH'],
+    fields: { EAN11: 'ProductStandardID', EANTP: 'InternationalArticleNumberCat' }, match: ['ProductStandardID'], seq: 'ConsecutiveNumber' },
+  { id: 'Plant', parent: 'Product', nav: '_ProductPlant', many: true, sheet: 'S_MARC',
+    fields: { WERKS: 'Plant', MMSTA: 'ProfileCode', MMSTD: 'ProfileValidityStartDate', PRCTR: 'ProfitCenter', AUSME: 'GoodsIssueISOUnit',
+      XCHPF: 'IsBatchManagementRequired', SERNP: 'SerialNumberProfile', XMCNG: 'IsNegativeStockAllowed', EPRIO: 'StockDeterminationGroup',
+      KZKRI: 'ProductIsCriticalPrt', INDUS: 'ProductCFOPCategory', PERKZ: 'PeriodType', PERIV: 'FiscalYearVariant',
+      FPRFM: 'DistrCntrDistributionProfile' }, match: ['Plant'] },
+  { id: 'PlantSupply', parent: 'Plant', nav: '_ProductPlantSupplyPlanning', sheet: 'S_MARC', sameRow: true,
+    fields: { DISMM: 'MRPType', DISPO: 'MRPResponsible', MTVFP: 'AvailabilityCheckType', MAABC: 'ConsumptionValueCategory', DISGR: 'MRPGroup',
+      STRGR: 'PlanningStrategyGroup', MINBE: 'ReorderThresholdQuantity', FXHOR: 'PlanningTimeFence', LFRHY: 'PlanAndOrderDayDetermination',
+      VRMOD: 'ProdRqmtsConsumptionMode', VINT1: 'BackwardCnsmpnPeriodInWorkDays', VINT2: 'FwdConsumptionPeriodInWorkDays',
+      MISKZ: 'MRPAvailabilityType', DISLS: 'LotSizingProcedure', BSTMI: 'MinimumLotSizeQuantity', BSTMA: 'MaximumLotSizeQuantity',
+      BSTFE: 'FixedLotSizeQuantity', LAGPR: 'StorageCostsPercentageCode', LOSFX: 'LotSizeIndependentCosts', WAERS: 'Currency',
+      AUSSS: 'AssemblyScrapPercent', MABST: 'MaximumStockQuantity', BSTRF: 'LotSizeRoundingQuantity', TAKZT: 'RqmtQtyRcptTaktTmeInWrkgDays',
+      RDPRF: 'RoundingProfile', EISBE: 'SafetyStockQuantity', EISLO: 'MinimumSafetyStockQuantity', SHZET: 'SafetySupplyDurationInDays',
+      LGRAD: 'ProductServiceLevelInPercent', RWPRO: 'RangeOfCvrgPrflCode', SHFLG: 'ProductSafetyTimeMRPRelevance',
+      SHPRO: 'SafetyTimePeriodProfile', AHDIS: 'DependentRqmtMRPRelevance', SFTY_STK_METH: 'MRPSafetyStockMethod',
+      SBDKZ: 'DependentRequirementsType', KAUSF: 'ComponentScrapInPercent', KZBED: 'ProductRequirementsGrouping',
+      KZAUS: 'ProductDiscontinuationCode', AUSDT: 'EffectiveOutDate', NFMAT: 'FollowUpProduct', SAUFT: 'RepetitiveManufacturingIsAllwd',
+      SFEPR: 'RepetitiveManufacturingProfile', BESKZ: 'ProcurementType', SOBSL: 'ProcurementSubType', LGPRO: 'ProductionInvtryManagedLoc',
+      WZEIT: 'TotalReplenishmentLeadTime', KZPSP: 'CrossProjectProduct', LGFSB: 'DfltStorageLocationExtProcmt', MRPPP: 'MRPPlanningCalendar',
+      DZEIT: 'ProdInhProdnDurationInWorkDays', PLIFZ: 'PlannedDeliveryDurationInDays', WEBAZ: 'GoodsReceiptDuration',
+      RGEKZ: 'ProductComponentBackflushCode', VSPVB: 'ProposedProductSupplyArea', SCHGT: 'ProductIsBulkComponent',
+      FHORI: 'SchedulingFloatProfile', AUFTL: 'ProdFcstRequirementsSplitCode' } },
+  { id: 'PlantProc', parent: 'Plant', nav: '_ProductPlantProcurement', sheet: 'S_MARC', sameRow: true,
+    fields: { EKGRP: 'PurchasingGroup', KORDB: 'IsSourceListRequired', KAUTB: 'IsAutoPurOrdCreationAllowed', FABKZ: 'JustInTimeDeliveryScheduleCode' } },
+  { id: 'PlantQM', parent: 'Plant', nav: '_ProductPlantQualityManagement', sheet: 'S_MARC', sameRow: true,
+    fields: { INSMK: 'HasPostToInspectionStock', KZDKZ: 'InspLotDocumentationIsRequired', PRFRQ: 'RecrrgInspIntervalTimeInDays',
+      SSQSS: 'ProdQltyManagementControlKey', QZGTP: 'ProductQualityCertificateType', QSSYS: 'QualityMgmtSystemForSupplier',
+      QMATA: 'ProdQualityAuthorizationGroup' } },
+  { id: 'PlantTrade', parent: 'Plant', nav: '_ProdPlantInternationalTrade', sheet: 'S_MARC', sameRow: true,
+    fields: { MTVER: 'ExportAndImportProductGroup', HERKL: 'CountryOfOrigin', HERKR: 'RegionOfOrigin', STEUC: 'ConsumptionTaxCtrlCode' } },
+  { id: 'PlantSales', parent: 'Plant', nav: '_ProductPlantSales', sheet: 'S_MARC', sameRow: true,
+    fields: { LADGR: 'LoadingGroup', VRVEZ: 'WrkCentersShipgSetupTimeInDays', VBEAZ: 'ProdShipgProcgDurationInDays',
+      VBAMG: 'CapPlanningQuantityInBaseUoM' } },
+  { id: 'PlantWork', parent: 'Plant', nav: '_ProductPlantWorkScheduling', sheet: 'S_MARC', sameRow: true,
+    fields: { KZECH: 'ProductionOrderBatchCode', BASMG: 'ProductBaseQuantity', UEETO: 'OverDeliveryTolerancePercent',
+      UNETO: 'UnderDeliveryTolerancePercent', UEETK: 'UnlimitedOverDelivIsAllowed', FRTME: 'ProdProductionQuantityISOUnit',
+      FEVOR: 'ProductionSupervisor', SFCPF: 'ProductionSchedulingProfile', RUEZT: 'SetupAndTeardownTime', TRANZ: 'TransitionTime',
+      BEARZ: 'ProcessingTimeInDays' } },
+  { id: 'PlantCost', parent: 'Plant', nav: '_ProductPlantCosting', sheet: 'S_MARC', sameRow: true,
+    fields: { KZKUP: 'IsCoProduct', NCOST: 'ProductIsCostingRelevant', AWSLS: 'VarianceKey', LOSGR: 'CostingLotSize' } },
+  { id: 'PlantStor', parent: 'Plant', nav: '_ProductPlantStorage', sheet: 'S_MARC', sameRow: true,
+    fields: { ABCIN: 'PhysInventoryForCycleCounting', CCFIX: 'CycleCountingIndicatorIsFixed', MAXLZ: 'MaximumStoragePeriod',
+      LZEIH: 'MaximumStoragePeriodISOUnit' } },
+  { id: 'PlantFcst', parent: 'Plant', nav: '_ProductPlantForecast', sheet: 'S_MARC', sameRow: true,
+    fields: { VRBWK: 'ConsumptionReferencePlant', VRBMT: 'ConsumptionReferenceProduct', VRBDT: 'ConsumptionRefUsageEndDate',
+      VRBFK: 'CnsmpnQuantityMultiplierValue', AUTRU: 'ForecastModelIsReset', KZKFK: 'CorrectionFactorIsRequired' } },
+  { id: 'Sloc', parent: 'Plant', nav: '_ProductPlantStorageLocation', many: true, sheet: 'S_MARD', link: ['WERKS'],
+    fields: { LGORT: 'StorageLocation', LGPBE: 'WarehouseStorageBin' }, match: ['StorageLocation'] },
+  { id: 'MRPArea', parent: 'Plant', nav: '_ProductPlantMRP', many: true, sheet: 'S_MRP_AREA', link: ['WERKS'], match: ['MRPArea'],
+    fields: { BERID: 'MRPArea', DISMM: 'MRPType', DISPO: 'MRPResponsible', DISGR: 'MRPGroup', MINBE: 'ReorderThresholdQuantity',
+      FXHOR: 'PlanningTimeFence', LFRHY: 'PlanAndOrderDayDetermination', DISLS: 'LotSizingProcedure', BSTMI: 'MinimumLotSizeQuantity',
+      BSTMA: 'MaximumLotSizeQuantity', BSTFE: 'FixedLotSizeQuantity', LAGPR: 'StorageCostsPercentageCode', LOSFX: 'LotSizeIndependentCosts',
+      WAERS: 'Currency', AUSSS: 'AssemblyScrapPercent', MABST: 'MaximumStockQuantity', BSTRF: 'LotSizeRoundingQuantity',
+      TAKZT: 'RqmtQtyRcptTaktTmeInWrkgDays', RDPRF: 'RoundingProfile', EISBE: 'SafetyStockQuantity', LGRAD: 'ProductServiceLevelInPercent',
+      RWPRO: 'RangeOfCvrgPrflCode', SHFLG: 'ProductSafetyTimeMRPRelevance', SHZET: 'SafetySupplyDurationInDays',
+      SHPRO: 'SafetyTimePeriodProfile', AHDIS: 'DependentRqmtMRPRelevance', SFTY_STK_METH: 'MRPSafetyStockMethod',
+      SOBSL: 'ProcurementSubType', LGFSB: 'DfltStorageLocationExtProcmt', MRPPP: 'MRPPlanningCalendar', PLIFZX: 'IsPlannedDeliveryTime',
+      PLIFZ: 'PlannedDeliveryDurationInDays', LGPRO: 'ProductionInvtryManagedLoc' } },
+  { id: 'Insp', parent: 'Plant', nav: '_ProductPlantInspTypeSetting', many: true, sheet: 'S_QMAT', link: ['WERKS'], match: ['InspectionLotType'],
+    fields: { ART: 'InspectionLotType', APA: 'InspTypeIsPrfrd', AKTIV: 'ProdInspTypeSettingIsActive', INSMK: 'HasPostToInspectionStock',
+      EIN: 'InspLotIsSerialNmbrPossible', DYNREGEL: 'InspLotDynamicRule', DYN: 'InspLotSkipIsAllowed', CHG_ORIG: 'InspLotOfEWMSummaryControl',
+      CHG: 'InspLotSummaryControl', AFR: 'InspLotHasHandlingUnit', SPEZUEBER: 'InspLotHasMaterialSpec', PPL: 'InspLotIsTaskListRequired',
+      CONF: 'InspLotHasConfignSpecification', TLS: 'InspLotHasBatchCharc', APP: 'InspLotHasAutomSpecAssgmt', MER: 'InspLotHasCharc',
+      MS_FLAG: 'InspLotHasMultipleSpec', STICHPRVER: 'SamplingProcedure', HPZ: 'InspectionLotIsFullInspection',
+      SPROZ: 'InspLotSampleQuantityInPercent', MST: 'InspLotIsSmplCalcMnlTriggered', MPB: 'InspLotHasManualSampleSize',
+      KZPRFKOST: 'InspectionLotHasAppraisalCosts', AUFNR_CO: 'QualityCostCollector', MPDAU: 'InspLotDurationInDays',
+      AVE: 'InspLotIsAutomUsgeDcsnPossible', QKZVERF: 'InspQualityScoreProcedure', QPMAT: 'InspLotAcceptedScrapRatioInPct' } },
+  { id: 'Val', parent: 'Product', nav: '_ProductValuation', many: true, sheet: 'S_MBEW', match: ['ValuationArea', 'ValuationType'],
+    fields: { BWKEY: 'ValuationArea', BWTAR: 'ValuationType', BWTTY: 'ValuationCategory', MLAST: 'PriceDeterminationControl',
+      BKLAS: 'ValuationClass', EKLAS: 'ValuationClassSalesOrderStock', QKLAS: 'ProjectStockValuationClass',
+      VPRSV: 'InventoryValuationProcedure', WAERS: 'Currency', VERPR: 'MovingAveragePrice', STPRS: 'StandardPrice',
+      PEINH: 'ProductPriceUnitQuantity', MTUSE: 'ProductUsageType', MTORG: 'ProductOriginType', OWPNR: 'IsProducedInhouse' } },
+  { id: 'ValAcc', parent: 'Val', nav: '_ProductValuationAccounting', sheet: 'S_MBEW', sameRow: true,
+    fields: { ZKPRS: 'FuturePrice', ZKDAT: 'FuturePriceValidityStartDate', BWPRS: 'TaxPricel1InCoCodeCrcy', BWPS1: 'TaxPrice2InCoCodeCrcy',
+      VJBWS: 'TaxPrice3InCoCodeCrcy', BWPEI: 'TaxBasedPricesPriceUnitQty', BWPRH: 'CommercialPrice1InCoCodeCrcy',
+      BWPH1: 'CommercialPrice2InCoCodeCrcy', VJBWH: 'CommercialPrice3InCoCodeCrcy', XLIFO: 'IsLIFOAndFIFORelevant',
+      MYPOL: 'LIFOValuationPoolNumber', ABWKZ: 'DevaluationYearCount' }, carry: { WAERS: 'Currency' } },
+  { id: 'ValCost', parent: 'Val', nav: '_ProductValuationCosting', sheet: 'S_MBEW', sameRow: true,
+    fields: { ZPLP1: 'PlannedPrice1InCoCodeCrcy', ZPLD1: 'FuturePlndPrice1ValdtyDate', ZPLP2: 'PlannedPrice2InCoCodeCrcy',
+      ZPLD2: 'FuturePlndPrice2ValdtyDate', ZPLP3: 'PlannedPrice3InCoCodeCrcy', ZPLD3: 'FuturePlndPrice3ValdtyDate',
+      HKMAT: 'IsMaterialRelatedOrigin', EKALR: 'ProductIsCostedWithQtyStruc', KOSGR: 'CostingOverheadGroup' }, carry: { WAERS: 'Currency' } },
+  { id: 'SalesDel', parent: 'Product', nav: '_ProductSalesDelivery', many: true, sheet: 'S_MVKE', match: ['ProductSalesOrg', 'ProductDistributionChnl'],
+    fields: { VKORG: 'ProductSalesOrg', VTWEG: 'ProductDistributionChnl', VRKME: 'SalesMeasureISOUnit', VAVME: 'VariableSalesUnitIsNotAllowed',
+      DWERK: 'SupplyingPlant', VMSTA: 'ProductSalesStatus', VMSTD: 'ProductSalesStatusValidityDate', SKTOF: 'CashDiscountIsDeductible',
+      LFMNG: 'DeliveryNoteProcMinDelivQty', AUMNG: 'MinimumOrderQuantity', SCMNG: 'DeliveryQuantity', SCHME: 'DeliveryQuantityISOUnit',
+      RDPRF: 'RoundingProfile', KONDM: 'PriceSpecificationProductGroup', BONUS: 'VolumeRebateGroup', MTPOS: 'ItemCategoryGroup',
+      KTGRM: 'AccountDetnProductGroup', PROVG: 'ProductCommissionGroup', PMATN: 'PricingReferenceProduct', PRODH: 'ProductHierarchy',
+      VERSG: 'LogisticsStatisticsGroup', MVGR1: 'FirstSalesSpecProductGroup', MVGR2: 'SecondSalesSpecProductGroup',
+      MVGR3: 'ThirdSalesSpecProductGroup', MVGR4: 'FourthSalesSpecProductGroup', MVGR5: 'FifthSalesSpecProductGroup' } },
+  // S_MLAN is keyed by country only; the API keeps sales tax per sales delivery. Each MLAN row is sent under every
+  // sales delivery of the product (see design, open point). TATYP1..9 / TAXM1..9 become separate entries.
+  { id: 'SalesTax', parent: 'SalesDel', nav: '_ProdSalesDeliverySalesTax', many: true, sheet: 'S_MLAN', expand: 'tax',
+    fields: { ALAND: 'Country' }, match: ['Country', 'ProductSalesTaxCategory'] }
+];
+{ const tax = TREE.find(n => n.id === 'SalesTax');
+  for (let i = 1; i <= 9; i++) { tax.fields['TATYP' + i] = `(tax category ${i})`; tax.fields['TAXM' + i] = `(tax class ${i})`; } }
+const NODE = Object.fromEntries(TREE.map(n => [n.id, n]));
+
+const SHEET_TAB = { S_MARA: 'Basic Data', S_MAKT: 'Descriptions', S_MARM: 'Alt. Units', S_MEAN: 'GTINs', S_MARC: 'Plant', S_MARD: 'Storage Locations',
+  S_MRP_AREA: 'MRP Area', S_QMAT: 'Inspection Setup', S_MBEW: 'Valuation', S_MVKE: 'Distribution Chains', S_MLAN: 'Tax Classification' };
+// Template sheets without a counterpart in API_PRODUCT_2 (rows are reported, not sent)
+const NOT_SUPPORTED = { S_FSH_SEASONS_MAT: 'seasons (fashion)', S_MLEA: 'supplier GTINs', S_MAMT: 'receipt texts', S_WRF_MATGRP_SKU: 'article hierarchy (retail)',
+  S_CLASS: 'classification', S_CHARACT: 'characteristic values', S_VARIANT: 'variant values', S_WLK2: 'POS data (retail)', S_WRPP: 'store replenishment (retail)',
+  S_MPOP: 'forecast parameters', S_CRFH: 'production resources/tools', S_WRPL: 'store MRP (retail)', S_MLGN: 'WM warehouse data (classic WM)',
+  S_MLGT: 'WM storage type data (classic WM)', S_MBEW_CURRENT: 'valuation current period (ledger)', S_MBEW_FUTURE: 'valuation future price (ledger)' };
+
+/* ------------------------------------------------------------------ */
+/* State and helpers                                                  */
+/* ------------------------------------------------------------------ */
+let xmlDoc = null, fileName = 'product.xml';
+let sheets = {};
+let activeTab = 'S_MARA';
+let csrfToken = null;
+let schema = null;          // entity type -> { props, navs }
+const results = new Map();  // source product -> result
+let stopRequested = false;
+
+const $ = id => document.getElementById(id);
+const logEl = $('log');
+const fullLog = [];
+const MAX_LOG_LINES = 800;
+function log(msg, cls) {
+  const text = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  fullLog.push((cls === 'err' ? 'ERROR ' : cls === 'warn' ? 'WARN  ' : '      ') + text);
+  const line = document.createElement('div'); if (cls) line.className = cls; line.textContent = text;
+  logEl.appendChild(line);
+  while (logEl.childNodes.length > MAX_LOG_LINES) logEl.removeChild(logEl.firstChild);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function logBlock(title, obj) {
+  const d = document.createElement('details'); const s = document.createElement('summary'); s.textContent = title; d.appendChild(s);
+  const pre = document.createElement('pre'); pre.textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
+  d.appendChild(pre); logEl.appendChild(d); logEl.scrollTop = logEl.scrollHeight;
+}
+function download(name, text, type) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: type || 'text/plain' }));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* ------------------------------------------------------------------ */
+/* SpreadsheetML parsing                                              */
+/* ------------------------------------------------------------------ */
+// Files as downloaded from the Migration Cockpit start with a line break before <?xml and contain SAP text
+// markup (<LS>…</>) in the introduction sheet. Excel accepts that, an XML parser does not.
+function sanitize(text) {
+  return text.replace(/^﻿?\s+/, '').replace(/<\/>|<(?:LS|EM|DS|AL|NP|ZH|ZK|LB|H)>/g, '');
+}
+function rowCells(rowEl) {
+  const out = []; let i = 0;
+  for (const c of rowEl.children) {
+    if (c.localName !== 'Cell') continue;
+    const ix = c.getAttributeNS(SS, 'Index'); if (ix) i = parseInt(ix, 10) - 1;
+    out.push({ idx: i, el: c });
+    const merge = c.getAttributeNS(SS, 'MergeAcross'); i += 1 + (merge ? parseInt(merge, 10) : 0);
+  }
+  return out;
+}
+function cellText(cellEl) { const d = [...cellEl.children].find(n => n.localName === 'Data'); return d ? d.textContent : ''; }
+function rowValues(rowEl) { const v = {}; for (const c of rowCells(rowEl)) v[c.idx] = cellText(c.el); return v; }
+function allRows(ws) {
+  const table = [...ws.children].find(n => n.localName === 'Table'); const res = []; let r = 0;
+  if (!table) return res;
+  for (const rowEl of table.children) {
+    if (rowEl.localName !== 'Row') continue;
+    const ix = rowEl.getAttributeNS(SS, 'Index'); if (ix) r = parseInt(ix, 10) - 1;
+    res[r] = rowEl; r++;
+  }
+  return res;
+}
+function parseWorkbook(text) {
+  const doc = new DOMParser().parseFromString(sanitize(text), 'application/xml');
+  const pe = doc.getElementsByTagName('parsererror');
+  if (pe.length) throw new Error('Not a valid XML file: ' + pe[0].textContent.substring(0, 200));
+  const result = {};
+  for (const ws of doc.getElementsByTagNameNS(SS, 'Worksheet')) {
+    const name = ws.getAttributeNS(SS, 'Name'); const rows = allRows(ws);
+    let sIdx = -1;
+    for (let i = 0; i < Math.min(rows.length, 15); i++) {
+      if (!rows[i]) continue;
+      if (/^S_[A-Z0-9_]+$/.test((rowValues(rows[i])[0] || '').trim())) { sIdx = i; break; }
+    }
+    if (sIdx < 0) continue;
+    const structure = rowValues(rows[sIdx])[0].trim();
+    const fv = rowValues(rows[sIdx + 1]); const tv = rows[sIdx + 2] ? rowValues(rows[sIdx + 2]) : {};
+    const fields = [], types = {}, colOf = {};
+    Object.keys(fv).map(Number).sort((a, b) => a - b).forEach(ix => {
+      const f = (fv[ix] || '').trim(); if (!f) return;
+      fields.push(f); colOf[f] = ix; types[f] = (tv[ix] || '').split(';');
+    });
+    const data = [];
+    for (let i = sIdx + 5; i < rows.length; i++) {   // structure, fields, types, groups, descriptions, then data
+      if (!rows[i]) continue;
+      const v = rowValues(rows[i]);
+      if (!Object.values(v).some(x => x && x.trim())) continue;
+      const cells = {};
+      for (const f of fields) {
+        let val = (v[colOf[f]] || ''); if (types[f][0] === 'EDA' && val) val = val.substring(0, 10);
+        cells[f] = { value: val, orig: val };
+      }
+      data.push({ el: rows[i], cells, include: true });
+    }
+    result[structure] = { name, fields, types, colOf, rows: data };
+  }
+  return { doc, sheets: result };
+}
+
+/* ------------------------------------------------------------------ */
+/* $metadata                                                          */
+/* ------------------------------------------------------------------ */
+function parseSchema(md) {
+  const out = {};
+  for (const et of md.getElementsByTagName('EntityType')) {
+    const e = { props: {}, navs: {} };
+    for (const pr of et.children) {
+      if (pr.localName === 'Property') {
+        e.props[pr.getAttribute('Name')] = { type: pr.getAttribute('Type'), maxLength: pr.getAttribute('MaxLength') ? parseInt(pr.getAttribute('MaxLength'), 10) : null,
+          precision: pr.getAttribute('Precision') ? parseInt(pr.getAttribute('Precision'), 10) : null, scale: pr.getAttribute('Scale') };
+      } else if (pr.localName === 'NavigationProperty') {
+        const t = pr.getAttribute('Type') || '';
+        e.navs[pr.getAttribute('Name')] = { target: t.replace(/^Collection\(|\)$/g, '').split('.').pop(), collection: t.startsWith('Collection(') };
+      }
+    }
+    out[et.getAttribute('Name')] = e;
+  }
+  for (const an of md.getElementsByTagName('Annotations')) {
+    const m = (an.getAttribute('Target') || '').match(/\.?([A-Za-z0-9_]+_Type)\/([A-Za-z0-9_]+)$/);
+    if (!m || !out[m[1]] || !out[m[1]].props[m[2]]) continue;
+    const p = out[m[1]].props[m[2]];
+    for (const a of an.getElementsByTagName('Annotation')) {
+      const term = a.getAttribute('Term') || '';
+      if (term.endsWith('core.Computed')) p.computed = true;
+      if (term.endsWith('core.Immutable')) p.immutable = true;
+      if (term.endsWith('common.IsUpperCase')) p.upper = true;
+      if (term.endsWith('common.IsDigitSequence')) p.digits = true;
+    }
+  }
+  return out;
+}
+// Entity type of each tree node, derived from the navigation properties in $metadata
+function typeOf(nodeId) {
+  const n = NODE[nodeId]; if (!n.parent) return n.type;
+  const pt = typeOf(n.parent); const nav = schema && schema[pt] && schema[pt].navs[n.nav];
+  return nav ? nav.target : null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Mapping: template rows -> desired object tree                      */
+/* ------------------------------------------------------------------ */
+const val = (row, f) => (row && row.cells[f] ? row.cells[f].value.trim() : '');
+const prodOf = row => val(row, 'PRODUCT');
+let index = {};
+function buildIndex() {
+  index = {};
+  for (const [st, sh] of Object.entries(sheets)) {
+    const m = new Map();
+    for (const r of sh.rows) { const k = prodOf(r); if (!m.has(k)) m.set(k, []); m.get(k).push(r); }
+    index[st] = m;
+  }
+}
+const missingProps = new Map();   // "Type.prop" -> rows with a value (property not in this service)
+function convert(entityType, prop, raw) {
+  let v = (raw ?? '').trim(); if (v === '') return undefined;
+  const p = schema && schema[entityType] && schema[entityType].props[prop];
+  if (!p) return v;
+  switch (p.type) {
+    case 'Edm.Boolean': return /^(x|true|1|y)$/i.test(v);
+    case 'Edm.Decimal': case 'Edm.Double': { const n = Number(v.replace(',', '.')); return isNaN(n) ? v : n; }
+    case 'Edm.Byte': case 'Edm.Int16': case 'Edm.Int32': case 'Edm.Int64': { const n = parseInt(v, 10); return isNaN(n) ? v : n; }
+    case 'Edm.Date': return v.substring(0, 10);
+    default:
+      if (p.digits && /^\d+$/.test(v) && p.maxLength) v = v.padStart(p.maxLength, '0');
+      if (p.upper) v = v.toUpperCase();
+      return v;
+  }
+}
+function mapFields(node, row, fields) {
+  const et = typeOf(node.id); const out = {};
+  for (const [f, prop] of Object.entries(fields)) {
+    if (prop.startsWith('(') || !row.cells[f]) continue;
+    const raw = row.cells[f].value;
+    if (schema && et && !schema[et].props[prop]) {
+      if (raw.trim()) { const k = `${et}.${prop}`; missingProps.set(k, (missingProps.get(k) || 0) + 1); }
+      continue;
+    }
+    const v = convert(et, prop, raw); if (v !== undefined) out[prop] = v;
+  }
+  return out;
+}
+function linked(node, parentRow, row) { return (node.link || []).every(f => val(row, f) === val(parentRow, f)); }
+// Returns { node, data, children: { nav: [items] | item } } for one template row
+function buildNode(node, row, parentRow) {
+  const item = { node: node.id, data: mapFields(node, row, node.fields), children: {} };
+  if (node.carry) Object.assign(item.data, mapFields(node, row, node.carry));
+  for (const child of TREE.filter(c => c.parent === node.id)) {
+    let items = [];
+    if (child.sameRow) {
+      const it = buildNode(child, row, row);
+      if (Object.keys(it.data).length && Object.keys(it.data).some(k => !(child.carry && Object.values(child.carry).includes(k)))) items = [it];
+    } else if (child.expand === 'tax') {
+      for (const r of (index[child.sheet] && index[child.sheet].get(prodOf(row))) || []) {
+        if (!r.include) continue;
+        for (let i = 1; i <= 9; i++) {
+          const cat = val(r, 'TATYP' + i), cls = val(r, 'TAXM' + i); if (!cat) continue;
+          const et = typeOf(child.id);
+          items.push({ node: child.id, data: { Country: convert(et, 'Country', val(r, 'ALAND')), ProductSalesTaxCategory: convert(et, 'ProductSalesTaxCategory', cat),
+            ...(cls ? { ProductTaxClassification: convert(et, 'ProductTaxClassification', cls) } : {}) }, children: {} });
+        }
+      }
+    } else {
+      const rows = ((index[child.sheet] && index[child.sheet].get(prodOf(row))) || []).filter(r => r.include && linked(child, row, r));
+      items = rows.map(r => buildNode(child, r, row));
+      if (child.seq) items.forEach((it, i) => { it.data[child.seq] = String(i + 1).padStart(5, '0'); });
+    }
+    if (!items.length) continue;
+    if (child.many) {
+      const arr = item.children[child.nav] || (item.children[child.nav] = []);
+      for (const it of items) {   // merge duplicates (e.g. description from Basic Data and from Descriptions sheet)
+        const dup = child.match && arr.find(x => child.match.every(k => String(x.data[k] ?? '') === String(it.data[k] ?? '')));
+        if (dup) Object.assign(dup.data, it.data); else arr.push(it);
+      }
+    } else item.children[child.nav] = items[0];
+  }
+  return item;
+}
+function buildProduct(hdr) {
+  const root = buildNode(NODE.Product, hdr, null);
+  if (!$('extNum').checked) delete root.data.Product;
+  return root;
+}
+// Plain JSON for a deep insert
+function toPayload(item) {
+  const o = { ...item.data };
+  for (const [nav, c] of Object.entries(item.children)) o[nav] = Array.isArray(c) ? c.map(toPayload) : toPayload(c);
+  return o;
+}
+
+/* ------------------------------------------------------------------ */
+/* Validation against $metadata                                       */
+/* ------------------------------------------------------------------ */
+function validateObject(entity, obj, path, issues) {
+  const e = schema && schema[entity];
+  if (!e) { issues.push(`${path}: entity type ${entity} not found in $metadata`); return; }
+  for (const [k, v] of Object.entries(obj)) {
+    if (k.startsWith('_')) {
+      const nav = e.navs[k];
+      if (!nav) { issues.push(`${path}.${k}: navigation does not exist in this service`); continue; }
+      if (nav.collection !== Array.isArray(v)) issues.push(`${path}.${k}: ${nav.collection ? 'must be a list' : 'must be a single object'}`);
+      (Array.isArray(v) ? v : [v]).forEach((it, i) => validateObject(nav.target, it, `${path}.${k}[${i}]`, issues));
+      continue;
+    }
+    const pr = e.props[k];
+    if (!pr) { issues.push(`${path}.${k}: property does not exist in this service`); continue; }
+    if (pr.computed) { issues.push(`${path}.${k}: computed by SAP, must not be sent`); continue; }
+    if (pr.type === 'Edm.String' && pr.maxLength && String(v).length > pr.maxLength) issues.push(`${path}.${k}: ${String(v).length} characters, max ${pr.maxLength} ("${String(v).substring(0, 20)}")`);
+    if (pr.type === 'Edm.Decimal') {
+      if (typeof v !== 'number') { issues.push(`${path}.${k}: "${v}" is not a number`); continue; }
+      const dec = (String(v).split('.')[1] || '').length;
+      if (pr.scale && pr.scale !== 'variable' && dec > parseInt(pr.scale, 10)) issues.push(`${path}.${k}: ${dec} decimals, max ${pr.scale}`);
+      const maxInt = (pr.precision || 99) - (pr.scale && pr.scale !== 'variable' ? parseInt(pr.scale, 10) : 0);
+      if (String(Math.trunc(Math.abs(v))).length > maxInt) issues.push(`${path}.${k}: value too large (max ${maxInt} digits before the decimal point)`);
+    }
+    if (/Edm\.(Byte|Int16|Int32)/.test(pr.type) && !Number.isInteger(v)) issues.push(`${path}.${k}: must be a whole number`);
+    if (pr.type === 'Edm.Date' && !/^\d{4}-\d{2}-\d{2}$/.test(String(v))) issues.push(`${path}.${k}: date must be YYYY-MM-DD`);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* HTTP                                                               */
+/* ------------------------------------------------------------------ */
+function base() { let p = $('svcUrl').value.trim(); if (!p.endsWith('/')) p += '/'; return p; }
+function withParams(url) { const c = $('client').value.trim(); return c ? url + (url.includes('?') ? '&' : '?') + 'sap-client=' + encodeURIComponent(c) : url; }
+const q = s => `'${encodeURIComponent(String(s ?? '')).replace(/'/g, "''")}'`;
+function authHint(status) {
+  if (status === 401) return ' — not logged on.';
+  if (status === 403) return ' — not authorized (S_START R3TR G4BA for the service group; SU53 shows the failed check) or CSRF failed.';
+  if (status === 404) return ' — service path not found: check /IWFND/V4_ADMIN and the path field.';
+  return '';
+}
+function looksLikeLogonPage(r, text) {
+  const ct = (r.headers.get('content-type') || '').toLowerCase();
+  return ct.includes('text/html') || /SAMLRequest|<html/i.test((text || '').substring(0, 400));
+}
+async function fetchToken() {
+  const r = await fetch(withParams(base()), { credentials: 'include', headers: { 'X-CSRF-Token': 'Fetch', 'Accept': 'application/json' } });
+  const t = await r.text();
+  if (!r.ok) throw new Error(`Service document: HTTP ${r.status}${authHint(r.status)}`);
+  if (looksLikeLogonPage(r, t)) throw new Error('SAP returned a logon page instead of the service document: the session expired. Reload the launchpad.');
+  csrfToken = r.headers.get('x-csrf-token');
+  if (!csrfToken) log('No CSRF token received.', 'warn');
+}
+function errText(body, status) {
+  const e = body && body.error; if (!e) return `HTTP ${status}`;
+  const det = (e.details || []).map(d => d.message).filter(Boolean);
+  return `HTTP ${status}: ` + [...new Set([e.message, ...det].filter(Boolean))].join(' | ');
+}
+async function call(method, path, body, extraHeaders) {
+  const url = withParams(path.startsWith('/') ? path : base() + path);
+  const doFetch = () => fetch(url, { method, credentials: 'include',
+    headers: Object.assign({ 'Accept': 'application/json', 'Content-Type': 'application/json' }, csrfToken ? { 'X-CSRF-Token': csrfToken } : {}, extraHeaders || {}),
+    body: body ? JSON.stringify(body) : undefined });
+  let r = await doFetch();
+  if (r.status === 403 && (r.headers.get('x-csrf-token') || '').toLowerCase() === 'required') { await fetchToken(); r = await doFetch(); }
+  const t = await r.text();
+  if (looksLikeLogonPage(r, t)) throw new Error(`${method} ${path.split('?')[0]} → logon page: session expired.`);
+  let j = null; try { j = t ? JSON.parse(t) : null; } catch (e) { /* not JSON */ }
+  if (!r.ok) throw new Error(`${method} ${path.split('?')[0]} → ${errText(j, r.status)}${j ? '' : ' ' + t.substring(0, 300)}${authHint(r.status)}`);
+  return j;
+}
+
+// $batch (multipart/mixed). groups: [{ req }] for an independent request or [{ changeset: [req…] }] for an atomic unit.
+function httpPart(req, id) {
+  return `Content-Type: application/http\r\nContent-Transfer-Encoding: binary\r\nContent-ID: ${id}\r\n\r\n` +
+    `${req.method} ${req.path} HTTP/1.1\r\nContent-Type: application/json\r\nAccept: application/json\r\n` +
+    Object.entries(req.headers || {}).map(([k, v]) => `${k}: ${v}\r\n`).join('') + '\r\n' + (req.body ? JSON.stringify(req.body) : '') + '\r\n';
+}
+function parseHttp(part) {
+  const at = part.search(/HTTP\/1\.1 \d{3}/); if (at < 0) return { status: 0, body: null, text: part };
+  const inner = part.substring(at); const status = parseInt(inner.substring(9, 12), 10);
+  const sep = inner.search(/\r?\n\r?\n/); const text = sep >= 0 ? inner.substring(sep).trim() : '';
+  let body = null; try { body = text ? JSON.parse(text) : null; } catch (e) { /* not JSON */ }
+  return { status, body, text };
+}
+function splitMultipart(text, boundary) {
+  return text.split('--' + boundary).slice(1).filter(p => !p.startsWith('--') && p.trim());
+}
+async function batch(groups) {
+  const boundary = 'batch_' + Math.random().toString(36).slice(2);
+  let payload = '', id = 0;
+  groups.forEach(g => {
+    if (g.changeset) {
+      const cs = 'changeset_' + Math.random().toString(36).slice(2);
+      payload += `--${boundary}\r\nContent-Type: multipart/mixed;boundary=${cs}\r\n\r\n`;
+      g.changeset.forEach(req => { payload += `--${cs}\r\n` + httpPart(req, ++id); });
+      payload += `--${cs}--\r\n`;
+    } else payload += `--${boundary}\r\n` + httpPart(g.req, ++id);
+  });
+  payload += `--${boundary}--\r\n`;
+  const doFetch = () => fetch(withParams(base() + '$batch'), { method: 'POST', credentials: 'include', body: payload,
+    headers: Object.assign({ 'Content-Type': `multipart/mixed;boundary=${boundary}`, 'Accept': 'multipart/mixed', 'Prefer': 'odata.continue-on-error' },
+      csrfToken ? { 'X-CSRF-Token': csrfToken } : {}) });
+  let r = await doFetch();
+  if (r.status === 403 && (r.headers.get('x-csrf-token') || '').toLowerCase() === 'required') { await fetchToken(); r = await doFetch(); }
+  const text = await r.text();
+  if (looksLikeLogonPage(r, text)) throw new Error('$batch → logon page: session expired.');
+  if (!r.ok) throw new Error(`$batch → HTTP ${r.status}: ${text.substring(0, 300)}`);
+  const m = (r.headers.get('content-type') || '').match(/boundary=([^;]+)/i);
+  if (!m) throw new Error('$batch → response without multipart boundary');
+  const parts = splitMultipart(text, m[1].replace(/"/g, '').trim());
+  const out = parts.map(part => {
+    const cm = part.substring(0, 300).match(/Content-Type:\s*multipart\/mixed;\s*boundary=([^\s;]+)/i);
+    if (cm) {   // change set that succeeded (or failed, depending on the server): one answer per request
+      const inner = splitMultipart(part, cm[1].replace(/"/g, '')).map(parseHttp);
+      const bad = inner.find(x => x.status >= 300);
+      return { status: bad ? bad.status : 200, body: bad ? bad.body : null, responses: inner };
+    }
+    const one = parseHttp(part);
+    return Object.assign(one, { responses: [one] });   // a failed change set comes back as a single error answer
+  });
+  if (out.length > groups.length) throw new Error(`$batch → ${out.length} responses for ${groups.length} groups`);
+  return out;
+}
+// Sends all groups; if SAP stopped at a failure, only the unprocessed rest is sent again
+async function batchAll(groups) {
+  const out = []; let rest = groups;
+  while (rest.length) {
+    const part = await batch(rest);
+    if (!part.length) { rest.forEach(() => out.push({ status: 0, body: { error: { message: 'not processed' } }, responses: [] })); break; }
+    out.push(...part); rest = rest.slice(part.length);
+  }
+  return out;
+}
+
+/* ------------------------------------------------------------------ */
+/* Connection test                                                    */
+/* ------------------------------------------------------------------ */
+async function testConnection() {
+  const st = $('connState'); st.textContent = 'testing…'; st.className = 'muted';
+  log(`Testing ${withParams(base())}`);
+  try {
+    await fetchToken();
+    const r = await fetch(withParams(base() + '$metadata'), { credentials: 'include' });
+    const t = await r.text();
+    if (!r.ok) throw new Error(`$metadata: HTTP ${r.status}${authHint(r.status)}`);
+    if (looksLikeLogonPage(r, t)) throw new Error('$metadata returned a logon page.');
+    const md = new DOMParser().parseFromString(t, 'application/xml');
+    readKeys(md); schema = parseSchema(md);
+    if (!schema.Product_Type) throw new Error('$metadata has no Product_Type: this is not the Product API.');
+    const ns = (md.getElementsByTagName('Schema')[0] || { getAttribute: () => '' }).getAttribute('Namespace');
+    log(`Service reachable: ${ns}, ${Object.keys(schema).length} entity types.`, 'ok');
+    const zz = Object.keys(schema.Product_Type.props).filter(p => p.startsWith('ZZ1_'));
+    log(`Custom fields on Product: ${zz.join(', ') || 'none'}`);
+    const wanted = Object.values(NODE.Product.fields).filter(p => p.startsWith('ZZ1_') && !zz.includes(p));
+    if (wanted.length) log(`Template custom fields not in this service (not sent): ${wanted.join(', ')}`, 'warn');
+    try {
+      const u = await fetch('/sap/bc/ui2/start_up' + ($('client').value.trim() ? '?sap-client=' + encodeURIComponent($('client').value.trim()) : ''), { credentials: 'include', headers: { Accept: 'application/json' } });
+      if (u.ok) { const j = await u.json(); if (j && j.id) log(`Requests run under SAP user ${j.id}${j.client ? ', client ' + j.client : ''}.`, 'ok'); }
+    } catch (e) { /* optional */ }
+    st.textContent = 'OK'; st.className = 'ok';
+    if (sheets.S_MARA) rebuild();
+  } catch (e) { st.textContent = 'error'; st.className = 'err'; log(e.message, 'err'); }
+}
+
+/* ------------------------------------------------------------------ */
+/* Grid                                                               */
+/* ------------------------------------------------------------------ */
+function apiOf(sheet, field) {
+  const hits = TREE.filter(n => n.sheet === sheet && (n.fields[field] || (n.carry && n.carry[field]))).map(n => {
+    const p = n.fields[field] || n.carry[field];
+    return p.startsWith('(') ? `${n.nav || n.id} ${p}` : `${n.id === 'Product' ? '' : (n.nav || '') + '.'}${p}`;
+  });
+  return [...new Set(hits)].join(', ');
+}
+function renderTabs() {
+  const tabs = $('tabs'); tabs.innerHTML = '';
+  for (const s of Object.keys(sheets)) {
+    if (!SHEET_TAB[s] && !sheets[s].rows.length) continue;
+    const b = document.createElement('button');
+    b.textContent = `${SHEET_TAB[s] || sheets[s].name} (${sheets[s].rows.length})`;
+    b.className = (s === activeTab ? 'on' : '') + (sheets[s].rows.length ? '' : ' empty');
+    b.onclick = () => { activeTab = s; renderTabs(); renderGrid(); };
+    tabs.appendChild(b);
+  }
+}
+const MAX_GRID_ROWS = 500;
+function renderGrid() {
+  const sh = sheets[activeTab]; const grid = $('grid');
+  if (!sh) { grid.innerHTML = '<div class="muted" style="padding:8px">No data.</div>'; return; }
+  const isHdr = activeTab === 'S_MARA';
+  const t = document.createElement('table'); const hr = t.insertRow();
+  const th = (html, cls) => { const c = document.createElement('th'); c.innerHTML = html; if (cls) c.className = cls; hr.appendChild(c); };
+  th('✓');
+  if (isHdr) { th('Status'); th('SAP product<span class="api">target for Change</span>'); }
+  for (const f of sh.fields) {
+    const api = NOT_SUPPORTED[activeTab] ? '' : apiOf(activeTab, f);
+    th(`${f}<span class="api">${api || '— not in API'}</span>`, api ? '' : 'unmapped');
+  }
+  const flt = $('gridFilter').value.trim().toUpperCase();
+  const rows = flt ? sh.rows.filter(r => prodOf(r).toUpperCase().includes(flt)) : sh.rows;
+  const shown = rows.slice(0, MAX_GRID_ROWS);
+  $('gridInfo').textContent = `${shown.length} of ${rows.length} row(s) shown` + (rows.length > MAX_GRID_ROWS ? ` (max ${MAX_GRID_ROWS}; use the filter)` : '');
+  shown.forEach(r => {
+    const tr = t.insertRow();
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = r.include; cb.onchange = () => r.include = cb.checked;
+    tr.insertCell().appendChild(cb);
+    if (isHdr) {
+      const st = tr.insertCell(); st.className = 'st ' + (r.statusCls || ''); st.textContent = r.status || ''; r.statusEl = st;
+      const inp = document.createElement('input'); inp.value = r.target || ''; inp.oninput = () => r.target = inp.value.trim(); tr.insertCell().appendChild(inp);
+    }
+    for (const f of sh.fields) {
+      const c = r.cells[f]; const inp = document.createElement('input'); inp.value = c.value; inp.title = f;
+      if (c.value !== c.orig) inp.className = 'dirty';
+      inp.oninput = () => { c.value = inp.value; inp.className = c.value !== c.orig ? 'dirty' : ''; };
+      tr.insertCell().appendChild(inp);
+    }
+  });
+  grid.innerHTML = ''; grid.appendChild(t);
+}
+function rebuild() { buildIndex(); renderTabs(); renderGrid(); }
+
+/* ------------------------------------------------------------------ */
+/* File load / export                                                 */
+/* ------------------------------------------------------------------ */
+$('file').onchange = async ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  fileName = f.name;
+  try {
+    const res = parseWorkbook(await f.text());
+    xmlDoc = res.doc; sheets = res.sheets; results.clear();
+    if (!sheets.S_MARA) throw new Error('No sheet with structure S_MARA found — is this the Migration Cockpit template "Product"?');
+    buildIndex();
+    sheets.S_MARA.rows.forEach(r => { r.target = $('extNum').checked ? prodOf(r) : ''; });
+    $('fileInfo').innerHTML = `<b>${f.name}</b><br>` + Object.entries(sheets).filter(([, v]) => v.rows.length)
+      .map(([s, v]) => `<span class="pill${NOT_SUPPORTED[s] ? ' none' : ''}">${v.name}: ${v.rows.length}</span>`).join('') || 'no data rows';
+    for (const [s, what] of Object.entries(NOT_SUPPORTED)) if (sheets[s] && sheets[s].rows.length) log(`Sheet "${sheets[s].name}" has ${sheets[s].rows.length} row(s): ${what} has no entity in the Product API — not sent.`, 'warn');
+    const heads = new Set(sheets.S_MARA.rows.map(prodOf));
+    for (const [s, m] of Object.entries(index)) {
+      if (s === 'S_MARA' || NOT_SUPPORTED[s]) continue;
+      const orphans = [...m.keys()].filter(k => !heads.has(k));
+      if (orphans.length) log(`Sheet "${sheets[s].name}": rows for ${orphans.length} product(s) without Basic Data row (e.g. ${orphans.slice(0, 3).join(', ')}) — not sent.`, 'warn');
+    }
+    const dup = sheets.S_MARA.rows.length - heads.size;
+    if (dup) log(`${dup} duplicate product number(s) in Basic Data.`, 'warn');
+    if (sheets.S_MLAN && sheets.S_MLAN.rows.length) log('Tax classification rows are sent under every distribution chain of the product (the API keeps sales tax per sales organization / distribution channel).', 'warn');
+    activeTab = 'S_MARA'; renderTabs(); renderGrid();
+    ['btnDry', 'btnRun', 'btnExport', 'btnResults'].forEach(id => $(id).disabled = false);
+    log(`File loaded: ${sheets.S_MARA.rows.length} product(s).`, 'ok');
+    if (!sheets.S_MARA.rows.length) log('Basic Data has no rows.', 'warn');
+  } catch (e) { log(e.message, 'err'); }
+};
+function setCell(rowEl, colIdx, value, typeInfo) {
+  const cells = rowCells(rowEl); const hit = cells.find(c => c.idx === colIdx);
+  const isDate = typeInfo && typeInfo[0] === 'EDA', isNum = typeInfo && typeInfo[0] === 'ENU';
+  const txt = isDate && value ? value + 'T00:00:00.000' : value;
+  const ssType = isDate ? 'DateTime' : (isNum ? 'Number' : 'String');
+  if (hit) {
+    let d = [...hit.el.children].find(n => n.localName === 'Data');
+    if (value === '') { if (d) hit.el.removeChild(d); return; }
+    if (!d) { d = xmlDoc.createElementNS(SS, 'Data'); d.setAttributeNS(SS, 'ss:Type', ssType); hit.el.appendChild(d); }
+    d.textContent = txt; return;
+  }
+  if (value === '') return;
+  const c = xmlDoc.createElementNS(SS, 'Cell'); c.setAttributeNS(SS, 'ss:Index', String(colIdx + 1));
+  const d = xmlDoc.createElementNS(SS, 'Data'); d.setAttributeNS(SS, 'ss:Type', ssType); d.textContent = txt; c.appendChild(d);
+  const next = cells.find(x => x.idx > colIdx);
+  if (next) { next.el.setAttributeNS(SS, 'ss:Index', String(next.idx + 1)); rowEl.insertBefore(c, next.el); } else rowEl.appendChild(c);
+}
+$('btnExport').onclick = () => {
+  let n = 0;
+  for (const sh of Object.values(sheets)) for (const r of sh.rows) for (const f of sh.fields) {
+    const c = r.cells[f]; if (c.value === c.orig) continue; setCell(r.el, sh.colOf[f], c.value, sh.types[f]); n++;
+  }
+  const xml = '<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n' + new XMLSerializer().serializeToString(xmlDoc.documentElement);
+  download(fileName.replace(/\.xml$/i, '') + '_changed.xml', xml, 'application/xml');
+  log(`XML saved with ${n} changed cell(s).`, 'ok');
+};
+
+/* ------------------------------------------------------------------ */
+/* Change / step-wise create: compare with SAP, build one change set   */
+/* ------------------------------------------------------------------ */
+function keyPath(set, obj, keys) { return `${set}(${keys.map(k => `${k}=${q(obj[k])}`).join(',')})`; }
+let schemaKeys = {};   // entity type -> key properties, in $metadata order
+function keysOf(type) { return schemaKeys[type] || []; }
+function readKeys(md) {
+  schemaKeys = {};
+  for (const et of md.getElementsByTagName('EntityType')) schemaKeys[et.getAttribute('Name')] = [...et.getElementsByTagName('PropertyRef')].map(p => p.getAttribute('Name'));
+}
+function setOfType(type) {
+  // Entity set name = type name without "_Type", except the one SAP abbreviates
+  return { ProdPlntInternationalTrade_Type: 'ProductPlantInternationalTrade', ProductPlantInspTypSetting_Type: 'ProductPlantInspTypeSetting' }[type] || type.replace(/_Type$/, '');
+}
+function entityUrl(type, cur) { return keyPath(setOfType(type), cur, keysOf(type)); }
+function expandFor(item) {
+  const parts = Object.entries(item.children).map(([nav, c]) => {
+    const sub = (Array.isArray(c) ? c : [c]).reduce((acc, x) => { Object.keys(x.children).forEach(k => acc[k] = acc[k] || x.children[k]); return acc; }, {});
+    const inner = expandFor({ children: sub });
+    return inner ? `${nav}($expand=${inner})` : nav;
+  });
+  return parts.join(',');
+}
+function same(a, b) {
+  if (typeof a === 'number' || typeof b === 'number') return Number(a) === Number(b);
+  if (typeof a === 'boolean' || typeof b === 'boolean') return Boolean(a) === Boolean(b);
+  return String(a ?? '').trim() === String(b ?? '').trim();
+}
+function ifMatch(cur) { return { 'If-Match': (cur && cur['@odata.etag']) || '*' }; }
+// Compares the desired tree with the current state from SAP and returns the requests for one change set
+function diffOps(item, cur, url, ops, label) {
+  const type = typeOf(item.node); const keys = keysOf(type);
+  const d = {};
+  for (const [k, v] of Object.entries(item.data)) if (!keys.includes(k) && !same(v, cur[k])) d[k] = v;
+  if (Object.keys(d).length) ops.push({ method: 'PATCH', path: url, body: d, headers: ifMatch(cur), label: `${label}: ${Object.keys(d).join(', ')}` });
+  for (const [nav, c] of Object.entries(item.children)) {
+    const node = NODE[(Array.isArray(c) ? c[0] : c).node];
+    const curC = cur[nav];
+    if (!node.many) {
+      if (curC) diffOps(c, curC, `${url}/${nav}`, ops, `${label} ${nav}`);
+      else ops.push({ method: 'POST', path: `${url}/${nav}`, body: toPayload(c), label: `${label} ${nav} created` });
+      continue;
+    }
+    for (const it of c) {
+      const ex = (curC || []).find(x => node.match.every(k => same(it.data[k], x[k])));
+      const tag = node.match.map(k => it.data[k]).join('/');
+      if (ex) diffOps(it, ex, entityUrl(typeOf(node.id), ex), ops, `${label} ${nav}(${tag})`);
+      else ops.push({ method: 'POST', path: `${url}/${nav}`, body: toPayload(it), label: `${label} ${nav}(${tag}) created` });
+    }
+  }
+  return ops;
+}
+async function readCurrent(item, product) {
+  const exp = expandFor(item);
+  return await call('GET', `${keyPath('Product', { Product: product }, ['Product'])}${exp ? '?$expand=' + exp : ''}`);
+}
+
+/* ------------------------------------------------------------------ */
+/* Run                                                                */
+/* ------------------------------------------------------------------ */
+function selected() { return (sheets.S_MARA ? sheets.S_MARA.rows : []).filter(r => r.include); }
+function mode() { return document.querySelector('input[name=mode]:checked').value; }
+function setStatus(r, text, cls) { r.status = text; r.statusCls = cls; if (r.statusEl && r.statusEl.isConnected) { r.statusEl.textContent = text; r.statusEl.className = 'st ' + (cls || ''); } }
+function result(h) {
+  const k = prodOf(h); let r = results.get(k);
+  if (!r) { r = { src: k, product: '', status: 'open', steps: 0, message: '' }; results.set(k, r); }
+  return r;
+}
+function finish(h, status, product, message, steps) {
+  const r = result(h); Object.assign(r, { status, product: product || r.product, message: message || '', steps: steps || 0 });
+  if (product) h.target = product;
+  setStatus(h, status === 'done' ? `${mode() === 'create' ? 'created' : 'changed'} ${product || ''}${steps !== undefined && mode() === 'change' ? ' (' + steps + ')' : ''}` : status === 'partial' ? `partial ${product}` : 'error', status === 'done' ? 'ok' : 'err');
+}
+
+// Rows that miss an identifying field (e.g. a plant row without plant) cannot be created
+function missingKeys(item, path, issues) {
+  for (const c of Object.values(item.children)) for (const it of (Array.isArray(c) ? c : [c])) {
+    const n = NODE[it.node];
+    (n.match || []).filter(k => k !== 'ValuationType').forEach(k => { if (it.data[k] === undefined || it.data[k] === '') issues.push(`${path}.${n.nav}: ${k} is empty`); });
+    missingKeys(it, `${path}.${n.nav}`, issues);
+  }
+}
+function validateAll(hs) {
+  if (!schema) { log('No $metadata loaded: click "Test connection" first.', 'warn'); return -1; }
+  missingProps.clear(); let total = 0;
+  for (const h of hs) {
+    const item = buildProduct(h); const issues = [];
+    validateObject('Product_Type', toPayload(item), prodOf(h), issues); missingKeys(item, prodOf(h), issues);
+    if (total < 200) issues.forEach(i => log('  ' + i, 'err'));
+    total += issues.length;
+  }
+  for (const [k, n] of missingProps) log(`Template column filled in ${n} row(s), but ${k} is not in this service — not sent.`, 'warn');
+  log(total ? `Validation against $metadata: ${total} problem(s).` : 'Validation against $metadata: no problems.', total ? 'warn' : 'ok');
+  return total;
+}
+$('btnDry').onclick = () => {
+  buildIndex(); const hs = selected();
+  if (validateAll(hs) < 0) return;
+  hs.slice(0, 3).forEach(h => logBlock(`POST Product — source ${prodOf(h)}`, toPayload(buildProduct(h))));
+  if (hs.length > 3) log(`Payload shown for the first 3 of ${hs.length} selected products.`);
+};
+
+async function createDeep(chunk) {
+  const groups = chunk.map(h => ({ req: { method: 'POST', path: 'Product', body: toPayload(buildProduct(h)) } }));
+  let answers;
+  try { answers = await batchAll(groups); }
+  catch (e) { if (/logon page/.test(e.message)) throw e; log(`$batch failed (${e.message}); products one by one`, 'warn');
+    answers = [];
+    for (const g of groups) { try { answers.push({ status: 201, body: await call('POST', 'Product', g.req.body) }); } catch (e2) { answers.push({ status: 500, body: { error: { message: e2.message } } }); } }
+  }
+  chunk.forEach((h, i) => {
+    const a = answers[i] || { status: 0 };
+    if (a.status >= 200 && a.status < 300) { finish(h, 'done', a.body && a.body.Product); log(`${prodOf(h)} → created as ${a.body && a.body.Product}`, 'ok'); }
+    else { finish(h, 'failed', '', errText(a.body, a.status)); log(`${prodOf(h)}: ${errText(a.body, a.status)}`, 'err'); }
+  });
+}
+async function upsert(h, item, product, createdNow) {
+  const cur = await readCurrent(item, product);
+  const ops = diffOps(item, cur, keyPath('Product', { Product: product }, ['Product']), [], product);
+  // All PATCHes share the product's ETag (LastChangeDateTime). The first one carries it; the rest of the change set
+  // uses "*" because the first change already moves the timestamp. The change set is atomic, so the check stays effective.
+  let seen = false; ops.forEach(o => { if (o.headers && o.headers['If-Match']) { if (seen) o.headers = { 'If-Match': '*' }; seen = true; } });
+  if (!ops.length) { finish(h, 'done', product, 'no differences', 0); log(`${prodOf(h)} → ${product}: no differences`, 'ok'); return; }
+  const [a] = await batchAll([{ changeset: ops.map(o => ({ method: o.method, path: o.path, body: o.body, headers: o.headers })) }]);
+  if (a.status >= 200 && a.status < 300) {
+    ops.forEach(o => log(`  ${o.label}`));
+    finish(h, 'done', product, '', ops.length); log(`${prodOf(h)} → ${product}: ${ops.length} change(s)`, 'ok');
+  } else {
+    const msg = errText(a.body, a.status);
+    finish(h, createdNow ? 'partial' : 'failed', product, msg); log(`${prodOf(h)} → ${product}: change set rejected, nothing of it saved — ${msg}`, 'err');
+    logBlock(`Change set for ${product}`, ops);
+  }
+}
+async function runOne(h) {
+  const item = buildProduct(h);
+  if (mode() === 'change') {
+    const product = h.target || prodOf(h);
+    if (!product) throw new Error('SAP product empty.');
+    delete item.data.Product;
+    await upsert(h, item, product, false);
+    return;
+  }
+  // step-wise create: product (basic data only) first, then everything else as one change set
+  const rootOnly = { ...item.data };
+  const created = await call('POST', 'Product', rootOnly);
+  const product = created.Product; result(h).product = product; result(h).status = 'partial'; h.target = product;
+  log(`  ${prodOf(h)}: basic data created as ${product}`);
+  delete item.data.Product;
+  item.data = {};   // basic data is in SAP now; only the views are compared
+  await upsert(h, item, product, true);
+}
+
+$('btnRun').onclick = async () => {
+  buildIndex();
+  const m = mode();
+  const hs = selected().filter(h => !(m === 'create' && results.get(prodOf(h)) && results.get(prodOf(h)).status === 'done'));
+  if (!hs.length) return log('Nothing to do: no products selected, or all are done already.', 'warn');
+  if (!schema) await testConnection();
+  if (!schema) return;
+  const parallel = Math.max(1, Math.min(16, parseInt($('parallel').value, 10) || 1));
+  const size = Math.max(1, parseInt($('batchSize').value, 10) || 1);
+  stopRequested = false; $('btnRun').disabled = true; $('btnStop').disabled = false;
+  const t0 = Date.now(); let finished = 0;
+  const progress = () => {
+    const sec = (Date.now() - t0) / 1000, rate = finished / Math.max(sec, 1);
+    const st = [...results.values()]; const ok = st.filter(r => r.status === 'done').length;
+    const eta = rate > 0 ? Math.round((hs.length - finished) / rate / 60) : '?';
+    $('progress').textContent = `${finished}/${hs.length} products · ${ok} ok, ${st.filter(r => r.status === 'failed' || r.status === 'partial').length} with errors · ${rate.toFixed(2)}/s · ETA ${eta} min`;
+  };
+  try {
+    await fetchToken();
+    validateAll(hs);
+    const deep = m === 'create' && $('createMethod').value === 'deep';
+    const queue = []; for (let i = 0; i < hs.length; i += deep ? size : 1) queue.push(hs.slice(i, i + (deep ? size : 1)));
+    const worker = async () => {
+      while (queue.length && !stopRequested) {
+        const chunk = queue.shift();
+        if (deep) await createDeep(chunk);
+        else for (const h of chunk) {
+          try { await runOne(h); }
+          catch (e) {
+            const r = result(h); finish(h, r.product ? 'partial' : 'failed', r.product, e.message); log(`${prodOf(h)}: ${e.message}`, 'err');
+            if (/logon page|session expired/i.test(e.message)) { stopRequested = true; log('Stopped: the SAP session is no longer valid. Download the results, reload the launchpad, load file and results again.', 'err'); }
+          }
+        }
+        finished += chunk.length; progress();
+      }
+    };
+    await Promise.all(Array.from({ length: parallel }, worker));
+    const st = [...results.values()];
+    log(`${stopRequested ? 'Stopped' : 'Done'}: ${st.filter(r => r.status === 'done').length} ok, ${st.filter(r => r.status !== 'done' && r.status !== 'open').length} with errors, ${hs.length - finished} not processed. ${Math.round((Date.now() - t0) / 1000)} s.`,
+      stopRequested || st.some(r => r.status === 'failed' || r.status === 'partial') ? 'warn' : 'ok');
+  } catch (e) { log(e.message, 'err'); if (/logon page/.test(e.message)) stopRequested = true; }
+  finally { $('btnRun').disabled = false; $('btnStop').disabled = true; progress(); renderGrid(); }
+};
+
+/* ------------------------------------------------------------------ */
+/* Results file and resume                                            */
+/* ------------------------------------------------------------------ */
+const RES_COLS = ['src', 'product', 'status', 'steps', 'message'];
+function csvCell(v) { v = String(v ?? ''); return /[;"\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+$('btnResults').onclick = () => {
+  const lines = [RES_COLS.join(';')]; for (const r of results.values()) lines.push(RES_COLS.map(c => csvCell(r[c])).join(';'));
+  download(fileName.replace(/\.xml$/i, '') + '_results.csv', '﻿' + lines.join('\r\n'), 'text/csv');
+};
+function parseCsv(text) {
+  const rows = []; let row = [], cur = '', inq = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inq) { if (ch === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else inq = false; } else cur += ch; }
+    else if (ch === '"') inq = true; else if (ch === ';') { row.push(cur); cur = ''; }
+    else if (ch === '\n') { row.push(cur.replace(/\r$/, '')); rows.push(row); row = []; cur = ''; } else cur += ch;
+  }
+  if (cur || row.length) { row.push(cur); rows.push(row); }
+  return rows;
+}
+$('resFile').onchange = async ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  if (!sheets.S_MARA) return log('Load the XML file first, then the results.', 'warn');
+  const rows = parseCsv((await f.text()).replace(/^﻿/, '')); const head = rows.shift(); let done = 0, partial = 0;
+  for (const cols of rows) { if (cols.length < 2) continue; const r = {}; head.forEach((h, i) => r[h] = cols[i] || ''); results.set(r.src, r); }
+  for (const h of sheets.S_MARA.rows) {
+    const r = results.get(prodOf(h)); if (!r) continue;
+    if (r.product) h.target = r.product;
+    if (r.status === 'done') { h.include = false; setStatus(h, `done ${r.product}`, 'ok'); done++; }
+    else if (r.status === 'partial') { setStatus(h, `partial ${r.product}`, 'err'); partial++; }
+  }
+  renderGrid(); log(`Results loaded: ${done} done (deselected), ${partial} partial — complete those with "Change".`, 'ok');
+};
+
+$('btnStop').onclick = () => { stopRequested = true; log('Stop requested: running requests finish, no new ones start.', 'warn'); };
+$('btnLog').onclick = () => download('matmass_log.txt', fullLog.join('\r\n'));
+$('btnClear').onclick = () => { logEl.innerHTML = ''; fullLog.length = 0; };
+$('gridFilter').oninput = () => renderGrid();
+$('btnSelAll').onclick = () => { const sh = sheets[activeTab]; if (sh) sh.rows.forEach(r => r.include = true); renderGrid(); };
+$('btnSelNone').onclick = () => { const sh = sheets[activeTab]; if (sh) sh.rows.forEach(r => r.include = false); renderGrid(); };
+$('btnTest').onclick = testConnection;
+$('extNum').onchange = () => { if (sheets.S_MARA) sheets.S_MARA.rows.forEach(r => { if (!r.target && $('extNum').checked) r.target = prodOf(r); }); renderGrid(); };
+
+// In the launchpad the session exists already: test right away
+if (location.protocol !== 'file:') testConnection();
+</script>
+</body>
+</html>
