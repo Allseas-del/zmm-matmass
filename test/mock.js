@@ -3,7 +3,7 @@
 'use strict';
 const http = require('http'), fs = require('fs'), path = require('path'), vm = require('vm');
 const PORT = parseInt(process.env.PORT || '8099', 10);
-const SVC = '/sap/opu/odata4/sap/api_product_2/srvd_a2x/sap/product/0001/';
+const SVC = '/sap/opu/odata4/sap/api_product/srvd_a2x/sap/product/0002/';
 const TOOL = path.join(__dirname, '../webapp/tool.html');
 
 // --- property lists taken from the tool's own mapping table (what the tool can send) plus keys/computed fields
