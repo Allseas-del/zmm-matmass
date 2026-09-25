@@ -27,7 +27,7 @@
 <table class="meta">
 <tr><td>Customer</td><td>Allseas – S/4HANA 2023 FPS01, DS4 (build 400, test 410) → QS4 → PS4</td></tr>
 <tr><td>Author</td><td>Pjotr Dassen</td></tr>
-<tr><td>Version</td><td>0.1 (draft – mapping pending)</td></tr>
+<tr><td>Version</td><td>0.2 (draft – API structure from $metadata; template mapping pending)</td></tr>
 <tr><td>Date</td><td>25 September 2026</td></tr>
 <tr><td>Package / transport</td><td><code>ZMM_MATMASS</code> / <code>DS4K915674</code></td></tr>
 <tr><td>Repository</td><td><code>C:\dev\zmm-matmass</code> – github.com/Allseas-del/zmm-matmass</td></tr>
@@ -68,9 +68,33 @@
 <p>Same layout as the task list tool: Connection, File, Data (editable grid per sheet, max. 500 rows shown, filter on material), Execute, Log. Connection is reduced to sap-client and service path; host and logon come from the launchpad.</p>
 
 <h3>5. Data: template and mapping</h3>
-<div class="note"><span class="open">Pending.</span> Needs (a) the LTMC product template with sample rows and (b) the <code>$metadata</code> of the Product V4 service on DS4. Property names are taken from the real metadata only.</div>
-<p>Principle: each template sheet is identified by its structure name (row 4) and field names (row 5); child rows are linked to the header through the source material number. With internal numbering the material number is assigned by SAP and returned in the results.</p>
-
+<div class="note"><span class="open">Template pending.</span> The field-level mapping follows once the LTMC product template with sample rows is available. The API side below is taken from the live <code>$metadata</code> of DS4/400 (25 Sep 2026).</div>
+<h4>5.1 API structure (service definition API_PRODUCT_2, version 0001)</h4>
+<table>
+<tr><th>Entity (API)</th><th>Key</th><th>Table (functional)</th><th>Created via</th></tr>
+<tr><td>Product</td><td>Product</td><td>MARA</td><td>POST <code>Product</code> (only root that is insertable)</td></tr>
+<tr><td>ProductDescription</td><td>Product, Language</td><td>MAKT</td><td>…/_ProductDescription (Language required)</td></tr>
+<tr><td>ProductUnitOfMeasure / …EAN</td><td>Product, AlternativeUnit (/ConsecutiveNumber)</td><td>MARM / MEAN</td><td>…/_ProductUnitOfMeasure, …/_ProductUnitOfMeasureEAN</td></tr>
+<tr><td>ProductProcurement, ProductSales, ProductStorage, ProductQualityManagement</td><td>Product (1:1)</td><td>MARA (view-specific fields)</td><td>…/_ProductProcurement etc.</td></tr>
+<tr><td>ProductPlant</td><td>Product, Plant</td><td>MARC</td><td>…/_ProductPlant (Plant required)</td></tr>
+<tr><td>ProductPlantSupplyPlanning, …Procurement, …Storage, …Sales, …WorkScheduling, …Costing, …Forecast, …QualityManagement, ProductPlantInternationalTrade</td><td>Product, Plant (1:1 to plant)</td><td>MARC (view-specific fields)</td><td>ProductPlant(…)/_ProductPlantSupplyPlanning etc.</td></tr>
+<tr><td>ProductPlantMRP</td><td>Product, MRPArea, Plant</td><td>MDMA</td><td>ProductPlant(…)/_ProductPlantMRP</td></tr>
+<tr><td>ProductPlantStorageLocation</td><td>Product, Plant, StorageLocation</td><td>MARD</td><td>ProductPlant(…)/_ProductPlantStorageLocation</td></tr>
+<tr><td>ProductPlantPurchaseTax, ProductPlantInspTypeSetting</td><td>+ DepartureCountry / InspectionLotType</td><td>MLAN / QMAT</td><td>ProductPlant(…)/…</td></tr>
+<tr><td>ProductValuation (+ Accounting, Costing, LedgerAccount, LedgerPrices)</td><td>Product, ValuationArea, ValuationType</td><td>MBEW / CKMLCR</td><td>…/_ProductValuation (ValuationArea required)</td></tr>
+<tr><td>ProductSalesDelivery (+ SalesTax)</td><td>Product, SalesOrg, DistributionChannel</td><td>MVKE / MLAN</td><td>…/_ProductSalesDelivery</td></tr>
+<tr><td>ProductEWMWarehouse (+ StorageType)</td><td>Product, EWMWarehouse, EntitledToDisposeParty</td><td>/SCWM/…</td><td>…/_ProductEWMWarehouse</td></tr>
+</table>
+<h4>5.2 Consequences for the tool (from $metadata)</h4>
+<table>
+<tr><th>Fact in $metadata</th><th>Consequence</th></tr>
+<tr><td>Every entity set except <code>Product</code> has <code>Insertable=false</code>; children are insertable only through the navigation of their parent (NavigationRestrictions).</td><td>Unlike the task list tool, children cannot be posted to their own entity set. Create = deep insert of the root with its compositions, or POST per navigation path (<code>Product('X')/_ProductPlant</code>, <code>ProductPlant(Product='X',Plant='P')/_ProductPlantSupplyPlanning</code>). Both are built; which one DS4 accepts is decided in the unit test.</td></tr>
+<tr><td><code>Product/Product</code> is <code>Immutable</code>, not <code>Computed</code>.</td><td>The material number can be sent on create (external numbering). Whether internal numbering is used at Allseas for the material types in scope: <span class="open">open point</span>.</td></tr>
+<tr><td><code>OptimisticConcurrency</code> on <code>LastChangeDateTime</code> (root) and <code>_Product/LastChangeDateTime</code> (all children).</td><td>PATCH needs <code>If-Match</code> with the ETag of the product; the ETag changes after every change, so change mode reads it again per product before patching.</td></tr>
+<tr><td><code>Deletable=false</code> on Product, plant, valuation, sales entities.</td><td>No deletions; deletion flags via <code>IsMarkedForDeletion</code> (PATCH).</td></tr>
+<tr><td>Units exist twice: SAP code (<code>BaseUnit</code>) and ISO code (<code>BaseISOUnit</code>); <code>ProductPlant/BaseISOUnit</code> is Computed.</td><td>ISO units from the template can be sent to the <code>…ISOUnit</code> properties, which avoids the logon-language conversion issue seen on STIHL. To be confirmed in the unit test.</td></tr>
+<tr><td>Custom fields <code>ZZ1_SERNP_PRD, ZZ1_NMOD_PRD, ZZ1_MakerSupplier_PRD, ZZ1_MATRL_PRD, ZZ1_CROSS_REF_PRD, ZZ1_WNFI_PRD</code> are exposed on Product and repeated on ProductSales, ProductProcurement, ProductStorage, ProductQualityManagement.</td><td>Sent once, on the Product root. <code>ZZ1_MFRPN_PRD</code> is <b>not</b> in this service (it is enabled for the V2 API_PRODUCT_SRV only): <span class="open">open point</span> – enable it for the V4 service in the Custom Fields app, or map the template's manufacturer part number to standard <code>ProductManufacturerNumber</code>.</td></tr>
+</table>
 <h3>6. Create mode and change mode</h3>
 <p>Create: POST the product root, then the child entities per sheet in $batch chunks with the key returned by SAP. Change: read the product with its children, PATCH only differing fields, POST missing children.</p>
 
@@ -107,7 +131,7 @@
 <tr><td>Engine (reused)</td><td>SpreadsheetML parser, index, mapper, <code>$metadata</code> validator, HTTP layer (CSRF, logon-page detection, $batch with <code>odata.continue-on-error</code>, resend of unprocessed rest), worker pool, results/resume.</td></tr>
 </table>
 <h3>11. API usage</h3>
-<p class="open">Pending $metadata.</p>
+<p>Service definition <code>API_PRODUCT_2</code>, version <code>0001</code> (namespace <code>com.sap.gateway.srvd_a2x.api_product_2.v0001</code>), OData V4, formats JSON. Service path: <span class="open">to be confirmed (URL that returned the $metadata)</span>. $batch with <code>odata.continue-on-error</code> as in the task list tool; each product and its children are sent as one unit, products in parallel workers.</p>
 <h3>12. Volume</h3>
 <p>Chunk size ("split") and parallel workers configurable; to be measured with ~100 materials in DS4/410.</p>
 
@@ -115,12 +139,14 @@
 <table>
 <tr><th>#</th><th>Point</th><th>Status</th></tr>
 <tr><td>1</td><td>LTMC product template with sample data</td><td class="open">open</td></tr>
-<tr><td>2</td><td>Product V4 service on DS4: service group, path, $metadata</td><td class="open">open</td></tr>
-<tr><td>3</td><td>ZZ1_*_PRD fields enabled for the V4 Product API (Custom Fields app)</td><td class="open">open</td></tr>
+<tr><td>2</td><td>Product V4 service on DS4: $metadata read 25 Sep 2026 (API_PRODUCT_2 v0001); exact service path / service group for S_START</td><td class="open">open</td></tr>
+<tr><td>3</td><td>ZZ1_MFRPN_PRD missing in the V4 service (other six ZZ1_*_PRD fields present)</td><td class="open">open</td></tr>
+<tr><td>6</td><td>Internal or external material numbering for the material types in scope</td><td class="open">open</td></tr>
+<tr><td>7</td><td>Deep insert vs. POST per navigation – decide in unit test</td><td class="open">open</td></tr>
 <tr><td>4</td><td>Launchpad catalog, target mapping, role; who gets S_START on the Product service</td><td class="open">open</td></tr>
 <tr><td>5</td><td>MDG bypass accepted for this load – confirm with data owner</td><td class="open">open</td></tr>
 </table>
-<p class="muted">Material Master Mass Upload – FD/TD – version 0.1 – 25 September 2026</p>
+<p class="muted">Material Master Mass Upload – FD/TD – version 0.2 – 25 September 2026</p>
 </main>
 </body>
 </html>
