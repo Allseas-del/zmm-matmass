@@ -936,12 +936,15 @@ async function createDeep(chunk) {
   });
 }
 async function upsert(h, item, product, createdNow) {
-  const cur = await readCurrent(item, product);
+  log(`  ${prodOf(h)} → ${product}: reading current data from SAP (GET with $expand)…`);
+  const t = Date.now(); const cur = await readCurrent(item, product);
+  log(`  ${prodOf(h)} → ${product}: read in ${((Date.now() - t) / 1000).toFixed(1)} s`);
   const ops = diffOps(item, cur, keyPath('Product', { Product: product }, ['Product']), [], product);
   // All PATCHes share the product's ETag (LastChangeDateTime). The first one carries it; the rest of the change set
   // uses "*" because the first change already moves the timestamp. The change set is atomic, so the check stays effective.
   let seen = false; ops.forEach(o => { if (o.headers && o.headers['If-Match']) { if (seen) o.headers = { 'If-Match': '*' }; seen = true; } });
   if (!ops.length) { finish(h, 'done', product, 'no differences', 0); log(`${prodOf(h)} → ${product}: no differences`, 'ok'); return; }
+  log(`  ${prodOf(h)} → ${product}: sending change set with ${ops.length} operation(s)…`);
   const [a] = await batchAll([{ changeset: ops.map(o => ({ method: o.method, path: o.path, body: o.body, headers: o.headers })) }]);
   if (a.status >= 200 && a.status < 300) {
     ops.forEach(o => log(`  ${o.label}`));
@@ -984,7 +987,7 @@ $('btnRun').onclick = async () => {
   const t0 = Date.now(); let finished = 0;
   const progress = () => {
     const sec = (Date.now() - t0) / 1000, rate = finished / Math.max(sec, 1);
-    const st = [...results.values()]; const ok = st.filter(r => r.status === 'done').length;
+    const st = hs.map(h => results.get(prodOf(h))).filter(Boolean); const ok = st.filter(r => r.status === 'done').length;
     const eta = rate > 0 ? Math.round((hs.length - finished) / rate / 60) : '?';
     $('progress').textContent = `${finished}/${hs.length} products · ${ok} ok, ${st.filter(r => r.status === 'failed' || r.status === 'partial').length} with errors · ${rate.toFixed(2)}/s · ETA ${eta} min`;
   };
@@ -1008,7 +1011,7 @@ $('btnRun').onclick = async () => {
       }
     };
     await Promise.all(Array.from({ length: parallel }, worker));
-    const st = [...results.values()];
+    const st = hs.map(h => results.get(prodOf(h))).filter(Boolean);
     log(`${stopRequested ? 'Stopped' : 'Done'}: ${st.filter(r => r.status === 'done').length} ok, ${st.filter(r => r.status !== 'done' && r.status !== 'open').length} with errors, ${hs.length - finished} not processed. ${Math.round((Date.now() - t0) / 1000)} s.`,
       stopRequested || st.some(r => r.status === 'failed' || r.status === 'partial') ? 'warn' : 'ok');
   } catch (e) { log(e.message, 'err'); if (/logon page/.test(e.message)) stopRequested = true; }
