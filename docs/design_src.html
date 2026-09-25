@@ -115,7 +115,7 @@
 <h4>5.3 Rules</h4>
 <table>
 <tr><th>Rule</th><th>Implementation</th></tr>
-<tr><td>Units</td><td>All template units are ISO codes and are sent to the <code>…ISOUnit</code> properties (e.g. <code>MEINS → BaseISOUnit</code>, <code>MEINH → AlternativeISOUnit</code>). No conversion table.</td></tr>
+<tr><td>Units</td><td>Template units must be ISO codes (T006-ISOCODE; e.g. SAP unit AU → C62, M → MTR) and are sent to the <code>…ISOUnit</code> properties (e.g. <code>MEINS → BaseISOUnit</code>, <code>MEINH → AlternativeISOUnit</code>). No conversion table.</td></tr>
 <tr><td>Types</td><td>Converted from the live $metadata: Decimal/Int → number (decimal comma accepted), Boolean ← <code>X</code>/true/1, Date → YYYY-MM-DD, <code>IsUpperCase</code> → upper case, <code>IsDigitSequence</code> → leading zeros. Empty cells are never sent.</td></tr>
 <tr><td>Custom fields</td><td><code>ZZ1_CROSS_REF_PRD, ZZ1_MAKERSUPPLIER_PRD (→ ZZ1_MakerSupplier_PRD), ZZ1_MATRL_PRD, ZZ1_MFRPN_PRD, ZZ1_NMOD_PRD, ZZ1_SERNP_PRD (Boolean), ZZ1_WNFI_PRD</code> on Product. ZZ1_MFRPN_PRD was added to the V4 service on 25 Sep 2026 (confirmed in $metadata). A template field whose property is not in the service is reported and skipped.</td></tr>
 <tr><td>Unit reference</td><td>SAP rejects a quantity in a child entity without the unit property of that same entity (DS4 message: <i>Together with property 'ProductPriceUnitQuantity' also property 'BaseISOUnit' needs to be provided</i>). The tool copies the product's <code>BaseISOUnit</code> (MEINS) into every child entity type that has a writable <code>BaseISOUnit</code> in $metadata (e.g. ProductValuation), and sends it along with every PATCH of such an entity.</td></tr>
@@ -204,7 +204,10 @@ __TESTS__
 <tr><td>25 Sep 2026</td><td>Deploy BSP ZMMMATMASS to DS4/400 (<code>npm run deploy</code>, transport DS4K915674)</td><td class="pass">ok</td></tr>
 <tr><td>25 Sep 2026</td><td>Connection test from client 410 (user P.DASSEN): service document, $metadata, 7 custom fields incl. ZZ1_MFRPN_PRD</td><td class="pass">ok</td></tr>
 <tr><td>25 Sep 2026</td><td>Test file "Source data for Product – testrun" (3 products, 158 plants, 411 storage locations, 158 valuations): load and dry run</td><td class="pass">ok – validation without problems</td></tr>
-<tr><td>25 Sep 2026</td><td>Run 1 Create, internal numbering, deep insert</td><td class="fail">3 × HTTP 400 <i>Together with property 'ProductPriceUnitQuantity' also property 'BaseISOUnit' needs to be provided</i> → rule "Unit reference" (5.3) added; rerun open</td></tr>
+<tr><td>25 Sep 2026</td><td>Run 1 Create, internal numbering, deep insert</td><td class="fail">3 × HTTP 400 <i>Together with property 'ProductPriceUnitQuantity' also property 'BaseISOUnit' needs to be provided</i> → rule "Unit reference" (5.3) added</td></tr>
+<tr><td>25 Sep 2026</td><td>Run 1 repeated after fix, internal numbering, deep insert</td><td class="fail">1029465, 1046670: HTTP 404 <i>Property PRODUCT is a key and cannot be initial</i>; 4502176: HTTP 400 <i>ISO unit 'AU' does not exist</i></td></tr>
+<tr><td>25 Sep 2026</td><td>Run 1 step-wise (POST Product with basic data only), internal numbering</td><td class="fail">1029465, 1046670: HTTP 400 <i>Property PRODUCT is a key and cannot be initial</i> → API_PRODUCT_2 on DS4 does not assign a number: <code>Product</code> must be sent. 4502176: <i>Error while converting ISO Unit(BaseISOUnit) to Internal Unit(BaseUnit)</i></td></tr>
+<tr><td>25 Sep 2026</td><td>T006 check of unit AU</td><td>SAP unit <code>AU</code> (Activity unit) has ISO code <code>C62</code> (not primary; no other SAP unit on C62). Template value AU is the SAP code, not the ISO code; MTR (ISO of SAP unit M) is correct.</td></tr>
 </table>
 
 <h2>16. Open points</h2>
@@ -215,7 +218,7 @@ __TESTS__
 <tr><td>3</td><td>ZZ1_MFRPN_PRD in the V4 service</td><td class="pass">closed – present in $metadata 25 Sep 2026</td></tr>
 <tr><td>4</td><td>Launchpad catalog, target mapping, role</td><td class="open">open</td></tr>
 <tr><td>5</td><td>MDG bypass and who gets write access – confirm with data owner</td><td class="open">open</td></tr>
-<tr><td>6</td><td>Internal or external material numbering for the material types in scope</td><td class="open">open</td></tr>
+<tr><td>6</td><td>Internal or external material numbering for the material types in scope</td><td class="open">DS4 25 Sep 2026: API requires <code>Product</code> (no internal numbering via API_PRODUCT_2). Open: external number range for HAWA/SERV and number source</td></tr>
 <tr><td>7</td><td>Deep insert accepted by DS4 (otherwise step-wise)</td><td class="open">integration test</td></tr>
 <tr><td>8</td><td>Tax classification (MLAN) per distribution chain – result in MLAN</td><td class="open">integration test</td></tr>
 <tr><td>9</td><td>If-Match "*" for the 2nd+ PATCH in a change set accepted by DS4</td><td class="open">integration test</td></tr>

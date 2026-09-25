@@ -181,7 +181,9 @@ function handle(method, p, body, headers) {   // returns { status, body }
     stats.post++;
     if (!body.ProductType) throw new ODataError(400, 'Enter a product type');
     if (!body.BaseISOUnit) throw new ODataError(400, 'Enter a base unit of measure');
-    const product = body.Product || String(4000000 + seq++);
+    // DS4 (25 Sep 2026): no internal number assignment through API_PRODUCT_2
+    if (!body.Product) throw new ODataError(400, 'Property PRODUCT is a key and cannot be initial');
+    const product = body.Product;
     if (store.has(product)) throw new ODataError(400, `Product ${product} already exists`);
     const prod = makeNode('Product_Type', { ...body, Product: product }, {});
     prod.data.BaseUnit = UNIT_SAP[prod.data.BaseISOUnit]; prod.data.LastChangeDateTime = stamp(); prod.data.CreatedByUser = 'TESTUSER';
