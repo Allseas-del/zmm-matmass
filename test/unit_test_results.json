@@ -100,6 +100,11 @@
   "info": ""
  },
  {
+  "name": "19a change: current state read with filtered GETs per entity set in one $batch, no $expand; PATCH only on canonical URLs",
+  "pass": true,
+  "info": "filterGets=11 expandGets=0"
+ },
+ {
   "name": "20 change without differences: nothing sent",
   "pass": true,
   "info": ""

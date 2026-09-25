@@ -325,6 +325,7 @@ function logBlock(title, obj) {
   const d = document.createElement('details'); const s = document.createElement('summary'); s.textContent = title; d.appendChild(s);
   const pre = document.createElement('pre'); pre.textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
   d.appendChild(pre); logEl.appendChild(d); logEl.scrollTop = logEl.scrollHeight;
+  fullLog.push('      ' + title + '\n' + pre.textContent);   // also in "Download full log"
 }
 function download(name, text, type) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: type || 'text/plain' }));
@@ -823,23 +824,18 @@ $('btnExport').onclick = () => {
 function keyPath(set, obj, keys) { return `${set}(${keys.map(k => `${k}=${q(obj[k])}`).join(',')})`; }
 let schemaKeys = {};   // entity type -> key properties, in $metadata order
 function keysOf(type) { return schemaKeys[type] || []; }
+let setsOfType = {};   // entity type -> entity set, from the EntityContainer in $metadata
 function readKeys(md) {
-  schemaKeys = {};
+  schemaKeys = {}; setsOfType = {};
   for (const et of md.getElementsByTagName('EntityType')) schemaKeys[et.getAttribute('Name')] = [...et.getElementsByTagName('PropertyRef')].map(p => p.getAttribute('Name'));
+  for (const es of md.getElementsByTagName('EntitySet')) { const t = (es.getAttribute('EntityType') || '').split('.').pop(); if (t && !setsOfType[t]) setsOfType[t] = es.getAttribute('Name'); }
 }
 function setOfType(type) {
-  // Entity set name = type name without "_Type", except the one SAP abbreviates
+  if (setsOfType[type]) return setsOfType[type];
+  // fallback: entity set name = type name without "_Type", except the ones SAP abbreviates
   return { ProdPlntInternationalTrade_Type: 'ProductPlantInternationalTrade', ProductPlantInspTypSetting_Type: 'ProductPlantInspTypeSetting' }[type] || type.replace(/_Type$/, '');
 }
 function entityUrl(type, cur) { return keyPath(setOfType(type), cur, keysOf(type)); }
-function expandFor(item) {
-  const parts = Object.entries(item.children).map(([nav, c]) => {
-    const sub = (Array.isArray(c) ? c : [c]).reduce((acc, x) => { Object.keys(x.children).forEach(k => acc[k] = acc[k] || x.children[k]); return acc; }, {});
-    const inner = expandFor({ children: sub });
-    return inner ? `${nav}($expand=${inner})` : nav;
-  });
-  return parts.join(',');
-}
 function same(a, b) {
   if (typeof a === 'number' || typeof b === 'number') return Number(a) === Number(b);
   if (typeof a === 'boolean' || typeof b === 'boolean') return Boolean(a) === Boolean(b);
@@ -858,7 +854,8 @@ function diffOps(item, cur, url, ops, label) {
     const node = NODE[(Array.isArray(c) ? c[0] : c).node];
     const curC = cur[nav];
     if (!node.many) {
-      if (curC) diffOps(c, curC, `${url}/${nav}`, ops, `${label} ${nav}`);
+      // DS4 only accepts modifying requests on the canonical URL or one containment navigation from it
+      if (curC) diffOps(c, curC, entityUrl(typeOf(c.node), curC), ops, `${label} ${nav}`);
       else ops.push({ method: 'POST', path: `${url}/${nav}`, body: toPayload(c), label: `${label} ${nav} created` });
       continue;
     }
@@ -871,9 +868,45 @@ function diffOps(item, cur, url, ops, label) {
   }
   return ops;
 }
+// Reads the current state of one product: one $batch with a GET per entity set (filtered on Product), no $expand.
+// A single GET with a nested $expand took 260 s on DS4 for a product with 51 plants (25 Sep 2026).
+function usedNodes(item, acc = new Set()) {
+  acc.add(item.node);
+  for (const c of Object.values(item.children)) (Array.isArray(c) ? c : [c]).forEach(x => usedNodes(x, acc));
+  return acc;
+}
+async function readAll(path) {   // follows server-side paging
+  const rows = []; let next = path;
+  while (next) { const j = await call('GET', next); rows.push(...((j && j.value) || [])); next = j && j['@odata.nextLink']; }
+  return rows;
+}
 async function readCurrent(item, product) {
-  const exp = expandFor(item);
-  return await call('GET', `${keyPath('Product', { Product: product }, ['Product'])}${exp ? '?$expand=' + exp : ''}`);
+  const nodes = [...usedNodes(item)].filter(n => n !== 'Product');
+  const types = [...new Set(nodes.map(typeOf).filter(Boolean))];
+  const filter = `?$filter=Product%20eq%20${q(product)}`;   // no spaces: the path goes into the $batch request line
+  const reqs = [{ req: { method: 'GET', path: keyPath('Product', { Product: product }, ['Product']) } },
+    ...types.map(t => ({ req: { method: 'GET', path: setOfType(t) + filter } }))];
+  const answers = await batchAll(reqs);
+  const [root] = answers;
+  if (!(root.status >= 200 && root.status < 300)) throw new Error(`GET Product(${product}) → ${errText(root.body, root.status)}${root.status === 404 ? ' — object does not exist in SAP' : ''}`);
+  const data = {};
+  for (let i = 0; i < types.length; i++) {
+    const a = answers[i + 1];
+    if (!(a.status >= 200 && a.status < 300)) throw new Error(`GET ${setOfType(types[i])} → ${errText(a.body, a.status)}`);
+    data[types[i]] = (a.body && a.body.value) || [];
+    if (a.body && a.body['@odata.nextLink']) data[types[i]].push(...await readAll(a.body['@odata.nextLink']));
+  }
+  // rebuild the tree as a nested $expand would have returned it: a child belongs to a parent when all parent keys match
+  const attach = (obj, nodeId) => {
+    const pt = typeOf(nodeId);
+    for (const child of TREE.filter(c => c.parent === nodeId && nodes.includes(c.id))) {
+      const rows = (data[typeOf(child.id)] || []).filter(r => keysOf(pt).every(k => same(r[k], obj[k])));
+      rows.forEach(r => attach(r, child.id));
+      if (child.many) obj[child.nav] = rows; else if (rows.length) obj[child.nav] = rows[0];
+    }
+    return obj;
+  };
+  return attach(root.body, 'Product');
 }
 
 /* ------------------------------------------------------------------ */
@@ -936,7 +969,7 @@ async function createDeep(chunk) {
   });
 }
 async function upsert(h, item, product, createdNow) {
-  log(`  ${prodOf(h)} → ${product}: reading current data from SAP (GET with $expand)…`);
+  log(`  ${prodOf(h)} → ${product}: reading current data from SAP (one $batch, one GET per entity set)…`);
   const t = Date.now(); const cur = await readCurrent(item, product);
   log(`  ${prodOf(h)} → ${product}: read in ${((Date.now() - t) / 1000).toFixed(1)} s`);
   const ops = diffOps(item, cur, keyPath('Product', { Product: product }, ['Product']), [], product);

@@ -173,6 +173,16 @@ function handle(method, p, body, headers) {   // returns { status, body }
   const [pathOnly] = p.split('?');
   if (method === 'GET') {
     stats.get++;
+    const fm = /^(\w+)$/.test(pathOnly) && decodeURIComponent(p.split('?')[1] || '').match(/\$filter=Product eq '([^']*)'/);
+    if (fm) {   // Set?$filter=Product eq '…' -> all nodes of that type in the product
+      stats.filterGets = (stats.filterGets || 0) + 1;
+      const t = TYPE_OF_SET[pathOnly]; if (!t) throw new ODataError(404, 'Entity set not found ' + pathOnly);
+      const prod = store.get(fm[1]); const out = [];
+      const walk = n => { if (n.type === t) out.push(serialize({ ...n, navs: {} }, prod)); Object.values(n.navs).forEach(v => (Array.isArray(v) ? v : [v]).forEach(walk)); };
+      if (prod) walk(prod);
+      return { status: 200, body: { value: out } };
+    }
+    if (/\$expand=/.test(decodeURIComponent(p))) stats.expandGets = (stats.expandGets || 0) + 1;
     const { node, prod, nav } = resolve(pathOnly);
     const v = nav ? node.navs[nav] : node;
     return { status: 200, body: Array.isArray(v) ? { value: v.map(x => serialize(x, prod)) } : serialize(v, prod) };
@@ -189,6 +199,9 @@ function handle(method, p, body, headers) {   // returns { status, body }
     prod.data.BaseUnit = UNIT_SAP[prod.data.BaseISOUnit]; prod.data.LastChangeDateTime = stamp(); prod.data.CreatedByUser = 'TESTUSER';
     store.set(product, prod); return { status: 201, body: serialize(prod, prod) };
   }
+  // DS4 (25 Sep 2026): modifying requests only on the canonical URL or one containment navigation from it
+  const depth = pathOnly.split('/').length - 1;
+  if ((method === 'PATCH' && depth > 0) || depth > 1) throw new ODataError(400, 'Resource path is supported only with containment navigation properties for this request type');
   const { node, prod, nav } = resolve(pathOnly);
   const im = headers['if-match'];
   if (method === 'POST') {

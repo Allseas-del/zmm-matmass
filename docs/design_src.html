@@ -133,8 +133,8 @@ __MAPPING__
 <table>
 <tr><th>Mode</th><th>Requests per product</th><th>Behaviour</th></tr>
 <tr><td>Create – deep insert (default)</td><td>1 POST <code>Product</code> with all compositions, inside a $batch package</td><td>Atomic per product: created completely or not at all.</td></tr>
-<tr><td>Create – step-wise</td><td>POST <code>Product</code> (basic data), then GET with $expand and one change set with PATCH (1:1 views that SAP creates implicitly) and POST via navigation (plants, units, valuations …)</td><td>Fallback if DS4 rejects the deep insert. If the change set fails, the product exists with basic data only (status <em>partial</em>) and is completed with Change.</td></tr>
-<tr><td>Change</td><td>GET <code>Product('X')?$expand=…</code>, then one change set</td><td>Only fields that differ are sent; missing children are created; children in SAP that are not in the file are left alone. Atomic per product.</td></tr>
+<tr><td>Create – step-wise</td><td>POST <code>Product</code> (basic data), then read the current state (see 11) and one change set with PATCH (1:1 views that SAP creates implicitly) and POST via navigation (plants, units, valuations …)</td><td>Fallback if DS4 rejects the deep insert. If the change set fails, the product exists with basic data only (status <em>partial</em>) and is completed with Change.</td></tr>
+<tr><td>Change</td><td>One $batch with a GET per entity set (<code>?$filter=Product eq 'X'</code>), then one change set</td><td>Only fields that differ are sent; missing children are created; children in SAP that are not in the file are left alone. Atomic per product.</td></tr>
 </table>
 <p>ETag: all entities share the product's <code>LastChangeDateTime</code>. The first PATCH of a change set carries the ETag read by the GET, the following ones <code>If-Match: *</code> (the first change already moves the timestamp; the change set is atomic, so the concurrency check stays effective).</p>
 
@@ -180,7 +180,8 @@ __MAPPING__
 <tr><td>CSRF / reachability</td><td><code>GET &lt;service root&gt;</code> with <code>X-CSRF-Token: Fetch</code></td></tr>
 <tr><td>Schema</td><td><code>GET $metadata</code></td></tr>
 <tr><td>Create (deep)</td><td><code>POST $batch</code> with n × <code>POST Product</code> {…, _ProductDescription:[…], _ProductPlant:[{…, _ProductPlantSupplyPlanning:{…}, _ProductPlantStorageLocation:[…]}], …}</td></tr>
-<tr><td>Read for change</td><td><code>GET Product(Product='X')?$expand=_ProductPlant($expand=…),…</code> (only the navigations present in the file)</td></tr>
+<tr><td>Read for change</td><td>One $batch: <code>GET Product(Product='X')</code> plus <code>GET &lt;EntitySet&gt;?$filter=Product eq 'X'</code> for every entity type present in the file, no $expand; server-side paging (<code>@odata.nextLink</code>) is followed. The tree is rebuilt in the browser by matching the parent keys. A nested $expand took 260 s on DS4 for a product with 51 plants.</td></tr>
+<tr><td>URLs in the change set</td><td>PATCH always on the canonical URL of the entity (<code>ProductPlantSupplyPlanning(Product='X',Plant='P')</code>); POST on the canonical URL of the parent plus one navigation (<code>ProductPlant(Product='X',Plant='P')/_ProductPlantStorageLocation</code>). DS4 rejects deeper paths: <i>Resource path is supported only with containment navigation properties for this request type</i>.</td></tr>
 <tr><td>Change</td><td><code>POST $batch</code> with one change set: <code>PATCH ProductPlant(Product='X',Plant='NL01')/_ProductPlantSupplyPlanning</code>, <code>POST ProductPlant(…)/_ProductPlantStorageLocation</code>, …</td></tr>
 </table>
 <p>Service path <code>/sap/opu/odata4/sap/api_product/srvd_a2x/sap/product/0002/</code> (confirmed on DS4/400, 25 Sep 2026; service group <code>API_PRODUCT</code>, service definition namespace <code>api_product_2</code> v0001). The field stays editable.</p>
@@ -208,6 +209,9 @@ __TESTS__
 <tr><td>25 Sep 2026</td><td>Run 1 repeated after fix, internal numbering, deep insert</td><td class="fail">1029465, 1046670: HTTP 404 <i>Property PRODUCT is a key and cannot be initial</i>; 4502176: HTTP 400 <i>ISO unit 'AU' does not exist</i></td></tr>
 <tr><td>25 Sep 2026</td><td>Run 1 step-wise (POST Product with basic data only), internal numbering</td><td class="fail">1029465, 1046670: HTTP 400 <i>Property PRODUCT is a key and cannot be initial</i> → API_PRODUCT_2 on DS4 does not assign a number: <code>Product</code> must be sent. 4502176: <i>Error while converting ISO Unit(BaseISOUnit) to Internal Unit(BaseUnit)</i></td></tr>
 <tr><td>25 Sep 2026</td><td>T006 check of unit AU</td><td>SAP unit <code>AU</code> (Activity unit) has ISO code <code>C62</code> (not primary; no other SAP unit on C62). Template value AU is the SAP code, not the ISO code; MTR (ISO of SAP unit M) is correct.</td></tr>
+<tr><td>25 Sep 2026</td><td>Create 1029465 with external number (step-wise)</td><td>HTTP 400 <i>The key value is already in use</i> – 1029465 already exists in 410</td></tr>
+<tr><td>25 Sep 2026</td><td>Change 1029465 (BISMT changed)</td><td class="fail">GET with nested $expand: 260 s. Change set (59 operations) rejected: <i>Resource path is supported only with containment navigation properties for this request type</i> (PATCH on nested navigation path) → read split into filtered GETs, PATCH on canonical URLs (see 11)</td></tr>
+<tr><td>25 Sep 2026</td><td>Change 4502176</td><td>HTTP 404 <i>Resource not found for entity 'A_PRODUCT_3'</i> – does not exist in 410</td></tr>
 </table>
 
 <h2>16. Open points</h2>

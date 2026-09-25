@@ -77,6 +77,8 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
     `groes=${p1b.SizeOrDimensionText} mrp=${p1b._ProductPlant[0]._ProductPlantSupplyPlanning.MRPType}`);
   ok('19 change: ETag handling — no 412 within the change set', st.preconditionFailed === 0 && /ZTEST-001 → ZTEST-001: 3 change\(s\)/.test(L));
   await page.click('#btnRun'); await waitIdle();
+  ok('19a change: current state read with filtered GETs per entity set in one $batch, no $expand; PATCH only on canonical URLs',
+    !st.expandGets && st.filterGets >= 5, `filterGets=${st.filterGets} expandGets=${st.expandGets || 0}`);
   ok('20 change without differences: nothing sent', /ZTEST-001 → ZTEST-001: no differences/.test(await logText()));
 
   // step-wise create for the corrected ZTEST-003
