@@ -58,7 +58,8 @@ Object.assign(T.ProductUnitOfMeasure_Type.props, { AlternativeSAPUnit: 1 });
 Object.assign(T.ProductValuation_Type.props, { BaseISOUnit: 1 });   // DS4: unit reference of ProductPriceUnitQuantity
 Object.assign(T.ProductUnitOfMeasureEAN_Type.props, { AlternativeISOUnit: 1 });
 const COMPUTED = { Product_Type: ['LastChangeDateTime', 'CreationDate', 'BaseUnit', 'CreatedByUser'], ProductUnitOfMeasure_Type: ['AlternativeUnit', 'AlternativeSAPUnit'] };
-// Properties that are keys filled from the parent (Computed in SAP)
+// Key properties that come from the parent. DS4 (25 Sep 2026): not filled by SAP in a deep insert or POST via
+// navigation — they must be in the body ('Property PLANT is a key and cannot be initial').
 function computedKeys(t) {
   if (t === 'Product_Type') return [];
   const own = { ProductDescription_Type: ['Language'], ProductUnitOfMeasureEAN_Type: ['ConsecutiveNumber'], ProductPlant_Type: ['Plant'],
@@ -90,7 +91,7 @@ function metadata() {
       const ty = edmType(p);
       x += `<Property Name="${p}" Type="${ty}"` + (ty === 'Edm.String' ? ` MaxLength="${MAXLEN[p] || (/ISOUnit|Unit$/.test(p) ? 3 : 40)}"` : '') +
         (ty === 'Edm.Decimal' ? ' Precision="13" Scale="3"' : '') + '/>';
-      if ((COMPUTED[t] || []).includes(p) || computedKeys(t).includes(p)) ann.push(`<Annotations Target="SAP__self.${t}/${p}"><Annotation Term="SAP__core.Computed"/></Annotations>`);
+      if ((COMPUTED[t] || []).includes(p)) ann.push(`<Annotations Target="SAP__self.${t}/${p}"><Annotation Term="SAP__core.Computed"/></Annotations>`);
     }
     for (const [n, [tt, many]] of Object.entries(d.navs || {})) x += `<NavigationProperty Name="${n}" Type="${many ? 'Collection(' : ''}com.sap.gateway.srvd_a2x.api_product_2.v0001.${tt}${many ? ')' : ''}"/>`;
     x += '</EntityType>';
@@ -110,7 +111,7 @@ function checkProps(t, obj, creating) {
   for (const [k, v] of Object.entries(obj)) {
     if (k.startsWith('_')) { const n = (T[t].navs || {})[k]; if (!n) throw new ODataError(400, `Property '${k}' is invalid`); continue; }
     if (!T[t].props[k]) throw new ODataError(400, `Property '${k}' is invalid`);
-    if ((COMPUTED[t] || []).includes(k) || computedKeys(t).includes(k)) throw new ODataError(400, `Property '${k}' is computed and cannot be set`);
+    if ((COMPUTED[t] || []).includes(k)) throw new ODataError(400, `Property '${k}' is computed and cannot be set`);
     const ty = edmType(k);
     if (ty === 'Edm.Decimal' && typeof v !== 'number') throw new ODataError(400, `Value for '${k}' is not a valid Edm.Decimal`);
     if (ty === 'Edm.Boolean' && typeof v !== 'boolean') throw new ODataError(400, `Value for '${k}' is not a valid Edm.Boolean`);
@@ -119,12 +120,19 @@ function checkProps(t, obj, creating) {
   // DS4 behaviour (25 Sep 2026): a quantity without its unit reference in the same entity is rejected
   if (t === 'ProductValuation_Type' && obj.ProductPriceUnitQuantity !== undefined && !obj.BaseISOUnit)
     throw new ODataError(400, "Together with property 'ProductPriceUnitQuantity' also property 'BaseISOUnit' needs to be provided");
+  if (t === 'ProductValuation_Type' && (obj.MovingAveragePrice !== undefined || obj.StandardPrice !== undefined) && !obj.Currency)
+    throw new ODataError(400, "Together with property 'MovingAveragePrice' also property 'Currency' needs to be provided");
 }
-function makeNode(t, obj, parentKeys, prod) {
+function makeNode(t, obj, parentKeys, prod, implicit) {
   checkProps(t, obj, true);
   const data = {}; const node = { type: t, data, navs: {} };
   for (const [k, v] of Object.entries(obj)) if (!k.startsWith('_')) data[k] = v;
-  for (const k of computedKeys(t)) if (parentKeys[k] !== undefined) data[k] = parentKeys[k];
+  for (const k of computedKeys(t)) {
+    if (implicit) { data[k] = parentKeys[k]; continue; }   // 1:1 view that SAP creates on its own
+    if (k === 'AlternativeUnit' && data[k] === undefined) { data[k] = parentKeys[k]; continue; }   // computed in the parent (from AlternativeISOUnit)
+    if (data[k] === undefined || data[k] === '') throw new ODataError(400, `Property ${k.toUpperCase()} is a key and cannot be initial`);
+    if (String(data[k]) !== String(parentKeys[k])) throw new ODataError(400, `Key ${k} ${data[k]} does not match the parent (${parentKeys[k]})`);
+  }
   if (t === 'ProductUnitOfMeasure_Type') { data.AlternativeUnit = UNIT_SAP[data.AlternativeISOUnit]; data.AlternativeSAPUnit = data.AlternativeUnit; }
   if (t === 'ProductPlant_Type' && !PLANTS.has(data.Plant)) throw new ODataError(400, `Plant ${data.Plant} does not exist`);
   if (t === 'ProductValuation_Type' && data.ValuationType === undefined) data.ValuationType = '';
@@ -133,7 +141,7 @@ function makeNode(t, obj, parentKeys, prod) {
   for (const [n, [tt, many]] of Object.entries(T[t].navs || {})) {
     const v = obj[n];
     if (many) { node.navs[n] = []; for (const c of (v || [])) addChild(node, n, c); }
-    else node.navs[n] = makeNode(tt, v || {}, keys, prod);   // 1:1 views exist implicitly, like MARA/MARC views in SAP
+    else node.navs[n] = makeNode(tt, v || {}, keys, prod, !v);   // 1:1 views exist implicitly, like MARA/MARC views in SAP
   }
   return node;
 }

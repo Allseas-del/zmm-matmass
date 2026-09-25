@@ -427,6 +427,11 @@ function parseSchema(md) {
       if (term.endsWith('core.Immutable')) p.immutable = true;
       if (term.endsWith('common.IsUpperCase')) p.upper = true;
       if (term.endsWith('common.IsDigitSequence')) p.digits = true;
+      // amount/quantity -> currency/unit property of the same entity (Org.OData.Measures.V1.ISOCurrency / Unit)
+      if (/Measures(\.V1)?\.(ISOCurrency|Unit)$/.test(term)) {
+        const path = a.getAttribute('Path') || ((a.getElementsByTagName('Path')[0] || {}).textContent) || '';
+        if (path && !path.includes('/')) p.ref = path;
+      }
     }
   }
   return out;
@@ -525,9 +530,20 @@ function fillBaseUnit(item, unit) {
   if (p && !p.computed && item.data.BaseISOUnit === undefined && Object.keys(item.data).length) item.data.BaseISOUnit = unit;
   for (const c of Object.values(item.children)) (Array.isArray(c) ? c : [c]).forEach(x => fillBaseUnit(x, unit));
 }
+// DS4 does not fill the parent's key fields in a deep insert or a POST via navigation ("Property PLANT is a key and
+// cannot be initial"): copy them into every child that has them as writable properties.
+function fillParentKeys(item, parent) {
+  const pt = typeOf(parent.node), et = typeOf(item.node), e = schema && et && schema[et];
+  for (const k of keysOf(pt)) {
+    const p = e && e.props[k];
+    if (p && !p.computed && item.data[k] === undefined && parent.data[k] !== undefined) item.data[k] = parent.data[k];
+  }
+  for (const c of Object.values(item.children)) (Array.isArray(c) ? c : [c]).forEach(x => fillParentKeys(x, item));
+}
 function buildProduct(hdr) {
   const root = buildNode(NODE.Product, hdr, null);
   if (!$('extNum').checked) delete root.data.Product;
+  for (const c of Object.values(root.children)) (Array.isArray(c) ? c : [c]).forEach(x => fillParentKeys(x, root));
   if (root.data.BaseISOUnit) for (const c of Object.values(root.children)) (Array.isArray(c) ? c : [c]).forEach(x => fillBaseUnit(x, root.data.BaseISOUnit));
   return root;
 }
@@ -847,8 +863,13 @@ function diffOps(item, cur, url, ops, label) {
   const type = typeOf(item.node); const keys = keysOf(type);
   const d = {};
   for (const [k, v] of Object.entries(item.data)) if (!keys.includes(k) && !same(v, cur[k])) d[k] = v;
-  // child entities: send the unit reference along with any change (see fillBaseUnit)
-  if (Object.keys(d).length && item.node !== 'Product' && item.data.BaseISOUnit !== undefined) d.BaseISOUnit = item.data.BaseISOUnit;
+  // amounts and quantities go together with their currency/unit ("Together with property 'MovingAveragePrice' also
+  // property 'Currency' needs to be provided"): from $metadata (Measures annotations), plus Currency/BaseISOUnit as fallback
+  if (Object.keys(d).length) {
+    const e = schema && schema[type];
+    for (const k of Object.keys(d)) { const r = e && e.props[k] && e.props[k].ref; if (r && item.data[r] !== undefined && !keys.includes(r)) d[r] = item.data[r]; }
+    if (item.node !== 'Product') for (const r of ['Currency', 'BaseISOUnit']) if (item.data[r] !== undefined) d[r] = item.data[r];
+  }
   if (Object.keys(d).length) ops.push({ method: 'PATCH', path: url, body: d, headers: ifMatch(cur), label: `${label}: ${Object.keys(d).join(', ')}` });
   for (const [nav, c] of Object.entries(item.children)) {
     const node = NODE[(Array.isArray(c) ? c[0] : c).node];
