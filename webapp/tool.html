@@ -531,12 +531,12 @@ function fillBaseUnit(item, unit) {
   for (const c of Object.values(item.children)) (Array.isArray(c) ? c : [c]).forEach(x => fillBaseUnit(x, unit));
 }
 // DS4 does not fill the parent's key fields in a deep insert or a POST via navigation ("Property PLANT is a key and
-// cannot be initial"): copy them into every child that has them as writable properties.
+// cannot be initial"), although $metadata marks them Computed: copy them into every child that has them.
 function fillParentKeys(item, parent) {
   const pt = typeOf(parent.node), et = typeOf(item.node), e = schema && et && schema[et];
   for (const k of keysOf(pt)) {
     const p = e && e.props[k];
-    if (p && !p.computed && item.data[k] === undefined && parent.data[k] !== undefined) item.data[k] = parent.data[k];
+    if (p && item.data[k] === undefined && parent.data[k] !== undefined) item.data[k] = parent.data[k];
   }
   for (const c of Object.values(item.children)) (Array.isArray(c) ? c : [c]).forEach(x => fillParentKeys(x, item));
 }
@@ -570,7 +570,7 @@ function validateObject(entity, obj, path, issues) {
     }
     const pr = e.props[k];
     if (!pr) { issues.push(`${path}.${k}: property does not exist in this service`); continue; }
-    if (pr.computed) { issues.push(`${path}.${k}: computed by SAP, must not be sent`); continue; }
+    if (pr.computed && !keysOf(entity).includes(k)) { issues.push(`${path}.${k}: computed by SAP, must not be sent`); continue; }
     if (pr.type === 'Edm.String' && pr.maxLength && String(v).length > pr.maxLength) issues.push(`${path}.${k}: ${String(v).length} characters, max ${pr.maxLength} ("${String(v).substring(0, 20)}")`);
     if (pr.type === 'Edm.Decimal') {
       if (typeof v !== 'number') { issues.push(`${path}.${k}: "${v}" is not a number`); continue; }
@@ -870,7 +870,7 @@ function diffOps(item, cur, url, ops, label) {
     for (const k of Object.keys(d)) { const r = e && e.props[k] && e.props[k].ref; if (r && item.data[r] !== undefined && !keys.includes(r)) d[r] = item.data[r]; }
     if (item.node !== 'Product') for (const r of ['Currency', 'BaseISOUnit']) if (item.data[r] !== undefined) d[r] = item.data[r];
   }
-  if (Object.keys(d).length) ops.push({ method: 'PATCH', path: url, body: d, headers: ifMatch(cur), label: `${label}: ${Object.keys(d).join(', ')}` });
+  if (Object.keys(d).length) ops.push({ method: 'PATCH', path: url, body: d, headers: ifMatch(cur), label: `${label}: ${Object.keys(d).map(k => `${k} ${JSON.stringify(cur[k] ?? '')} → ${JSON.stringify(d[k])}`).join(', ')}` });
   for (const [nav, c] of Object.entries(item.children)) {
     const node = NODE[(Array.isArray(c) ? c[0] : c).node];
     const curC = cur[nav];

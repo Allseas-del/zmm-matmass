@@ -59,7 +59,7 @@ Object.assign(T.ProductValuation_Type.props, { BaseISOUnit: 1 });   // DS4: unit
 Object.assign(T.ProductUnitOfMeasureEAN_Type.props, { AlternativeISOUnit: 1 });
 const COMPUTED = { Product_Type: ['LastChangeDateTime', 'CreationDate', 'BaseUnit', 'CreatedByUser'], ProductUnitOfMeasure_Type: ['AlternativeUnit', 'AlternativeSAPUnit'] };
 // Key properties that come from the parent. DS4 (25 Sep 2026): not filled by SAP in a deep insert or POST via
-// navigation — they must be in the body ('Property PLANT is a key and cannot be initial').
+// navigation — they must be in the body ('Property PLANT is a key and cannot be initial'), although $metadata marks them Computed.
 function computedKeys(t) {
   if (t === 'Product_Type') return [];
   const own = { ProductDescription_Type: ['Language'], ProductUnitOfMeasureEAN_Type: ['ConsecutiveNumber'], ProductPlant_Type: ['Plant'],
@@ -91,7 +91,7 @@ function metadata() {
       const ty = edmType(p);
       x += `<Property Name="${p}" Type="${ty}"` + (ty === 'Edm.String' ? ` MaxLength="${MAXLEN[p] || (/ISOUnit|Unit$/.test(p) ? 3 : 40)}"` : '') +
         (ty === 'Edm.Decimal' ? ' Precision="13" Scale="3"' : '') + '/>';
-      if ((COMPUTED[t] || []).includes(p)) ann.push(`<Annotations Target="SAP__self.${t}/${p}"><Annotation Term="SAP__core.Computed"/></Annotations>`);
+      if ((COMPUTED[t] || []).includes(p) || computedKeys(t).includes(p)) ann.push(`<Annotations Target="SAP__self.${t}/${p}"><Annotation Term="SAP__core.Computed"/></Annotations>`);
     }
     for (const [n, [tt, many]] of Object.entries(d.navs || {})) x += `<NavigationProperty Name="${n}" Type="${many ? 'Collection(' : ''}com.sap.gateway.srvd_a2x.api_product_2.v0001.${tt}${many ? ')' : ''}"/>`;
     x += '</EntityType>';
