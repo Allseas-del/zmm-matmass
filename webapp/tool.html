@@ -606,7 +606,7 @@ async function call(method, path, body, extraHeaders) {
   const t = await r.text();
   if (looksLikeLogonPage(r, t)) throw new Error(`${method} ${path.split('?')[0]} → logon page: session expired.`);
   let j = null; try { j = t ? JSON.parse(t) : null; } catch (e) { /* not JSON */ }
-  if (!r.ok) throw new Error(`${method} ${path.split('?')[0]} → ${errText(j, r.status)}${j ? '' : ' ' + t.substring(0, 300)}${authHint(r.status)}`);
+  if (!r.ok) throw new Error(`${method} ${path.split('?')[0]} → ${errText(j, r.status)}${j ? '' : ' ' + t.substring(0, 300)}${j && j.error ? (r.status === 404 ? ' — object does not exist in SAP' : '') : authHint(r.status)}`);
   return j;
 }
 
