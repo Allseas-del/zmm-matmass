@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Material Mass Upload – Design</title>
+<style>
+  :root { --ink:#1d2330; --muted:#667085; --line:#d9dde5; --acc:#0a6ed1; --bg:#fff; --soft:#f5f6f8; --warn:#b36b00; --ok:#107e3e; }
+  body { margin:0; font:15px/1.55 "72", Arial, sans-serif; color:var(--ink); background:var(--bg); }
+  main { max-width:1020px; margin:0 auto; padding:24px 20px 60px; }
+  h1 { font-size:26px; margin:0 0 4px; } h2 { font-size:20px; margin:36px 0 8px; border-bottom:1px solid var(--line); padding-bottom:4px; }
+  h3 { font-size:17px; margin:24px 0 6px; } h4 { font-size:15px; margin:18px 0 6px; }
+  .meta td { border:none; padding:1px 12px 1px 0; }
+  table { border-collapse:collapse; width:100%; font-size:13.5px; margin:8px 0; }
+  th, td { border:1px solid var(--line); padding:5px 7px; text-align:left; vertical-align:top; }
+  th { background:var(--soft); }
+  code { background:var(--soft); padding:0 3px; border-radius:3px; font-size:12.5px; }
+  pre { background:var(--soft); padding:10px; overflow:auto; font-size:12.5px; }
+  .muted { color:var(--muted); } .open { color:var(--warn); font-weight:600; } .pass { color:var(--ok); font-weight:600; } .fail { color:#bb0000; font-weight:600; }
+  .note { background:#fff8e6; border-left:4px solid var(--warn); padding:8px 12px; margin:10px 0; }
+  img { max-width:100%; border:1px solid var(--line); }
+  nav ol { columns:2; }
+  details summary { cursor:pointer; color:var(--acc); }
+</style>
+</head>
+<body>
+<main>
+<h1>Material Master Mass Upload</h1>
+<div class="muted">Functional and Technical Design – Migration Cockpit template "Product" → OData V4 API_PRODUCT_2, hosted in the Fiori launchpad</div>
+<table class="meta">
+<tr><td>Customer</td><td>Allseas – S/4HANA 2023 FPS01, DS4 (build 400, test 410) → QS4 → PS4</td></tr>
+<tr><td>Author</td><td>Pjotr Dassen</td></tr>
+<tr><td>Version</td><td>0.4 – deployed to DS4 (BSP ZMMMATMASS, DS4K915674); integration test on DS4/410 in progress</td></tr>
+<tr><td>Date</td><td>25 September 2026</td></tr>
+<tr><td>Package / transport</td><td><code>ZMM_MATMASS</code> / <code>DS4K915674</code>, BSP <code>ZMMMATMASS</code></td></tr>
+<tr><td>Repository</td><td><code>C:\dev\zmm-matmass</code> – github.com/Allseas-del/zmm-matmass</td></tr>
+</table>
+
+<nav><b>Contents</b><ol>
+<li>Purpose and scope</li><li>Solution overview</li><li>Process</li><li>User interface</li><li>Data: template and mapping</li><li>Create and change</li>
+<li>Errors, results and restart</li><li>Authorizations</li><li>Constraints and assumptions</li><li>Architecture</li><li>API usage</li><li>Volume ("split")</li>
+<li>Client-side processing</li><li>Deployment and launchpad</li><li>Test evidence</li><li>Open points</li></ol></nav>
+
+<h2>Part A – Functional design</h2>
+
+<h3>1. Purpose and scope</h3>
+<p>Materials delivered in the SAP Migration Cockpit (LTMC) template for migration object <em>Product</em> are created or changed in S/4HANA through SAP's released OData V4 Product API (<code>API_PRODUCT_2</code>). The tool is the engine built and tested for the STIHL maintenance task list upload, adapted to the product business object and hosted as an app in the Allseas Fiori launchpad instead of being started from the browser console.</p>
+<table>
+<tr><th>In scope</th><th>Details</th></tr>
+<tr><td>Create materials</td><td>Basic data (incl. custom fields ZZ1_*_PRD), descriptions, units of measure with GTINs, procurement/sales/storage/QM views, plant data with all plant views, storage locations, MRP areas, inspection setup, valuation, distribution chains and sales tax classification.</td></tr>
+<tr><td>Change materials</td><td>Reads the product from SAP, sends only differing fields and adds missing plants, storage locations, units etc. – all changes of one product in one atomic change set.</td></tr>
+<tr><td>Volume</td><td>Selection is split into $batch packages, several packages in parallel, results file and resume.</td></tr>
+</table>
+<table>
+<tr><th>Out of scope</th><th>Reason</th></tr>
+<tr><td>MDG change requests</td><td>Decision 25 Sep 2026: materials are created directly through the API; MDG governance is bypassed for this load.</td></tr>
+<tr><td>Deleting data</td><td><code>Deletable=false</code> on product, plant, valuation, sales entities. Deletion flags (<code>IsMarkedForDeletion</code>) can be set with Change mode if added to the mapping.</td></tr>
+<tr><td>Classification, characteristics, retail/fashion sheets, classic WM, ledger valuation sheets</td><td>No entity in API_PRODUCT_2 (list in chapter 5.4). Rows are reported in the log and not sent.</td></tr>
+</table>
+
+<h3>2. Solution overview</h3>
+<svg viewBox="0 0 980 220" width="100%" role="img" aria-label="Solution overview" style="font:13px Arial">
+  <rect x="10" y="40" width="200" height="130" rx="8" fill="#f5f6f8" stroke="#667085"/>
+  <text x="110" y="65" text-anchor="middle" font-weight="bold">LTMC template "Product"</text>
+  <text x="110" y="88" text-anchor="middle">XML Spreadsheet 2003</text><text x="110" y="108" text-anchor="middle">Basic Data, Plant Data,</text><text x="110" y="126" text-anchor="middle">Valuation, …</text>
+  <rect x="280" y="20" width="380" height="170" rx="8" fill="#eaf2fb" stroke="#0a6ed1"/>
+  <text x="470" y="45" text-anchor="middle" font-weight="bold">Fiori launchpad tile → BSP ZMMMATMASS</text>
+  <text x="470" y="70" text-anchor="middle">tool.html (vanilla JS, same origin, launchpad session)</text>
+  <text x="470" y="98" text-anchor="middle">parse · map · validate against $metadata</text>
+  <text x="470" y="120" text-anchor="middle">edit · dry run · split into $batch packages</text>
+  <text x="470" y="142" text-anchor="middle">create (deep insert) / change (change set per product)</text>
+  <text x="470" y="164" text-anchor="middle">results CSV · resume · log</text>
+  <rect x="730" y="40" width="240" height="130" rx="8" fill="#f5f6f8" stroke="#667085"/>
+  <text x="850" y="65" text-anchor="middle" font-weight="bold">S/4HANA DS4 / QS4 / PS4</text>
+  <text x="850" y="88" text-anchor="middle">/sap/opu/odata4 (CSRF)</text><text x="850" y="108" text-anchor="middle">API_PRODUCT_2 (RAP)</text><text x="850" y="128" text-anchor="middle">MARA, MARC, MARD, MBEW, …</text>
+  <line x1="210" y1="105" x2="278" y2="105" stroke="#1d2330" marker-end="url(#a)"/><line x1="660" y1="105" x2="728" y2="105" stroke="#1d2330" marker-end="url(#a)"/>
+  <text x="694" y="98" text-anchor="middle" font-size="11">$batch</text>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1d2330"/></marker></defs>
+</svg>
+<p>The page contains no SAP logic. Every check that decides whether a material is valid (material type, plant, valuation class, units, authorizations) is done by SAP's product business object behind the API.</p>
+
+<h3>3. Process</h3>
+<table>
+<tr><th>#</th><th>Step</th><th>What the user does / sees</th></tr>
+<tr><td>1</td><td>Start</td><td>Tile <em>Material Master Mass Upload</em>. The tool tests the connection itself: service reachable, custom fields in the service, SAP user.</td></tr>
+<tr><td>2</td><td>Load file</td><td>Choose the filled template. Rows per sheet are shown; sheets without API entity and orphan rows are reported.</td></tr>
+<tr><td>3</td><td>Check / edit</td><td>Grid per sheet; the sub-line of each column shows the API property. Changed cells turn yellow and can be saved back into the template.</td></tr>
+<tr><td>4</td><td>Dry run</td><td>Validates every product against the live $metadata (property exists, not computed, length, decimals, type, identifying fields filled) and shows the payload of the first three.</td></tr>
+<tr><td>5</td><td>Execute</td><td>Create or Change. Progress line: products processed, ok/errors, throughput, remaining time.</td></tr>
+<tr><td>6</td><td>Results</td><td>Download results (CSV) and full log. Failed products: correct data, run again (done products are skipped automatically).</td></tr>
+<tr><td>7</td><td>Restart</td><td>After an interruption: load template and results CSV; done products are deselected.</td></tr>
+</table>
+
+<h3>4. User interface</h3>
+<p>Sections: 1 Connection (service path, sap-client), 2 File, 3 Data (tabs per sheet, filter on product, max. 500 rows shown), 4 Execute (mode, numbering, create method, parallel requests, products per $batch, results/resume), Log. Screenshot from the unit test:</p>
+<p>__SCREENSHOT__</p>
+
+<h3>5. Data: template and mapping</h3>
+<h4>5.1 Template</h4>
+<p>Input is the Migration Cockpit template <em>Product</em> as downloaded from SAP (XML Spreadsheet 2003, 28 sheets). The tool identifies each sheet by its structure name (row 4) and field names (row 5); data starts in row 9. Child rows are linked to the product by <code>PRODUCT</code>, plant-dependent rows additionally by <code>WERKS</code>, GTINs by <code>MEINH</code>.</p>
+<div class="note">The file as downloaded from SAP is not well-formed XML: it starts with a line break before <code>&lt;?xml</code> and the introduction sheet contains SAP text markup (<code>&lt;LS&gt;…&lt;/&gt;</code>). Excel accepts this, a browser XML parser does not. The tool removes both before parsing (unit test 03).</div>
+<h4>5.2 API structure (API_PRODUCT_2 v0001, $metadata DS4/400, 25 Sep 2026)</h4>
+<table>
+<tr><th>Entity</th><th>Key</th><th>Table</th><th>Template sheet</th></tr>
+<tr><td>Product</td><td>Product</td><td>MARA</td><td>Basic Data</td></tr>
+<tr><td>ProductDescription</td><td>Product, Language</td><td>MAKT</td><td>Basic Data (MAKTX/SPRAS), Additional Descriptions</td></tr>
+<tr><td>ProductProcurement / Sales / Storage / QualityManagement (1:1)</td><td>Product</td><td>MARA views</td><td>Basic Data</td></tr>
+<tr><td>ProductUnitOfMeasure (+ EAN)</td><td>Product, AlternativeUnit (+ ConsecutiveNumber)</td><td>MARM / MEAN</td><td>Alternative Units of Measure, Additional GTINs</td></tr>
+<tr><td>ProductPlant</td><td>Product, Plant</td><td>MARC</td><td>Plant Data</td></tr>
+<tr><td>ProductPlant… SupplyPlanning, Procurement, QualityManagement, InternationalTrade, Sales, WorkScheduling, Costing, Storage, Forecast (1:1)</td><td>Product, Plant</td><td>MARC views</td><td>Plant Data</td></tr>
+<tr><td>ProductPlantStorageLocation / MRP / InspTypeSetting</td><td>+ StorageLocation / MRPArea / InspectionLotType</td><td>MARD / MDMA / QMAT</td><td>Storage Locations, MRP Area, Inspection Setup Data</td></tr>
+<tr><td>ProductValuation (+ Accounting, Costing 1:1)</td><td>Product, ValuationArea, ValuationType</td><td>MBEW</td><td>Valuation Data</td></tr>
+<tr><td>ProductSalesDelivery (+ SalesTax)</td><td>Product, SalesOrg, DistributionChannel (+ Country, TaxCategory)</td><td>MVKE / MLAN</td><td>Distribution Chains, Tax Classification</td></tr>
+</table>
+<h4>5.3 Rules</h4>
+<table>
+<tr><th>Rule</th><th>Implementation</th></tr>
+<tr><td>Units</td><td>All template units are ISO codes and are sent to the <code>…ISOUnit</code> properties (e.g. <code>MEINS → BaseISOUnit</code>, <code>MEINH → AlternativeISOUnit</code>). No conversion table.</td></tr>
+<tr><td>Types</td><td>Converted from the live $metadata: Decimal/Int → number (decimal comma accepted), Boolean ← <code>X</code>/true/1, Date → YYYY-MM-DD, <code>IsUpperCase</code> → upper case, <code>IsDigitSequence</code> → leading zeros. Empty cells are never sent.</td></tr>
+<tr><td>Custom fields</td><td><code>ZZ1_CROSS_REF_PRD, ZZ1_MAKERSUPPLIER_PRD (→ ZZ1_MakerSupplier_PRD), ZZ1_MATRL_PRD, ZZ1_MFRPN_PRD, ZZ1_NMOD_PRD, ZZ1_SERNP_PRD (Boolean), ZZ1_WNFI_PRD</code> on Product. ZZ1_MFRPN_PRD was added to the V4 service on 25 Sep 2026 (confirmed in $metadata). A template field whose property is not in the service is reported and skipped.</td></tr>
+<tr><td>Unit reference</td><td>SAP rejects a quantity in a child entity without the unit property of that same entity (DS4 message: <i>Together with property 'ProductPriceUnitQuantity' also property 'BaseISOUnit' needs to be provided</i>). The tool copies the product's <code>BaseISOUnit</code> (MEINS) into every child entity type that has a writable <code>BaseISOUnit</code> in $metadata (e.g. ProductValuation), and sends it along with every PATCH of such an entity.</td></tr>
+<tr><td>Descriptions</td><td>MAKTX/SPRAS of Basic Data and the rows of Additional Descriptions are merged per language.</td></tr>
+<tr><td>GTINs</td><td>Additional GTINs are attached to the unit of measure with the same <code>MEINH</code>; the consecutive number is assigned 00001, 00002 … per unit.</td></tr>
+<tr><td>Tax classification</td><td>MLAN is per country only, the API keeps sales tax per sales organization/distribution channel. Each MLAN row (TATYP1..9/TAXM1..9) is sent under every distribution chain of the product (<span class="open">to be confirmed in integration test</span>). Without a distribution chain the rows cannot be sent.</td></tr>
+<tr><td>Material number</td><td>"Send product number from the file" (default on) sends <code>PRODUCT</code> (<code>Product</code> is Immutable, not Computed). Off: SAP assigns the number; it is returned in the results.</td></tr>
+</table>
+<h4>5.4 Field mapping (generated from the tool's mapping table)</h4>
+<details><summary>Show the complete mapping per sheet</summary>
+__MAPPING__
+</details>
+
+<h3>6. Create and change</h3>
+<table>
+<tr><th>Mode</th><th>Requests per product</th><th>Behaviour</th></tr>
+<tr><td>Create – deep insert (default)</td><td>1 POST <code>Product</code> with all compositions, inside a $batch package</td><td>Atomic per product: created completely or not at all.</td></tr>
+<tr><td>Create – step-wise</td><td>POST <code>Product</code> (basic data), then GET with $expand and one change set with PATCH (1:1 views that SAP creates implicitly) and POST via navigation (plants, units, valuations …)</td><td>Fallback if DS4 rejects the deep insert. If the change set fails, the product exists with basic data only (status <em>partial</em>) and is completed with Change.</td></tr>
+<tr><td>Change</td><td>GET <code>Product('X')?$expand=…</code>, then one change set</td><td>Only fields that differ are sent; missing children are created; children in SAP that are not in the file are left alone. Atomic per product.</td></tr>
+</table>
+<p>ETag: all entities share the product's <code>LastChangeDateTime</code>. The first PATCH of a change set carries the ETag read by the GET, the following ones <code>If-Match: *</code> (the first change already moves the timestamp; the change set is atomic, so the concurrency check stays effective).</p>
+
+<h3>7. Errors, results and restart</h3>
+<p>Errors are handled per product, never per run. A product ends as <code>done</code>, <code>failed</code> (nothing in SAP) or <code>partial</code> (step-wise create: basic data in SAP, views not). SAP's message is shown per product and in the results CSV (<code>src;product;status;steps;message</code>). When SAP returns a logon page (session expired), the run stops starting new work and the log explains how to resume.</p>
+
+<h3>8. Authorizations</h3>
+<h4>8.1 Who can start the app</h4>
+<p>Users with a role that contains the launchpad catalog with the tile / target mapping <code>Material-massUpload</code> (<span class="open">catalog, space/page and role name: open point 4</span>). The tile only makes the app visible.</p>
+<h4>8.2 Authorization objects</h4>
+<table>
+<tr><th>Check</th><th>Object / values</th><th>Effect when missing</th></tr>
+<tr><td>Start of the BSP</td><td>ICF node <code>/sap/bc/ui5_ui5/sap/zmmmatmass</code>, launchpad logon</td><td>App does not load.</td></tr>
+<tr><td>Start of the V4 service</td><td><code>S_START</code> AUTHPGMID=R3TR, AUTHOBJTYP=G4BA, AUTHOBJNAM=<code>API_PRODUCT</code> (service group, first path segment after <code>/sap/</code>)</td><td>HTTP 403 "no start authorization for R3TR G4BA …"; $metadata may still be readable.</td></tr>
+<tr><td>Material master</td><td>The checks of the product business object, as for MM01/MM02: <code>M_MATE_MAR</code> (material type), <code>M_MATE_WRK</code> (plant), <code>M_MATE_STA</code> (maintenance status), <code>M_MATE_BUK</code> (company code, valuation), <code>M_MATE_VKO</code> (sales org), <code>M_MATE_MAT</code> (authorization group). Exact set: SU24 of the service and SU53 after the integration test.</td><td>Error message per product.</td></tr>
+<tr><td>CSRF</td><td>X-CSRF-Token, renewed automatically</td><td>Handled by the tool.</td></tr>
+</table>
+<h4>8.3 Where the protection sits</h4>
+<p>All checks are in SAP; the tool runs with the launchpad user's session and cannot bypass them. Changes are recorded under that user (CreatedByUser / change documents). Because the load bypasses MDG, the role with <code>S_START</code> on the Product service and the material master write authorizations should be limited to the migration team (<span class="open">decision data owner, open point 5</span>).</p>
+
+<h3>9. Constraints and assumptions</h3>
+<ul>
+<li>Service group of API_PRODUCT_2 published in /IWFND/V4_ADMIN on DS4, QS4, PS4; SICF <code>/sap/opu/odata4</code> active; virus scan profile <code>/IWBEP/V4/ODATA_UPLOAD</code> active (note 3027559 – required on STIHL for any POST).</li>
+<li>Referenced master data exists: material types, plants, storage locations, valuation classes, units (ISO codes maintained in T006).</li>
+<li>Browser: current Edge/Chrome via the Fiori launchpad.</li>
+</ul>
+
+<h2>Part B – Technical design</h2>
+<h3>10. Architecture</h3>
+<table>
+<tr><th>Object</th><th>Content</th></tr>
+<tr><td><code>webapp/Component.js</code>, <code>manifest.json</code></td><td>UI5 component, inbound <code>Material-massUpload</code>; renders <code>tool.html</code> in a same-origin frame.</td></tr>
+<tr><td><code>webapp/tool.html</code></td><td>The tool, vanilla JavaScript, no libraries, no external resources.</td></tr>
+<tr><td>Parser</td><td>Sanitizes the SAP file, reads SpreadsheetML with <code>ss:Index</code>/<code>MergeAcross</code>, finds structure/field rows.</td></tr>
+<tr><td>Mapping table <code>TREE</code></td><td>One entry per API node: sheet, navigation, 1:1 or 1:n, fields → properties, link fields, match keys. Chapter 5.4 is generated from it.</td></tr>
+<tr><td>Schema</td><td>Live $metadata: types, lengths, keys, navigations, Computed/Immutable/IsUpperCase/IsDigitSequence.</td></tr>
+<tr><td>HTTP layer</td><td>CSRF, logon-page detection, $batch with <code>odata.continue-on-error</code>, change sets, resend of the unprocessed rest when SAP stops a $batch.</td></tr>
+<tr><td>Runner</td><td>Worker pool; deep create per $batch package, change/step-wise per product with GET + change set.</td></tr>
+</table>
+<h3>11. API usage</h3>
+<table>
+<tr><th>Purpose</th><th>Request</th></tr>
+<tr><td>CSRF / reachability</td><td><code>GET &lt;service root&gt;</code> with <code>X-CSRF-Token: Fetch</code></td></tr>
+<tr><td>Schema</td><td><code>GET $metadata</code></td></tr>
+<tr><td>Create (deep)</td><td><code>POST $batch</code> with n × <code>POST Product</code> {…, _ProductDescription:[…], _ProductPlant:[{…, _ProductPlantSupplyPlanning:{…}, _ProductPlantStorageLocation:[…]}], …}</td></tr>
+<tr><td>Read for change</td><td><code>GET Product(Product='X')?$expand=_ProductPlant($expand=…),…</code> (only the navigations present in the file)</td></tr>
+<tr><td>Change</td><td><code>POST $batch</code> with one change set: <code>PATCH ProductPlant(Product='X',Plant='NL01')/_ProductPlantSupplyPlanning</code>, <code>POST ProductPlant(…)/_ProductPlantStorageLocation</code>, …</td></tr>
+</table>
+<p>Service path <code>/sap/opu/odata4/sap/api_product/srvd_a2x/sap/product/0002/</code> (confirmed on DS4/400, 25 Sep 2026; service group <code>API_PRODUCT</code>, service definition namespace <code>api_product_2</code> v0001). The field stays editable.</p>
+<h3>12. Volume ("split")</h3>
+<p>The selection is cut into packages of <em>Products per $batch</em> (default 20); <em>Parallel requests</em> (default 4) packages are in flight at the same time. Each product in a package is an independent request, so one rejected product does not affect the others. Real throughput depends on SAP's processing time per product; to be measured with ~100 materials in DS4/410 before a full load.</p>
+<h3>13. Client-side processing</h3>
+<p>Nothing is stored in the browser. Results and log live in memory until downloaded. The grid shows max. 500 rows (filter on product), the log the last 800 lines (full log downloadable).</p>
+<h3>14. Deployment and launchpad</h3>
+<ol>
+<li><code>npm install</code>, then <code>npm run deploy</code> (build + deploy-to-abap to DS4/400, package <code>ZMM_MATMASS</code>, transport <code>DS4K915674</code>).</li>
+<li>Launchpad: target mapping semantic object <code>Material</code>, action <code>massUpload</code>, app type SAPUI5, ID <code>com.allseas.zmmmatmass</code>, URL <code>/sap/bc/ui5_ui5/sap/zmmmatmass</code>; tile in a catalog for the migration role (<span class="open">open point 4</span>).</li>
+<li>Test in DS4/410 after transport, then QS4, PS4.</li>
+</ol>
+
+<h3>15. Test evidence</h3>
+<h4>15.1 Unit test (test double)</h4>
+<p>A local test double of API_PRODUCT_2 (<code>test/mock.js</code>) reproduces the relevant behaviour: CSRF, $metadata with the DS4 entity types, keys and navigations, deep insert, implicit 1:1 views after create, ETag/If-Match with 412, atomic change sets, <code>continue-on-error</code>, unknown plant and unit errors. The tool was driven end-to-end with Playwright/Chromium (<code>test/unit_test.js</code>) using the original SAP template with three test materials inserted (<code>test/test_products.xml</code>).</p>
+__TESTS__
+<h4>15.2 Integration test DS4/410</h4>
+<table><tr><th>Date</th><th>Step</th><th>Result</th></tr>
+<tr><td>25 Sep 2026</td><td>Deploy BSP ZMMMATMASS to DS4/400 (<code>npm run deploy</code>, transport DS4K915674)</td><td class="pass">ok</td></tr>
+<tr><td>25 Sep 2026</td><td>Connection test from client 410 (user P.DASSEN): service document, $metadata, 7 custom fields incl. ZZ1_MFRPN_PRD</td><td class="pass">ok</td></tr>
+<tr><td>25 Sep 2026</td><td>Test file "Source data for Product – testrun" (3 products, 158 plants, 411 storage locations, 158 valuations): load and dry run</td><td class="pass">ok – validation without problems</td></tr>
+<tr><td>25 Sep 2026</td><td>Run 1 Create, internal numbering, deep insert</td><td class="fail">3 × HTTP 400 <i>Together with property 'ProductPriceUnitQuantity' also property 'BaseISOUnit' needs to be provided</i> → rule "Unit reference" (5.3) added; rerun open</td></tr>
+</table>
+
+<h2>16. Open points</h2>
+<table>
+<tr><th>#</th><th>Point</th><th>Status</th></tr>
+<tr><td>1</td><td>LTMC product template</td><td class="pass">closed – received 25 Sep 2026</td></tr>
+<tr><td>2</td><td>Service path and service group on DS4</td><td class="pass">closed – <code>…/api_product/srvd_a2x/sap/product/0002/</code>, group API_PRODUCT</td></tr>
+<tr><td>3</td><td>ZZ1_MFRPN_PRD in the V4 service</td><td class="pass">closed – present in $metadata 25 Sep 2026</td></tr>
+<tr><td>4</td><td>Launchpad catalog, target mapping, role</td><td class="open">open</td></tr>
+<tr><td>5</td><td>MDG bypass and who gets write access – confirm with data owner</td><td class="open">open</td></tr>
+<tr><td>6</td><td>Internal or external material numbering for the material types in scope</td><td class="open">open</td></tr>
+<tr><td>7</td><td>Deep insert accepted by DS4 (otherwise step-wise)</td><td class="open">integration test</td></tr>
+<tr><td>8</td><td>Tax classification (MLAN) per distribution chain – result in MLAN</td><td class="open">integration test</td></tr>
+<tr><td>9</td><td>If-Match "*" for the 2nd+ PATCH in a change set accepted by DS4</td><td class="open">integration test</td></tr>
+<tr><td>10</td><td>Test materials with Allseas values for DS4/410</td><td class="open">open</td></tr>
+</table>
+<p class="muted">Material Master Mass Upload – FD/TD – version 0.4 – 25 September 2026</p>
+</main>
+</body>
+</html>

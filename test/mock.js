@@ -55,6 +55,7 @@ T.ProdSalesDeliverySalesTax_Type.props.ProductSalesTaxCategory = 1; T.ProdSalesD
 for (const [t, d] of Object.entries(T)) d.keys.forEach(k => d.props[k] = 1);
 Object.assign(T.Product_Type.props, { LastChangeDateTime: 1, CreationDate: 1, BaseUnit: 1, CreatedByUser: 1 });
 Object.assign(T.ProductUnitOfMeasure_Type.props, { AlternativeSAPUnit: 1 });
+Object.assign(T.ProductValuation_Type.props, { BaseISOUnit: 1 });   // DS4: unit reference of ProductPriceUnitQuantity
 Object.assign(T.ProductUnitOfMeasureEAN_Type.props, { AlternativeISOUnit: 1 });
 const COMPUTED = { Product_Type: ['LastChangeDateTime', 'CreationDate', 'BaseUnit', 'CreatedByUser'], ProductUnitOfMeasure_Type: ['AlternativeUnit', 'AlternativeSAPUnit'] };
 // Properties that are keys filled from the parent (Computed in SAP)
@@ -115,6 +116,9 @@ function checkProps(t, obj, creating) {
     if (ty === 'Edm.Boolean' && typeof v !== 'boolean') throw new ODataError(400, `Value for '${k}' is not a valid Edm.Boolean`);
     if (/ISOUnit$/.test(k) && v && !UNIT_SAP[v]) throw new ODataError(400, `Unit of measure ${v} (ISO) is not defined`);
   }
+  // DS4 behaviour (25 Sep 2026): a quantity without its unit reference in the same entity is rejected
+  if (t === 'ProductValuation_Type' && obj.ProductPriceUnitQuantity !== undefined && !obj.BaseISOUnit)
+    throw new ODataError(400, "Together with property 'ProductPriceUnitQuantity' also property 'BaseISOUnit' needs to be provided");
 }
 function makeNode(t, obj, parentKeys, prod) {
   checkProps(t, obj, true);

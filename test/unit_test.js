@@ -37,6 +37,8 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   ok('07 payload: ISO base unit, booleans, numbers', payload.BaseISOUnit === 'PCE' && payload.ZZ1_SERNP_PRD === true && payload.GrossWeight === 0.05, JSON.stringify({ b: payload.BaseISOUnit, s: payload.ZZ1_SERNP_PRD, g: payload.GrossWeight }));
   ok('08 payload: ZZ1_MFRPN_PRD and standard MFRPN both mapped', payload.ZZ1_MFRPN_PRD === 'ABC-123' && payload.ProductManufacturerNumber === 'ABC-123');
   ok('09 payload: descriptions from Basic Data and Descriptions sheet merged (EN + NL)', (payload._ProductDescription || []).map(d => d.Language).join(',') === 'EN,NL');
+  ok('10a payload: product base unit copied into valuation (unit reference of ProductPriceUnitQuantity)',
+    payload._ProductValuation[0].BaseISOUnit === 'PCE' && payload._ProductValuation[0].ProductPriceUnitQuantity === 1, JSON.stringify(payload._ProductValuation[0]));
   ok('10 payload: plant with MRP (1:1) and storage location (1:n), valuation, UoM with GTIN',
     payload._ProductPlant[0]._ProductPlantSupplyPlanning.MRPType === 'PD' && payload._ProductPlant[0]._ProductPlantStorageLocation[0].StorageLocation === '0001' &&
     payload._ProductValuation[0].ValuationClass === '3000' && payload._ProductUnitOfMeasure[0]._ProductUnitOfMeasureEAN[0].ConsecutiveNumber === '00001');
@@ -67,13 +69,13 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   ok('17 repeated create sends only the failed product again', st.post - postsBefore === 1, `${st.post - postsBefore} POST`);
 
   // change mode: two changes on ZTEST-001
-  await page.evaluate(() => { sheets.S_MARA.rows[0].cells.GROES.value = 'M12X50'; sheets.S_MARC.rows[0].cells.DISMM.value = 'VB'; });
+  await page.evaluate(() => { sheets.S_MARA.rows[0].cells.GROES.value = 'M12X50'; sheets.S_MARC.rows[0].cells.DISMM.value = 'VB'; sheets.S_MBEW.rows[0].cells.PEINH.value = '10'; });
   await page.check('input[name=mode][value=change]'); await select(['ZTEST-001']);
   await page.click('#btnRun'); await waitIdle(); L = await logText(); st = await api('/__stats');
   const p1b = await api('/__product?id=ZTEST-001');
-  ok('18 change: header field and plant MRP type changed in one change set', p1b.SizeOrDimensionText === 'M12X50' && p1b._ProductPlant[0]._ProductPlantSupplyPlanning.MRPType === 'VB' && st.changesets >= 1,
+  ok('18 change: header field, plant MRP type and price unit (with unit reference) changed in one change set', p1b.SizeOrDimensionText === 'M12X50' && p1b._ProductPlant[0]._ProductPlantSupplyPlanning.MRPType === 'VB' && p1b._ProductValuation[0].ProductPriceUnitQuantity === 10 && st.changesets >= 1,
     `groes=${p1b.SizeOrDimensionText} mrp=${p1b._ProductPlant[0]._ProductPlantSupplyPlanning.MRPType}`);
-  ok('19 change: ETag handling — no 412 within the change set', st.preconditionFailed === 0 && /ZTEST-001 → ZTEST-001: 2 change\(s\)/.test(L));
+  ok('19 change: ETag handling — no 412 within the change set', st.preconditionFailed === 0 && /ZTEST-001 → ZTEST-001: 3 change\(s\)/.test(L));
   await page.click('#btnRun'); await waitIdle();
   ok('20 change without differences: nothing sent', /ZTEST-001 → ZTEST-001: no differences/.test(await logText()));
 
@@ -100,6 +102,7 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   await page.goto(BASE + '/tool.html'); await page.setInputFiles('#file', FILE);
   await page.waitForFunction(() => /File loaded/.test(fullLog.join('\n')));
   await page.setInputFiles('#resFile', csvPath);
+  await page.waitForFunction(() => /Results loaded/.test(fullLog.join('\n')), null, { timeout: 10000 });
   L = await logText();
   const inc = await page.evaluate(() => sheets.S_MARA.rows.map(r => r.include));
   ok('24 resume: results loaded, done products deselected', /Results loaded: 3 done/.test(L) && inc.every(x => !x), inc.join(','));

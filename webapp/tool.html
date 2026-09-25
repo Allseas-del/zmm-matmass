@@ -516,9 +516,18 @@ function buildNode(node, row, parentRow) {
   }
   return item;
 }
+// Quantity fields in child entities (e.g. ProductPriceUnitQuantity in ProductValuation) refer to a BaseISOUnit
+// property of the same entity; SAP rejects the quantity without it. Copy the product's base unit into every
+// child entity type that has a writable BaseISOUnit and did not get one from the file.
+function fillBaseUnit(item, unit) {
+  const et = typeOf(item.node), p = schema && et && schema[et] && schema[et].props.BaseISOUnit;
+  if (p && !p.computed && item.data.BaseISOUnit === undefined && Object.keys(item.data).length) item.data.BaseISOUnit = unit;
+  for (const c of Object.values(item.children)) (Array.isArray(c) ? c : [c]).forEach(x => fillBaseUnit(x, unit));
+}
 function buildProduct(hdr) {
   const root = buildNode(NODE.Product, hdr, null);
   if (!$('extNum').checked) delete root.data.Product;
+  if (root.data.BaseISOUnit) for (const c of Object.values(root.children)) (Array.isArray(c) ? c : [c]).forEach(x => fillBaseUnit(x, root.data.BaseISOUnit));
   return root;
 }
 // Plain JSON for a deep insert
@@ -842,6 +851,8 @@ function diffOps(item, cur, url, ops, label) {
   const type = typeOf(item.node); const keys = keysOf(type);
   const d = {};
   for (const [k, v] of Object.entries(item.data)) if (!keys.includes(k) && !same(v, cur[k])) d[k] = v;
+  // child entities: send the unit reference along with any change (see fillBaseUnit)
+  if (Object.keys(d).length && item.node !== 'Product' && item.data.BaseISOUnit !== undefined) d.BaseISOUnit = item.data.BaseISOUnit;
   if (Object.keys(d).length) ops.push({ method: 'PATCH', path: url, body: d, headers: ifMatch(cur), label: `${label}: ${Object.keys(d).join(', ')}` });
   for (const [nav, c] of Object.entries(item.children)) {
     const node = NODE[(Array.isArray(c) ? c[0] : c).node];

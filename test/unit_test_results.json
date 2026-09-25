@@ -45,6 +45,11 @@
   "info": ""
  },
  {
+  "name": "10a payload: product base unit copied into valuation (unit reference of ProductPriceUnitQuantity)",
+  "pass": true,
+  "info": "{\"ValuationArea\":\"NL01\",\"ValuationClass\":\"3000\",\"InventoryValuationProcedure\":\"V\",\"Currency\":\"EUR\",\"MovingAveragePrice\":1.25,\"ProductPriceUnitQuantity\":1,\"BaseISOUnit\":\"PCE\"}"
+ },
+ {
   "name": "10 payload: plant with MRP (1:1) and storage location (1:n), valuation, UoM with GTIN",
   "pass": true,
   "info": ""
@@ -85,7 +90,7 @@
   "info": "1 POST"
  },
  {
-  "name": "18 change: header field and plant MRP type changed in one change set",
+  "name": "18 change: header field, plant MRP type and price unit (with unit reference) changed in one change set",
   "pass": true,
   "info": "groes=M12X50 mrp=VB"
  },
