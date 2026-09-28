@@ -106,7 +106,7 @@
   </div>
   <div class="tabs" id="tabs"></div>
   <div class="grid" id="grid"><div class="muted" style="padding:8px">Load a file first.</div></div>
-  <div class="muted" style="margin-top:6px">Selection applies per product (tab Basic Data). Yellow cells differ from the file. Orange columns have no property in the API and are not sent.</div>
+  <div class="muted" style="margin-top:6px">Selection applies per product (tab Basic Data). Empty cell = leave as it is; <code>#</code> = clear the field in SAP (mode Change). Yellow cells differ from the file. Orange columns have no property in the API and are not sent.</div>
 </section>
 
 <section>
@@ -442,7 +442,7 @@ function parseSchema(md) {
     for (const pr of et.children) {
       if (pr.localName === 'Property') {
         e.props[pr.getAttribute('Name')] = { type: pr.getAttribute('Type'), maxLength: pr.getAttribute('MaxLength') ? parseInt(pr.getAttribute('MaxLength'), 10) : null,
-          precision: pr.getAttribute('Precision') ? parseInt(pr.getAttribute('Precision'), 10) : null, scale: pr.getAttribute('Scale') };
+          precision: pr.getAttribute('Precision') ? parseInt(pr.getAttribute('Precision'), 10) : null, scale: pr.getAttribute('Scale'), nullable: pr.getAttribute('Nullable') !== 'false' };
       } else if (pr.localName === 'NavigationProperty') {
         const t = pr.getAttribute('Type') || '';
         e.navs[pr.getAttribute('Name')] = { target: t.replace(/^Collection\(|\)$/g, '').split('.').pop(), collection: t.startsWith('Collection(') };
@@ -491,10 +491,20 @@ function buildIndex() {
   }
 }
 const missingProps = new Map();   // "Type.prop" -> rows with a value (property not in this service)
+// A cell with only "#" clears the field in SAP (Change mode). An empty cell means "leave as it is" and is never sent.
+const CLEAR_MARK = '#';
+function emptyValue(p) {
+  if (!p) return '';
+  if (p.type === 'Edm.Boolean') return false;
+  if (/Edm\.(Decimal|Double|Byte|Int16|Int32|Int64)/.test(p.type)) return 0;   // ABAP initial value; no null for numbers
+  if (/Edm\.(Date|DateTimeOffset|TimeOfDay)/.test(p.type)) return null;
+  return '';
+}
 function convert(entityType, prop, raw) {
   let v = (raw ?? '').trim(); if (v === '') return undefined;
-  if (/ISOUnit$/.test(prop)) v = toIso(v);
   const p = schema && schema[entityType] && schema[entityType].props[prop];
+  if (v === CLEAR_MARK) return mode() === 'change' ? emptyValue(p) : undefined;
+  if (/ISOUnit$/.test(prop)) v = toIso(v);
   if (!p) return v;
   switch (p.type) {
     case 'Edm.Boolean': return /^(x|true|1|y)$/i.test(v);
@@ -607,6 +617,7 @@ function validateObject(entity, obj, path, issues) {
       continue;
     }
     const pr = e.props[k];
+    if (v === null) continue;   // clears a field ("#")
     if (!pr) { issues.push(`${path}.${k}: property does not exist in this service`); continue; }
     if (pr.computed && !keysOf(entity).includes(k)) { issues.push(`${path}.${k}: computed by SAP, must not be sent`); continue; }
     if (pr.type === 'Edm.String' && pr.maxLength && String(v).length > pr.maxLength) issues.push(`${path}.${k}: ${String(v).length} characters, max ${pr.maxLength} ("${String(v).substring(0, 20)}")`);

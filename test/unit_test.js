@@ -89,6 +89,14 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   await page.evaluate(() => { sheets.S_MBEW.rows[0].cells.WAERS.value = 'EUR'; });
   ok('20 change without differences: nothing sent', /ZTEST-001 → ZTEST-001: no differences/.test(await logText()));
 
+  // "#" clears a field in Change mode; empty cells are left alone
+  await page.evaluate(() => { sheets.S_MARA.rows[0].cells.GROES.value = '#'; sheets.S_MARA.rows[0].cells.BRGEW.value = '#'; });
+  await page.click('#btnRun'); await waitIdle();
+  const p1d = await api('/__product?id=ZTEST-001');
+  ok('20a "#" clears fields in Change mode (text → "", decimal → 0), other fields unchanged', p1d.SizeOrDimensionText === '' && Number(p1d.GrossWeight) === 0 && p1d.ZZ1_MFRPN_PRD === 'ABC-123',
+    `groes=${JSON.stringify(p1d.SizeOrDimensionText)} brgew=${p1d.GrossWeight}`);
+  await page.evaluate(() => { sheets.S_MARA.rows[0].cells.GROES.value = 'M12X50'; sheets.S_MARA.rows[0].cells.BRGEW.value = '0.05'; });
+  await page.click('#btnRun'); await waitIdle();
   // step-wise create for the corrected ZTEST-003
   await page.evaluate(() => { sheets.S_MARC.rows[2].cells.WERKS.value = 'NL01'; });
   await page.check('input[name=mode][value=create]'); await page.selectOption('#createMethod', 'step'); await select(['ZTEST-003']);

@@ -74,6 +74,7 @@ const STEPS = [
   ['Click "Download results (CSV)" and "Download full log".', 'CSV with one row per material: source number, SAP number, status, message. Log file with all steps.'],
   ['Correct the faulty material in the grid and click "Execute in SAP" again.', 'Only the corrected material is sent; it is created. Materials already done are skipped.'],
   ['Mode Change: change e.g. the MRP type (Plant tab) and a basic data field of a created material; select only that material; Execute.', 'Log: "<material>: n change(s)" with the changed fields. The changes are visible in SAP; other fields unchanged.'],
+  ['Mode Change: put "#" in a filled field (e.g. Old material number) of one material and Execute.', 'Log shows the field with old value → "". In SAP the field is empty; other fields unchanged.'],
   ['Execute Change again without changes.', 'Log: "no differences". Nothing is changed in SAP.'],
   ['Close the app, open it again, load the template and then the results CSV under "Resume from results".', 'Log: "Results loaded: n done (deselected)". Done materials are deselected.'],
   ['Optional: method "product first, then views in one change set" for a new material.', 'Material is created; log shows "basic data created" followed by the view changes.'],
