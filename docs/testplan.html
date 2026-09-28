@@ -63,6 +63,7 @@
 const RECIPIENT = 'pjotr.dassen@delaware.pro';
 const STEPS = [
   ['Open the Fiori launchpad in DS4/410 and start the tile "Material Master Mass Upload".', 'The app opens. Section 1 shows "OK"; the log shows "Service reachable", the custom fields (incl. ZZ1_MFRPN_PRD) and your SAP user.'],
+  ['Section 2: click "Download example template" and open the file in Excel.', 'Excel shows the Product template with 2 products (HAWA, SERV) on Basic Data, 2 rows on Plant Data, Storage Locations and Valuation Data.'],
   ['Load the prepared template file (section 2).', 'Log: "File loaded: n product(s)". Rows per sheet are shown. Sheets without API entity (e.g. Class Data) are reported as "not sent".'],
   ['Open the tabs Basic Data, Plant and Valuation. Change one description in the grid.', 'Data of the file is shown; under each column the API field. The changed cell turns yellow.'],
   ['Click "Save changed file (XML)" and open the saved file in Excel.', 'The file opens in Excel and contains the change.'],

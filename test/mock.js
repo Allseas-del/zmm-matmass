@@ -278,6 +278,7 @@ const server = http.createServer((req, res) => {
   let data = ''; req.on('data', c => data += c); req.on('end', () => {
     const u = new URL(req.url, 'http://x'); const send = (s, b, ct, h) => { res.writeHead(s, Object.assign({ 'Content-Type': ct || 'application/json' }, h || {})); res.end(b); };
     if (u.pathname === '/tool.html' || u.pathname === '/') return send(200, fs.readFileSync(TOOL), 'text/html');
+    if (u.pathname === '/template_product.xml') return send(200, fs.readFileSync(path.join(__dirname, '../webapp/template_product.xml')), 'application/xml');
     if (u.pathname === '/sap/bc/ui2/start_up') return send(200, JSON.stringify({ id: 'TESTUSER', client: '410' }));
     if (u.pathname === '/__stats') return send(200, JSON.stringify({ ...stats, products: [...store.keys()] }));
     if (u.pathname === '/__product') return send(200, JSON.stringify(store.has(u.searchParams.get('id')) ? serialize(store.get(u.searchParams.get('id')), store.get(u.searchParams.get('id'))) : null));

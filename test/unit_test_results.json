@@ -142,7 +142,12 @@
  {
   "name": "25a internal numbering: product created through V2 (Product \"\", SAP unit), views and other basic data through V4; number in column SAP product",
   "pass": true,
-  "info": "v2post=2 targets=4001055,4001064, plants=1"
+  "info": "v2post=2 targets=4001009,4001018, plants=1"
+ },
+ {
+  "name": "25b example template: download, load (2 products, 2 MARC, 2 MARD, 2 MBEW), no validation problems, V2 units M and AU",
+  "pass": true,
+  "info": "2,2,2,2 M/HAWA,AU/SERV"
  },
  {
   "name": "26 no JavaScript errors on the page",

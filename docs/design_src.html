@@ -112,6 +112,7 @@
 <tr><td>ProductValuation (+ Accounting, Costing 1:1)</td><td>Product, ValuationArea, ValuationType</td><td>MBEW</td><td>Valuation Data</td></tr>
 <tr><td>ProductSalesDelivery (+ SalesTax)</td><td>Product, SalesOrg, DistributionChannel (+ Country, TaxCategory)</td><td>MVKE / MLAN</td><td>Distribution Chains, Tax Classification</td></tr>
 </table>
+<p>Example template: button <i>Download example template</i> in section 2 delivers <code>template_product.xml</code> (BSP ZMMMATMASS): the empty Migration Cockpit template "Product" (S/4HANA 2023) with one HAWA and one SERV product (values from the DS4 test run file, plant/valuation area NL10), 2 plant rows, 2 storage location rows (both HAWA – a service material has no storage locations) and 2 valuation rows. Generated with <code>test/gen_template.py</code>.</p>
 <h4>5.3 Rules</h4>
 <table>
 <tr><th>Rule</th><th>Implementation</th></tr>

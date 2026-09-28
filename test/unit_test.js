@@ -136,6 +136,17 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   ok('25a internal numbering: product created through V2 (Product "", SAP unit), views and other basic data through V4; number in column SAP product',
     st.v2post === 2 && /^4\d{6}$/.test(tg[0]) && /^4\d{6}$/.test(tg[1]) && tg[0] !== tg[1] && pn && pn._ProductPlant.length === 1 && pn._ProductValuation.length === 1 && pn.ProductGroup === (await page.evaluate(() => toPayload(buildProduct(sheets.S_MARA.rows[0])).ProductGroup)),
     `v2post=${st.v2post} targets=${tg.join(',')} plants=${pn && pn._ProductPlant.length}`);
+  // downloadable example template: link works, file loads, validates, V2 payload for HAWA and SERV
+  const [dlt] = await Promise.all([page.waitForEvent('download'), page.click('#lnkTemplate')]);
+  const tPath = path.join(__dirname, 'template_download.xml'); await dlt.saveAs(tPath);
+  await page.evaluate(() => fullLog.length = 0);
+  await page.setInputFiles('#file', tPath); await page.waitForFunction(() => /File loaded/.test(fullLog.join('\n')));
+  await page.click('#btnDry'); await page.waitForFunction(() => /Validation against/.test(fullLog.join('\n')));
+  L = await logText();
+  const tv = await page.evaluate(() => sheets.S_MARA.rows.map(r => v2Payload(buildProduct(r)).BaseUnit + '/' + toPayload(buildProduct(r)).ProductType));
+  const tc = await page.evaluate(() => ['S_MARA', 'S_MARC', 'S_MARD', 'S_MBEW'].map(k => sheets[k].rows.length).join(','));
+  ok('25b example template: download, load (2 products, 2 MARC, 2 MARD, 2 MBEW), no validation problems, V2 units M and AU',
+    /File loaded: 2 product/.test(L) && tc === '2,2,2,2' && /Validation against \$metadata: no problems/.test(L) && tv.join(',') === 'M/HAWA,AU/SERV', `${tc} ${tv.join(',')}`);
   ok('26 no JavaScript errors on the page', errors.length === 0, errors.join(' | '));
   await page.screenshot({ path: path.join(__dirname, 'screenshot.png'), fullPage: true });
   await browser.close();
