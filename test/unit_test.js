@@ -147,6 +147,13 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   const tc = await page.evaluate(() => ['S_MARA', 'S_MARC', 'S_MARD', 'S_MBEW'].map(k => sheets[k].rows.length).join(','));
   ok('25b example template: download, load (2 products, 2 MARC, 2 MARD, 2 MBEW), no validation problems, V2 units M and AU',
     /File loaded: 2 product/.test(L) && tc === '2,2,2,2' && /Validation against \$metadata: no problems/.test(L) && tv.join(',') === 'M/HAWA,AU/SERV', `${tc} ${tv.join(',')}`);
+  // unit translation: SAP unit via built-in T006 table, own line via the text field
+  await page.evaluate(() => { sheets.S_MARA.rows[1].cells.MEINS.value = 'AU'; sheets.S_MARA.rows[0].cells.MEINS.value = 'STK'; });
+  await page.evaluate(() => { document.getElementById('unitBox').open = true; });
+  await page.fill('#unitMap', 'STK=MTR'); await page.click('#btnUnitSave');
+  const tu = await page.evaluate(() => sheets.S_MARA.rows.map(r => toPayload(buildProduct(r)).BaseISOUnit));
+  L = await logText();
+  ok('25c unit translation: AU → C62 (T006), STK → MTR (own line), logged', tu.join(',') === 'MTR,C62' && /Unit AU translated to ISO C62 \(T006\)/.test(L) && /Unit STK translated to ISO MTR \(own table\)/.test(L), tu.join(','));
   ok('26 no JavaScript errors on the page', errors.length === 0, errors.join(' | '));
   await page.screenshot({ path: path.join(__dirname, 'screenshot.png'), fullPage: true });
   await browser.close();

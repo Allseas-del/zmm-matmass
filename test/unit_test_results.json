@@ -150,6 +150,11 @@
   "info": "2,2,2,2 M/HAWA,AU/SERV"
  },
  {
+  "name": "25c unit translation: AU → C62 (T006), STK → MTR (own line), logged",
+  "pass": true,
+  "info": "MTR,C62"
+ },
+ {
   "name": "26 no JavaScript errors on the page",
   "pass": true,
   "info": ""

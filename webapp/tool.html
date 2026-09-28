@@ -87,6 +87,13 @@
   </div>
   <div class="muted">Example: Migration Cockpit template "Product" (S/4HANA 2023) with one HAWA and one SERV product, plant/valuation area NL10, 2 storage locations for the HAWA product (a service has none). Open it in Excel, replace the example rows and save as XML Spreadsheet 2003.</div>
   <div id="fileInfo" class="muted">No file loaded yet.</div>
+  <details id="unitBox">
+    <summary>Unit translation (supplied value &rarr; ISO code)</summary>
+    <p class="muted">The API needs ISO unit codes. A supplied value that is not an ISO code is translated: first with the lines below, then with the built-in table from T006 of DS4 (SAP and commercial unit &rarr; ISO, e.g. AU &rarr; C62, M &rarr; MTR, PC &rarr; PCE, KG &rarr; KGM). One line per unit: <code>SUPPLIED=ISO</code>. Saved in this browser.</p>
+    <textarea id="unitMap" rows="5" cols="40" placeholder="ST=PCE&#10;STK=PCE"></textarea>
+    <div><button id="btnUnitSave" class="sec">Apply</button> <span id="unitState" class="muted"></span></div>
+    <details><summary>Built-in table (T006, DS4, 28 Sep 2026)</summary><div id="unitBuiltin" class="muted" style="columns:6 120px; font:12px Consolas, monospace"></div></details>
+  </details>
 </section>
 
 <section>
@@ -316,6 +323,21 @@ let csrfToken = null, csrfV2 = null;
 // ISO unit -> SAP commercial unit (EN), from T006 on DS4 (ISOCODE, primary flag), 28 Sep 2026. The V2 API expects SAP units,
 // the template and the V4 API use ISO codes.
 const ISO_TO_SAP = {"23":"RHO","28":"KGF","2J":"C3S","2M":"CMS","2Q":"KBQ","2X":"000","2Z":"MV","3B":"MEJ","4G":"\u00b5L","4H":"\u00b5M","4K":"MA","4N":"MBQ","4O":"\u00b5F","4P":"NM","4T":"PF","59":"PPM","61":"PPB","77":"Ml.",A18:"BQK",A87:"GOH",A93:"GM3",A97:"HPA",ACR:"ACR",AMP:"A",ANN:"YR",B0:"bft",B11:"JKK",B15:"JMO",B22:"KA",B25:"KBK",B34:"KD3",B42:"KJK",B44:"KJM",B45:"KML",B47:"NI",B49:"KOH",B73:"MN",B75:"MGO",B78:"MHV",B84:"\u00b5A",B98:"MIS",BAR:"BAR",BG:"BAG",BO:"BT",BQL:"BQ",C10:"RF",C15:"MIJ",C16:"MMS",C18:"MMO",C19:"MOK",C22:"MNM",C24:"MPS",C26:"MSE",C29:"MTE",C31:"MW",C34:"MOL",C38:"M/L",C39:"NA",C41:"R-U",C45:"NAM",C47:"NS",C56:"NMM",C60:"OCM",C61:"OM",C62:"AU",C65:"PAS",CA:"CAN",CCK:"CCK",CDL:"CD",CEL:"\u00b0C",CLT:"CL",CMK:"CM2",CMQ:"CCM",CMT:"CM",CR:"CRT",CS:"CV",CT:"CAR",D10:"S/M",D21:"M2K",D33:"TES",D41:"TOM",D46:"VAM",D53:"WMK",D87:"MMK",D95:"JG",DAY:"DAY",DD:"DEG",DMQ:"CD3",DMT:"DM",DR:"DR",DZN:"DZ",E22:"TEU",EA:"EA",FAH:"\u00b0F",FAR:"F",FOT:"FT",FTK:"FT2",FTQ:"FT3",GBQ:"GBQ",GE:"lbg",GK:"GKG",GL:"GLI",GLL:"GAL",GM:"GM2",GP:"MGQ",GQ:"\u00b5GQ",GRM:"G",GRO:"GRO",GV:"GJ",HAR:"HA",HLT:"HL",HR:"HR",HTZ:"HZ",HUR:"H",IE:"PRS",INH:"\"",INK:"\"2",INQ:"\"3",J2:"JKG",JOU:"J",KEL:"K",KGM:"KG",KGS:"KGS",KHZ:"KHZ",KJO:"KJ",KMH:"KMH",KMK:"KM2",KMQ:"KGV",KMT:"KM",KPA:"KPA",KVA:"KVA",KVT:"KV",KWH:"KWH",KWT:"KW",L2:"LMI",LBR:"LB",LTR:"L",M1:"MGL",MAW:"MGW",MBR:"MBA",MGM:"MG",MHZ:"MHZ",MIK:"MI2",MIL:"TS",MIN:"MIN",MLT:"ML",MMK:"MM2",MMQ:"MM3",MMT:"MM",MON:"MON",MPA:"MPA",MQH:"M3H",MQS:"M3S",MSK:"MS2",MTK:"M2",MTQ:"M3",MTR:"M",MTS:"M/S",MVA:"MVA",MWH:"MWH",NA:"MGK",NEW:"N",OHM:"OHM",ONZ:"OZ",OZA:"FOZ",P1:"%",PAL:"PA",PCE:"PC",PF:"PAL",PK:"PAC",PR:"PAA",PT:"PT",QT:"QT",RO:"ROL",S4:"M2S",SEC:"S",SMI:"MI",STN:"TON",TNE:"TO",VLT:"V",WEE:"WK",WTT:"W",YDK:"YD2",YDQ:"YD3",YRD:"YD"};
+// Supplied unit -> ISO code. Built-in: SAP internal and commercial units of T006 (DS4) with their ISO code; the user's
+// lines (localStorage) come first. Values that already are ISO codes are left alone.
+const UNIT_TO_ISO = {"\"":"INH","\"2":"INK","\"3":"INQ","%":"P1","000":"2X","A":"AMP","AU":"C62","BAG":"BG","BQ":"BQL","BQK":"A18","BT":"BO","C3S":"2J","CAN":"CA","CAR":"CT","CCM":"CMQ","CD":"CDL","CD3":"DMQ","CL":"CLT","CM":"CMT","CM2":"CMK","CMS":"2M","CRT":"CR","CV":"CS","D":"DAY","DEG":"DD","DM":"DMT","DZ":"DZN","F":"FAR","FOZ":"OZA","FT":"FOT","FT2":"FTK","FT3":"FTQ","G":"GRM","GAL":"GLL","GJ":"GV","GKG":"GK","GLI":"GL","GM2":"GM","GM3":"A93","GOH":"A87","H":"HUR","HA":"HAR","HL":"HLT","HPA":"A97","HZ":"HTZ","J":"JOU","JG":"D95","JKG":"J2","JKK":"B11","JMO":"B15","K":"KEL","KA":"B22","KBK":"B25","KBQ":"2Q","KD3":"B34","KG":"KGM","KGF":"28","KGV":"KMQ","KJ":"KJO","KJK":"B42","KJM":"B44","KM":"KMT","KM2":"KMK","KML":"B45","KOH":"B49","KV":"KVT","KW":"KWT","L":"LTR","LB":"LBR","LMI":"L2","M":"MTR","M/H":"MTS","M/L":"C38","M/M":"C36","M/S":"MTS","M2":"MTK","M2K":"D21","M2S":"S4","M3":"MTQ","M3H":"MQH","M3S":"MQS","MA":"4K","MBA":"MBR","MBQ":"4N","MEJ":"3B","MG":"MGM","MGK":"NA","MGL":"M1","MGO":"B75","MGQ":"GP","MGW":"MAW","MHV":"B78","MI":"SMI","MI2":"MIK","MIJ":"C15","MIS":"B98","ML":"MLT","MM":"MMT","MM2":"MMK","MM3":"MMQ","MMO":"C18","MMS":"C16","MN":"B73","MNM":"C22","MOK":"C19","MOL":"C34","MPL":"C36","MPS":"C24","MS2":"MSK","MSE":"C26","MTE":"C29","MV":"2Z","MW":"C31","Ml.":"77","N":"NEW","NAM":"C45","NI":"B47","NM":"4P","NMM":"C56","NS":"C47","OCM":"C60","OM":"C61","OZ":"ONZ","PA":"PAL","PAA":"PR","PAC":"PK","PAS":"C65","PC":"PCE","PPB":"61","PPM":"59","PRS":"IE","R-U":"C41","RF":"C10","RHO":"23","ROL":"RO","S":"SEC","S/M":"D10","TES":"D33","TEU":"E22","TO":"TNE","TOM":"D41","TON":"STN","TS":"MIL","V":"VLT","VAM":"D46","W":"WTT","WK":"WEE","WMK":"D53","YD":"YRD","YD2":"YDK","YD3":"YDQ","YR":"ANN","ZDG":"PK","bft":"B0","lbg":"GE","\u00b0C":"CEL","\u00b0F":"FAH","\u00b5A":"B84","\u00b5F":"4O","\u00b5GQ":"GQ","\u00b5L":"4G","\u00b5M":"4H"};
+const ISO_CODES = new Set(["23","28","2J","2M","2Q","2X","2Z","3B","4G","4H","4K","4N","4O","4P","4T","59","61","77","A18","A87","A93","A97","ACR","AMP","ANN","B0","B11","B15","B22","B25","B34","B42","B44","B45","B47","B49","B73","B75","B78","B84","B98","BAR","BG","BO","BQL","C10","C15","C16","C18","C19","C22","C24","C26","C29","C31","C34","C36","C38","C39","C41","C45","C47","C56","C60","C61","C62","C65","CA","CCK","CDL","CEL","CLT","CMK","CMQ","CMT","CR","CS","CT","D10","D21","D33","D41","D46","D53","D87","D95","DAY","DD","DMQ","DMT","DR","DZN","E22","EA","FAH","FAR","FOT","FTK","FTQ","GBQ","GE","GK","GL","GLL","GM","GP","GQ","GRM","GRO","GV","HAR","HLT","HR","HTZ","HUR","IE","INH","INK","INQ","J2","JOU","KEL","KGM","KGS","KHZ","KJO","KMH","KMK","KMQ","KMT","KPA","KVA","KVT","KWH","KWT","L2","LBR","LTR","M1","MAW","MBR","MGM","MHZ","MIK","MIL","MIN","MLT","MMK","MMQ","MMT","MON","MPA","MQH","MQS","MSK","MTK","MTQ","MTR","MTS","MVA","MWH","NA","NEW","OHM","ONZ","OZA","P1","PAL","PCE","PF","PK","PR","PT","QT","RO","S4","SEC","SMI","STN","TNE","VLT","WEE","WTT","YDK","YDQ","YRD"]);
+let userUnitMap = {}; const unitLogged = new Set();
+function parseUnitMap(text) {
+  const m = {}; for (const line of (text || '').split(/\r?\n/)) { const x = line.match(/^\s*([^=\s]+)\s*=\s*([^=\s]+)\s*$/); if (x) m[x[1].toUpperCase()] = x[2].toUpperCase(); }
+  return m;
+}
+function toIso(v) {
+  const k = String(v).trim(); const u = k.toUpperCase();
+  const iso = userUnitMap[u] || userUnitMap[k] || (ISO_CODES.has(k) ? k : null) || UNIT_TO_ISO[k] || UNIT_TO_ISO[u];
+  if (iso && iso !== k && !unitLogged.has(k)) { unitLogged.add(k); log(`Unit ${k} translated to ISO ${iso} (${userUnitMap[u] || userUnitMap[k] ? 'own table' : 'T006'}).`); }
+  return iso || k;
+}
 let schema = null;          // entity type -> { props, navs }
 const results = new Map();  // source product -> result
 let stopRequested = false;
@@ -471,6 +493,7 @@ function buildIndex() {
 const missingProps = new Map();   // "Type.prop" -> rows with a value (property not in this service)
 function convert(entityType, prop, raw) {
   let v = (raw ?? '').trim(); if (v === '') return undefined;
+  if (/ISOUnit$/.test(prop)) v = toIso(v);
   const p = schema && schema[entityType] && schema[entityType].props[prop];
   if (!p) return v;
   switch (p.type) {
@@ -1217,6 +1240,16 @@ $('extNum').onchange = () => { if (sheets.S_MARA) sheets.S_MARA.rows.forEach(r =
 
 // In the launchpad the session exists already: test right away
 if (location.protocol !== 'file:') testConnection();
+
+try { $('unitMap').value = localStorage.getItem('zmmmatmass.unitMap') || ''; } catch (e) { /* storage not available */ }
+userUnitMap = parseUnitMap($('unitMap').value);
+$('unitBuiltin').textContent = Object.entries(UNIT_TO_ISO).map(([a, b]) => `${a}=${b}`).join('  ');
+$('btnUnitSave').onclick = () => {
+  userUnitMap = parseUnitMap($('unitMap').value); unitLogged.clear();
+  try { localStorage.setItem('zmmmatmass.unitMap', $('unitMap').value); } catch (e) { /* storage not available */ }
+  const bad = Object.entries(userUnitMap).filter(([, iso]) => !ISO_CODES.has(iso)).map(([a, b]) => `${a}=${b}`);
+  $('unitState').textContent = `${Object.keys(userUnitMap).length} line(s) applied` + (bad.length ? ` — not an ISO code in T006: ${bad.join(', ')}` : '');
+};
 </script>
 </body>
 </html>
