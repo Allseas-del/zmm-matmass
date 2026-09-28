@@ -105,6 +105,11 @@
   "info": "filterGets=11 expandGets=0"
  },
  {
+  "name": "19b change: other currency in file than in SAP — price not sent, warning, rest of the change set passes",
+  "pass": true,
+  "info": "map=1.5 cur=EUR"
+ },
+ {
   "name": "20 change without differences: nothing sent",
   "pass": true,
   "info": ""

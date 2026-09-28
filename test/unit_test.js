@@ -79,6 +79,14 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   await page.click('#btnRun'); await waitIdle();
   ok('19a change: current state read with filtered GETs per entity set in one $batch, no $expand; PATCH only on canonical URLs',
     !st.expandGets && st.filterGets >= 5, `filterGets=${st.filterGets} expandGets=${st.expandGets || 0}`);
+  // currency of a valuation differs between file and SAP: amounts not sent, warning logged
+  await page.evaluate(() => { sheets.S_MBEW.rows[0].cells.WAERS.value = 'USD'; sheets.S_MBEW.rows[0].cells.VERPR.value = '9.99'; });
+  await page.click('#btnRun'); await waitIdle(); L = await logText();
+  const p1c = await api('/__product?id=ZTEST-001');
+  ok('19b change: other currency in file than in SAP — price not sent, warning, rest of the change set passes',
+    /currency USD in the file, EUR in SAP — not changed: MovingAveragePrice/.test(L) && p1c._ProductValuation[0].MovingAveragePrice === 1.5 && p1c._ProductValuation[0].Currency === 'EUR',
+    `map=${p1c._ProductValuation[0].MovingAveragePrice} cur=${p1c._ProductValuation[0].Currency}`);
+  await page.evaluate(() => { sheets.S_MBEW.rows[0].cells.WAERS.value = 'EUR'; sheets.S_MBEW.rows[0].cells.VERPR.value = '1.5'; });
   ok('20 change without differences: nothing sent', /ZTEST-001 → ZTEST-001: no differences/.test(await logText()));
 
   // step-wise create for the corrected ZTEST-003

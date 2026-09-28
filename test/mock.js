@@ -226,6 +226,8 @@ function handle(method, p, body, headers) {   // returns { status, body }
     const target = nav ? node.navs[nav] : node;
     checkProps(target.type, body);
     for (const k of T[target.type].keys) if (k in body && String(body[k]) !== String(target.data[k])) throw new ODataError(400, `Key ${k} cannot be changed`);
+    if (target.type === 'ProductValuation_Type' && body.Currency && target.data.Currency && body.Currency !== target.data.Currency)
+      throw new ODataError(400, `Currency ${body.Currency} provided is incorrect for Product ${target.data.Product} Valuation ${target.data.ValuationArea}`);
     Object.assign(target.data, body); prod.data.LastChangeDateTime = stamp(); return { status: 200, body: serialize(target, prod) };
   }
   throw new ODataError(405, 'Method not allowed');

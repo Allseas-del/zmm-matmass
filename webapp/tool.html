@@ -863,6 +863,17 @@ function diffOps(item, cur, url, ops, label) {
   const type = typeOf(item.node); const keys = keysOf(type);
   const d = {};
   for (const [k, v] of Object.entries(item.data)) if (!keys.includes(k) && !same(v, cur[k])) d[k] = v;
+  // The currency of a valuation is the company code currency and cannot be changed ("Currency EUR provided is incorrect
+  // for Product … Valuation US10"). If the file has another currency, its amounts are in that currency: they are not
+  // sent, and the entity keeps SAP's currency.
+  if (d.Currency !== undefined && cur.Currency) {
+    const e = schema && schema[type], fileCur = d.Currency;
+    const isAmount = k => (e && e.props[k] && e.props[k].ref === 'Currency') || /Price|Crcy/.test(k);
+    const skipped = Object.keys(d).filter(isAmount);
+    skipped.forEach(k => delete d[k]); delete d.Currency;
+    item.data = { ...item.data, Currency: cur.Currency }; skipped.forEach(k => delete item.data[k]);
+    (ops.warnings = ops.warnings || []).push(`${label}: currency ${fileCur} in the file, ${cur.Currency} in SAP — not changed: ${skipped.join(', ') || 'currency'}`);
+  }
   // amounts and quantities go together with their currency/unit ("Together with property 'MovingAveragePrice' also
   // property 'Currency' needs to be provided"): from $metadata (Measures annotations), plus Currency/BaseISOUnit as fallback
   if (Object.keys(d).length) {
@@ -997,6 +1008,7 @@ async function upsert(h, item, product, createdNow) {
   // All PATCHes share the product's ETag (LastChangeDateTime). The first one carries it; the rest of the change set
   // uses "*" because the first change already moves the timestamp. The change set is atomic, so the check stays effective.
   let seen = false; ops.forEach(o => { if (o.headers && o.headers['If-Match']) { if (seen) o.headers = { 'If-Match': '*' }; seen = true; } });
+  (ops.warnings || []).forEach(w => log('  ' + w, 'warn'));
   if (!ops.length) { finish(h, 'done', product, 'no differences', 0); log(`${prodOf(h)} → ${product}: no differences`, 'ok'); return; }
   log(`  ${prodOf(h)} → ${product}: sending change set with ${ops.length} operation(s)…`);
   const [a] = await batchAll([{ changeset: ops.map(o => ({ method: o.method, path: o.path, body: o.body, headers: o.headers })) }]);
