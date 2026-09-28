@@ -38,6 +38,7 @@
   td input { border:none; background:transparent; font:inherit; width:100%; min-width:60px; padding:2px; }
   td input.dirty { background:#fff4c2; }
   td.st { font-weight:600; max-width:480px; overflow:hidden; text-overflow:ellipsis; }
+  .note { margin:4px 0 8px; padding:6px 10px; border-left:3px solid var(--acc); background:#eef4fb; font-size:13px; }
   .ok { color:var(--ok); } .err { color:var(--err); } .warn { color:var(--warn); }
   #log { font:12px/1.4 Consolas, monospace; background:#0f1720; color:#d7e0ea; padding:10px; border-radius:4px; max-height:380px; overflow:auto; white-space:pre-wrap; }
   #log .ok { color:#6fdc8c; } #log .err { color:#ff8a8a; } #log .warn { color:#ffd479; }
@@ -115,6 +116,7 @@
     <label><input type="radio" name="mode" value="create" checked> Create</label>
     <label><input type="radio" name="mode" value="change"> Change (existing products in SAP)</label>
   </div>
+  <div class="note">Tip: to delete a value in SAP, fill the cell with <b>#</b> (mode Change). Empty cells are not changed.</div>
   <div class="row">
     <label><input type="checkbox" id="extNum" checked> Send product number from the file (external numbering)</label>
     <label>Create method <select id="createMethod">
