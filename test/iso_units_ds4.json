@@ -1,0 +1,742 @@
+{
+"23": {
+"com": "RHO",
+"sap": "RHO"
+},
+"28": {
+"com": "KGF",
+"sap": "KGF"
+},
+"2J": {
+"com": "C3S",
+"sap": "C3S"
+},
+"2M": {
+"com": "CMS",
+"sap": "CMS"
+},
+"2Q": {
+"com": "KBQ",
+"sap": "KBQ"
+},
+"2X": {
+"com": "000",
+"sap": "000"
+},
+"2Z": {
+"com": "MV",
+"sap": "MV"
+},
+"3B": {
+"com": "MEJ",
+"sap": "MEJ"
+},
+"4G": {
+"com": "\u00b5L",
+"sap": "\u00b5L"
+},
+"4H": {
+"com": "\u00b5M",
+"sap": "\u00b5M"
+},
+"4K": {
+"com": "MA",
+"sap": "MA"
+},
+"4N": {
+"com": "MBQ",
+"sap": "MBQ"
+},
+"4O": {
+"com": "\u00b5F",
+"sap": "\u00b5F"
+},
+"4P": {
+"com": "NM",
+"sap": "NM"
+},
+"4T": {
+"com": "PF",
+"sap": "PF"
+},
+"59": {
+"com": "PPM",
+"sap": "PPM"
+},
+"61": {
+"com": "PPB",
+"sap": "PPB"
+},
+"77": {
+"com": "Ml.",
+"sap": "Ml."
+},
+"A18": {
+"com": "BQK",
+"sap": "BQK"
+},
+"A87": {
+"com": "GOH",
+"sap": "GOH"
+},
+"A93": {
+"com": "GM3",
+"sap": "GM3"
+},
+"A97": {
+"com": "HPA",
+"sap": "HPA"
+},
+"ACR": {
+"com": "ACR",
+"sap": "ACR"
+},
+"AMP": {
+"com": "A",
+"sap": "A"
+},
+"ANN": {
+"com": "YR",
+"sap": "YR"
+},
+"B0": {
+"com": "bft",
+"sap": "bft"
+},
+"B11": {
+"com": "JKK",
+"sap": "JKK"
+},
+"B15": {
+"com": "JMO",
+"sap": "JMO"
+},
+"B22": {
+"com": "KA",
+"sap": "KA"
+},
+"B25": {
+"com": "KBK",
+"sap": "KBK"
+},
+"B34": {
+"com": "KD3",
+"sap": "KD3"
+},
+"B42": {
+"com": "KJK",
+"sap": "KJK"
+},
+"B44": {
+"com": "KJM",
+"sap": "KJM"
+},
+"B45": {
+"com": "KML",
+"sap": "KML"
+},
+"B47": {
+"com": "NI",
+"sap": "NI"
+},
+"B49": {
+"com": "KOH",
+"sap": "KOH"
+},
+"B73": {
+"com": "MN",
+"sap": "MN"
+},
+"B75": {
+"com": "MGO",
+"sap": "MGO"
+},
+"B78": {
+"com": "MHV",
+"sap": "MHV"
+},
+"B84": {
+"com": "\u00b5A",
+"sap": "\u00b5A"
+},
+"B98": {
+"com": "MIS",
+"sap": "MIS"
+},
+"BAR": {
+"com": "BAR",
+"sap": "BAR"
+},
+"BG": {
+"com": "BAG",
+"sap": "BAG"
+},
+"BO": {
+"com": "BT",
+"sap": "BT"
+},
+"BQL": {
+"com": "BQ",
+"sap": "BQ"
+},
+"C10": {
+"com": "RF",
+"sap": "RF"
+},
+"C15": {
+"com": "MIJ",
+"sap": "MIJ"
+},
+"C16": {
+"com": "MMS",
+"sap": "MMS"
+},
+"C18": {
+"com": "MMO",
+"sap": "MMO"
+},
+"C19": {
+"com": "MOK",
+"sap": "MOK"
+},
+"C22": {
+"com": "MNM",
+"sap": "MNM"
+},
+"C24": {
+"com": "MPS",
+"sap": "MPS"
+},
+"C26": {
+"com": "MSE",
+"sap": "MSE"
+},
+"C29": {
+"com": "MTE",
+"sap": "MTE"
+},
+"C31": {
+"com": "MW",
+"sap": "MW"
+},
+"C34": {
+"com": "MOL",
+"sap": "MOL"
+},
+"C38": {
+"com": "M/L",
+"sap": "M/L"
+},
+"C39": {
+"com": "NA",
+"sap": "NA"
+},
+"C41": {
+"com": "R-U",
+"sap": "R-U"
+},
+"C45": {
+"com": "NAM",
+"sap": "NAM"
+},
+"C47": {
+"com": "NS",
+"sap": "NS"
+},
+"C56": {
+"com": "NMM",
+"sap": "NMM"
+},
+"C60": {
+"com": "OCM",
+"sap": "OCM"
+},
+"C61": {
+"com": "OM",
+"sap": "OM"
+},
+"C62": {
+"com": "AU",
+"sap": "AU"
+},
+"C65": {
+"com": "PAS",
+"sap": "PAS"
+},
+"CA": {
+"com": "CAN",
+"sap": "CAN"
+},
+"CCK": {
+"com": "CCK",
+"sap": "CCK"
+},
+"CDL": {
+"com": "CD",
+"sap": "CD"
+},
+"CEL": {
+"com": "\u00b0C",
+"sap": "\u00b0C"
+},
+"CLT": {
+"com": "CL",
+"sap": "CL"
+},
+"CMK": {
+"com": "CM2",
+"sap": "CM2"
+},
+"CMQ": {
+"com": "CCM",
+"sap": "CCM"
+},
+"CMT": {
+"com": "CM",
+"sap": "CM"
+},
+"CR": {
+"com": "CRT",
+"sap": "CRT"
+},
+"CS": {
+"com": "CV",
+"sap": "CV"
+},
+"CT": {
+"com": "CAR",
+"sap": "CAR"
+},
+"D10": {
+"com": "S/M",
+"sap": "S/M"
+},
+"D21": {
+"com": "M2K",
+"sap": "M2K"
+},
+"D33": {
+"com": "TES",
+"sap": "TES"
+},
+"D41": {
+"com": "TOM",
+"sap": "TOM"
+},
+"D46": {
+"com": "VAM",
+"sap": "VAM"
+},
+"D53": {
+"com": "WMK",
+"sap": "WMK"
+},
+"D87": {
+"com": "MMK",
+"sap": "MMK"
+},
+"D95": {
+"com": "JG",
+"sap": "JG"
+},
+"DAY": {
+"com": "DAY",
+"sap": "DAY"
+},
+"DD": {
+"com": "DEG",
+"sap": "DEG"
+},
+"DMQ": {
+"com": "CD3",
+"sap": "CD3"
+},
+"DMT": {
+"com": "DM",
+"sap": "DM"
+},
+"DR": {
+"com": "DR",
+"sap": "DR"
+},
+"DZN": {
+"com": "DZ",
+"sap": "DZ"
+},
+"E22": {
+"com": "TEU",
+"sap": "TEU"
+},
+"EA": {
+"com": "EA",
+"sap": "EA"
+},
+"FAH": {
+"com": "\u00b0F",
+"sap": "\u00b0F"
+},
+"FAR": {
+"com": "F",
+"sap": "F"
+},
+"FOT": {
+"com": "FT",
+"sap": "FT"
+},
+"FTK": {
+"com": "FT2",
+"sap": "FT2"
+},
+"FTQ": {
+"com": "FT3",
+"sap": "FT3"
+},
+"GBQ": {
+"com": "GBQ",
+"sap": "GBQ"
+},
+"GE": {
+"com": "lbg",
+"sap": "lbg"
+},
+"GK": {
+"com": "GKG",
+"sap": "GKG"
+},
+"GL": {
+"com": "GLI",
+"sap": "GLI"
+},
+"GLL": {
+"com": "GAL",
+"sap": "GAL"
+},
+"GM": {
+"com": "GM2",
+"sap": "GM2"
+},
+"GP": {
+"com": "MGQ",
+"sap": "MGQ"
+},
+"GQ": {
+"com": "\u00b5GQ",
+"sap": "\u00b5GQ"
+},
+"GRM": {
+"com": "G",
+"sap": "G"
+},
+"GRO": {
+"com": "GRO",
+"sap": "GRO"
+},
+"GV": {
+"com": "GJ",
+"sap": "GJ"
+},
+"HAR": {
+"com": "HA",
+"sap": "HA"
+},
+"HLT": {
+"com": "HL",
+"sap": "HL"
+},
+"HR": {
+"com": "HR",
+"sap": "HR"
+},
+"HTZ": {
+"com": "HZ",
+"sap": "HZ"
+},
+"HUR": {
+"com": "H",
+"sap": "H"
+},
+"IE": {
+"com": "PRS",
+"sap": "PRS"
+},
+"INH": {
+"com": "\"",
+"sap": "\""
+},
+"INK": {
+"com": "\"2",
+"sap": "\"2"
+},
+"INQ": {
+"com": "\"3",
+"sap": "\"3"
+},
+"J2": {
+"com": "JKG",
+"sap": "JKG"
+},
+"JOU": {
+"com": "J",
+"sap": "J"
+},
+"KEL": {
+"com": "K",
+"sap": "K"
+},
+"KGM": {
+"com": "KG",
+"sap": "KG"
+},
+"KGS": {
+"com": "KGS",
+"sap": "KGS"
+},
+"KHZ": {
+"com": "KHZ",
+"sap": "KHZ"
+},
+"KJO": {
+"com": "KJ",
+"sap": "KJ"
+},
+"KMH": {
+"com": "KMH",
+"sap": "KMH"
+},
+"KMK": {
+"com": "KM2",
+"sap": "KM2"
+},
+"KMQ": {
+"com": "KGV",
+"sap": "KGV"
+},
+"KMT": {
+"com": "KM",
+"sap": "KM"
+},
+"KPA": {
+"com": "KPA",
+"sap": "KPA"
+},
+"KVA": {
+"com": "KVA",
+"sap": "KVA"
+},
+"KVT": {
+"com": "KV",
+"sap": "KV"
+},
+"KWH": {
+"com": "KWH",
+"sap": "KWH"
+},
+"KWT": {
+"com": "KW",
+"sap": "KW"
+},
+"L2": {
+"com": "LMI",
+"sap": "LMI"
+},
+"LBR": {
+"com": "LB",
+"sap": "LB"
+},
+"LTR": {
+"com": "L",
+"sap": "L"
+},
+"M1": {
+"com": "MGL",
+"sap": "MGL"
+},
+"MAW": {
+"com": "MGW",
+"sap": "MGW"
+},
+"MBR": {
+"com": "MBA",
+"sap": "MBA"
+},
+"MGM": {
+"com": "MG",
+"sap": "MG"
+},
+"MHZ": {
+"com": "MHZ",
+"sap": "MHZ"
+},
+"MIK": {
+"com": "MI2",
+"sap": "MI2"
+},
+"MIL": {
+"com": "TS",
+"sap": "TS"
+},
+"MIN": {
+"com": "MIN",
+"sap": "MIN"
+},
+"MLT": {
+"com": "ML",
+"sap": "ML"
+},
+"MMK": {
+"com": "MM2",
+"sap": "MM2"
+},
+"MMQ": {
+"com": "MM3",
+"sap": "MM3"
+},
+"MMT": {
+"com": "MM",
+"sap": "MM"
+},
+"MON": {
+"com": "MON",
+"sap": "MON"
+},
+"MPA": {
+"com": "MPA",
+"sap": "MPA"
+},
+"MQH": {
+"com": "M3H",
+"sap": "M3H"
+},
+"MQS": {
+"com": "M3S",
+"sap": "M3S"
+},
+"MSK": {
+"com": "MS2",
+"sap": "MS2"
+},
+"MTK": {
+"com": "M2",
+"sap": "M2"
+},
+"MTQ": {
+"com": "M3",
+"sap": "M3"
+},
+"MTR": {
+"com": "M",
+"sap": "M"
+},
+"MTS": {
+"com": "M/S",
+"sap": "M/S"
+},
+"MVA": {
+"com": "MVA",
+"sap": "MVA"
+},
+"MWH": {
+"com": "MWH",
+"sap": "MWH"
+},
+"NA": {
+"com": "MGK",
+"sap": "MGK"
+},
+"NEW": {
+"com": "N",
+"sap": "N"
+},
+"OHM": {
+"com": "OHM",
+"sap": "OHM"
+},
+"ONZ": {
+"com": "OZ",
+"sap": "OZ"
+},
+"OZA": {
+"com": "FOZ",
+"sap": "FOZ"
+},
+"P1": {
+"com": "%",
+"sap": "%"
+},
+"PAL": {
+"com": "PA",
+"sap": "PA"
+},
+"PCE": {
+"com": "PC",
+"sap": "PC"
+},
+"PF": {
+"com": "PAL",
+"sap": "PAL"
+},
+"PK": {
+"com": "PAC",
+"sap": "PAC"
+},
+"PR": {
+"com": "PAA",
+"sap": "PAA"
+},
+"PT": {
+"com": "PT",
+"sap": "PT"
+},
+"QT": {
+"com": "QT",
+"sap": "QT"
+},
+"RO": {
+"com": "ROL",
+"sap": "ROL"
+},
+"S4": {
+"com": "M2S",
+"sap": "M2S"
+},
+"SEC": {
+"com": "S",
+"sap": "S"
+},
+"SMI": {
+"com": "MI",
+"sap": "MI"
+},
+"STN": {
+"com": "TON",
+"sap": "TON"
+},
+"TNE": {
+"com": "TO",
+"sap": "TO"
+},
+"VLT": {
+"com": "V",
+"sap": "V"
+},
+"WEE": {
+"com": "WK",
+"sap": "WK"
+},
+"WTT": {
+"com": "W",
+"sap": "W"
+},
+"YDK": {
+"com": "YD2",
+"sap": "YD2"
+},
+"YDQ": {
+"com": "YD3",
+"sap": "YD3"
+},
+"YRD": {
+"com": "YD",
+"sap": "YD"
+}
+}

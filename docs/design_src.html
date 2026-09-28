@@ -30,7 +30,7 @@
 <table class="meta">
 <tr><td>Customer</td><td>Allseas – S/4HANA 2023 FPS01, DS4 (build 400, test 410) → QS4 → PS4</td></tr>
 <tr><td>Author</td><td>Pjotr Dassen</td></tr>
-<tr><td>Version</td><td>0.4 – deployed to DS4 (BSP ZMMMATMASS, DS4K915674); integration test on DS4/410 in progress</td></tr>
+<tr><td>Version</td><td>0.5 – V2 create for internal numbering; deployed to DS4 (BSP ZMMMATMASS, DS4K915674); integration test on DS4/410 in progress</td></tr>
 <tr><td>Date</td><td>25 September 2026</td></tr>
 <tr><td>Package / transport</td><td><code>ZMM_MATMASS</code> / <code>DS4K915674</code>, BSP <code>ZMMMATMASS</code></td></tr>
 <tr><td>Repository</td><td><code>C:\dev\zmm-matmass</code> – github.com/Allseas-del/zmm-matmass</td></tr>
@@ -125,7 +125,8 @@
 <tr><td>Descriptions</td><td>MAKTX/SPRAS of Basic Data and the rows of Additional Descriptions are merged per language.</td></tr>
 <tr><td>GTINs</td><td>Additional GTINs are attached to the unit of measure with the same <code>MEINH</code>; the consecutive number is assigned 00001, 00002 … per unit.</td></tr>
 <tr><td>Tax classification</td><td>MLAN is per country only, the API keeps sales tax per sales organization/distribution channel. Each MLAN row (TATYP1..9/TAXM1..9) is sent under every distribution chain of the product (<span class="open">to be confirmed in integration test</span>). Without a distribution chain the rows cannot be sent.</td></tr>
-<tr><td>Material number</td><td>"Send product number from the file" (default on) sends <code>PRODUCT</code> (<code>Product</code> is Immutable, not Computed). Off: the tool sends <code>"Product": ""</code> (also in the children), as MM01 with an empty material field; SAP assigns the next internal number, which appears in column <i>SAP product</i> and in the results. Without the property DS4 answers <i>Property PRODUCT is a key and cannot be initial</i> (25 Sep 2026); the empty string is to be confirmed on DS4.</td></tr>
+<tr><td>Material number</td><td>"Send product number from the file" on: <code>PRODUCT</code> is sent to API_PRODUCT_2 (V4); the number must be free and in an external number range of the material type. Off (internal numbering): API_PRODUCT_2 cannot assign a number (DS4: <i>Property PRODUCT is a key and cannot be initial</i>, also with <code>""</code>; SAP Community confirms). The V2 API <code>API_PRODUCT_SRV</code> can: <code>POST A_Product</code> with <code>"Product": ""</code> gave 201 with number 1000412 for type HAWA on DS4/410 (28 Sep 2026). The tool therefore creates the product through V2 with type, industry sector, base unit and descriptions, and sends everything else (other basic data, plants, storage locations, valuations, …) through V4 as one change set on the new number. The new number appears in column <i>SAP product</i>.</td></tr>
+<tr><td>Units for V2</td><td>V2 expects SAP units, the template has ISO codes. The tool converts with a table from T006 of DS4 (ISOCODE, primary flag; 185 codes; e.g. MTR → M, C62 → AU, PCE → PC, KGM → KG). ISO code C36 is ambiguous (M/M, MPL, none primary) and not converted.</td></tr>
 </table>
 <h4>5.4 Field mapping (generated from the tool's mapping table)</h4>
 <details><summary>Show the complete mapping per sheet</summary>
@@ -151,6 +152,7 @@ __MAPPING__
 <table>
 <tr><th>Check</th><th>Object / values</th><th>Effect when missing</th></tr>
 <tr><td>Start of the BSP</td><td>ICF node <code>/sap/bc/ui5_ui5/sap/zmmmatmass</code>, launchpad logon</td><td>App does not load.</td></tr>
+<tr><td>Start of the V2 service (create with internal number only)</td><td><code>S_SERVICE</code> for <code>API_PRODUCT_SRV</code> (TADIR R3TR IWSG, e.g. <code>ZAPI_PRODUCT_SRV_0001</code>; the hash value is shown in SU53/SU24)</td><td>HTTP 403 on <code>POST A_Product</code>.</td></tr>
 <tr><td>Start of the V4 service</td><td><code>S_START</code> AUTHPGMID=R3TR, AUTHOBJTYP=G4BA, AUTHOBJNAM=<code>API_PRODUCT</code> (service group, first path segment after <code>/sap/</code>)</td><td>HTTP 403 "no start authorization for R3TR G4BA …"; $metadata may still be readable.</td></tr>
 <tr><td>Material master</td><td>The checks of the product business object, as for MM01/MM02: <code>M_MATE_MAR</code> (material type), <code>M_MATE_WRK</code> (plant), <code>M_MATE_STA</code> (maintenance status), <code>M_MATE_BUK</code> (company code, valuation), <code>M_MATE_VKO</code> (sales org), <code>M_MATE_MAT</code> (authorization group). Exact set: SU24 of the service and SU53 after the integration test.</td><td>Error message per product.</td></tr>
 <tr><td>CSRF</td><td>X-CSRF-Token, renewed automatically</td><td>Handled by the tool.</td></tr>
@@ -180,6 +182,7 @@ __MAPPING__
 <h3>11. API usage</h3>
 <table>
 <tr><th>Purpose</th><th>Request</th></tr>
+<tr><td>Create with internal number (V2)</td><td><code>POST /sap/opu/odata/sap/API_PRODUCT_SRV/A_Product</code> {"Product":"", ProductType, IndustrySector, BaseUnit (SAP unit), to_Description:{results:[…]}} with its own CSRF token; then read and change set through V4 as in Change.</td></tr>
 <tr><td>CSRF / reachability</td><td><code>GET &lt;service root&gt;</code> with <code>X-CSRF-Token: Fetch</code></td></tr>
 <tr><td>Schema</td><td><code>GET $metadata</code></td></tr>
 <tr><td>Create (deep)</td><td><code>POST $batch</code> with n × <code>POST Product</code> {…, _ProductDescription:[…], _ProductPlant:[{…, _ProductPlantSupplyPlanning:{…}, _ProductPlantStorageLocation:[…]}], …}</td></tr>
@@ -216,6 +219,7 @@ __TESTS__
 <tr><td>25 Sep 2026</td><td>Change 1029465 (BISMT changed)</td><td class="fail">GET with nested $expand: 260 s. Change set (59 operations) rejected: <i>Resource path is supported only with containment navigation properties for this request type</i> (PATCH on nested navigation path) → read split into filtered GETs, PATCH on canonical URLs (see 11)</td></tr>
 <tr><td>25 Sep 2026</td><td>Change 1029465 and 1046670 after the fix</td><td class="fail">Read: 0.6–1.9 s per product (was 260 s). Change sets (60 operations) rejected: 1046670 <i>Together with property 'MovingAveragePrice' also property 'Currency' needs to be provided</i>; 1029465 <i>Property PLANT is a key and cannot be initial | Property PRODUCT is a key and cannot be initial</i> → rules "Parent keys" and "Currency reference" (5.3). The parent-key rule also explains the 404 of the deep insert with external number.</td></tr>
 <tr><td>25 Sep 2026</td><td>Change 1029465 with parent keys in the POST</td><td class="fail">Parent-key error solved. Change set rejected only for the currency: <i>Currency EUR provided is incorrect for Product 1029465 Valuation US10 | … NO10 | MY10 | MX10 | JM10 | GB10 | CA10 | BR10 | AU11</i> → rule "Valuation currency" (5.3). LotSizingProcedure is empty in SAP for all 51 plants, EX in the file.</td></tr>
+<tr><td>28 Sep 2026</td><td>Gateway Client: <code>POST /sap/opu/odata/sap/API_PRODUCT_SRV/A_Product</code> {"Product":"", ProductType HAWA, IndustrySector M, BaseUnit EA, to_Description NL}</td><td class="pass">201 Created, internal number 1000412 → decision: create with internal number through V2, rest through V4</td></tr>
 <tr><td>25 Sep 2026</td><td>Change 4502176</td><td>HTTP 404 <i>Resource not found for entity 'A_PRODUCT_3'</i> – does not exist in 410</td></tr>
 </table>
 
@@ -227,13 +231,13 @@ __TESTS__
 <tr><td>3</td><td>ZZ1_MFRPN_PRD in the V4 service</td><td class="pass">closed – present in $metadata 25 Sep 2026</td></tr>
 <tr><td>4</td><td>Launchpad catalog, target mapping, role</td><td class="open">open</td></tr>
 <tr><td>5</td><td>MDG bypass and who gets write access – confirm with data owner</td><td class="open">open</td></tr>
-<tr><td>6</td><td>Internal or external material numbering for the material types in scope</td><td class="open">DS4 25 Sep 2026: API requires <code>Product</code> (no internal numbering via API_PRODUCT_2). Open: external number range for HAWA/SERV and number source</td></tr>
+<tr><td>6</td><td>Internal or external material numbering for the material types in scope</td><td class="pass">decided 28 Sep 2026 – internal numbering through V2 API_PRODUCT_SRV (create) + V4 (rest); external numbering stays available</td></tr>
 <tr><td>7</td><td>Deep insert accepted by DS4 (otherwise step-wise)</td><td class="open">integration test</td></tr>
 <tr><td>8</td><td>Tax classification (MLAN) per distribution chain – result in MLAN</td><td class="open">integration test</td></tr>
 <tr><td>9</td><td>If-Match "*" for the 2nd+ PATCH in a change set accepted by DS4</td><td class="open">integration test</td></tr>
 <tr><td>10</td><td>Test materials with Allseas values for DS4/410</td><td class="open">open</td></tr>
 </table>
-<p class="muted">Material Master Mass Upload – FD/TD – version 0.4 – 25 September 2026</p>
+<p class="muted">Material Master Mass Upload – FD/TD – version 0.5 – 28 September 2026</p>
 </main>
 </body>
 </html>

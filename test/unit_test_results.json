@@ -140,9 +140,9 @@
   "info": ""
  },
  {
-  "name": "25a internal numbering: Product \"\" sent, number assigned by SAP and shown in column SAP product (deep and step-wise)",
+  "name": "25a internal numbering: product created through V2 (Product \"\", SAP unit), views and other basic data through V4; number in column SAP product",
   "pass": true,
-  "info": "4001008,4001010,"
+  "info": "v2post=2 targets=4001008,4001017, plants=1"
  },
  {
   "name": "26 no JavaScript errors on the page",

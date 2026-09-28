@@ -132,8 +132,10 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   await page.evaluate(() => sheets.S_MARA.rows.forEach(r => r.include = prodOf(r) === 'ZTEST-002'));
   await page.selectOption('#createMethod', 'step'); await page.click('#btnRun'); await waitIdle();
   const tg = await page.evaluate(() => sheets.S_MARA.rows.map(r => r.target));
-  ok('25a internal numbering: Product "" sent, number assigned by SAP and shown in column SAP product (deep and step-wise)',
-    pl0.Product === '' && pl0._ProductPlant[0].Product === '' && /^4\d{6}$/.test(tg[0]) && /^4\d{6}$/.test(tg[1]) && tg[0] !== tg[1], tg.join(','));
+  st = await api('/__stats'); const pn = await api('/__product?id=' + tg[0]);
+  ok('25a internal numbering: product created through V2 (Product "", SAP unit), views and other basic data through V4; number in column SAP product',
+    st.v2post === 2 && /^4\d{6}$/.test(tg[0]) && /^4\d{6}$/.test(tg[1]) && tg[0] !== tg[1] && pn && pn._ProductPlant.length === 1 && pn._ProductValuation.length === 1 && pn.ProductGroup === (await page.evaluate(() => toPayload(buildProduct(sheets.S_MARA.rows[0])).ProductGroup)),
+    `v2post=${st.v2post} targets=${tg.join(',')} plants=${pn && pn._ProductPlant.length}`);
   ok('26 no JavaScript errors on the page', errors.length === 0, errors.join(' | '));
   await page.screenshot({ path: path.join(__dirname, 'screenshot.png'), fullPage: true });
   await browser.close();

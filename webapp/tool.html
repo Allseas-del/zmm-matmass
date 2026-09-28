@@ -59,6 +59,9 @@
     <label>sap-client <input type="text" id="client" size="4" placeholder="session"></label>
   </div>
   <div class="row">
+    <label>V2 service (create with internal number) <input type="text" id="svcV2" value="/sap/opu/odata/sap/API_PRODUCT_SRV/"></label>
+  </div>
+  <div class="row">
     <button id="btnTest" class="sec">Test connection</button>
     <span id="connState" class="muted">not tested</span>
   </div>
@@ -68,6 +71,7 @@
       <li>The app runs inside the Fiori launchpad of the same SAP system; requests use your launchpad session. No password is entered or stored.</li>
       <li>Service path: /IWFND/V4_ADMIN &rarr; service group of the Product API &rarr; "Service Test". The field is editable in case the path differs.</li>
       <li>sap-client: leave empty to use the client of the launchpad session.</li>
+      <li>V2 service: only used for "Create" without "Send product number": API_PRODUCT_2 (V4) cannot assign an internal number, API_PRODUCT_SRV (V2) can (DS4, 28 Sep 2026). The product is created there with basic data and descriptions; all other data follows through V4.</li>
       <li>Authorization: S_START for the service group (R3TR G4BA) plus the normal material master authorizations; see the design document, chapter 8.</li>
     </ul>
   </details>
@@ -107,6 +111,7 @@
       <option value="deep" selected>deep insert (product with all views in one request)</option>
       <option value="step">product first, then views in one change set</option>
     </select></label>
+    <span class="muted">Without "Send product number": always product via V2 first, then the rest via V4.</span>
   </div>
   <div class="row">
     <button id="btnDry" class="sec" disabled>Show payload (dry run)</button>
@@ -304,7 +309,10 @@ const NOT_SUPPORTED = { S_FSH_SEASONS_MAT: 'seasons (fashion)', S_MLEA: 'supplie
 let xmlDoc = null, fileName = 'product.xml';
 let sheets = {};
 let activeTab = 'S_MARA';
-let csrfToken = null;
+let csrfToken = null, csrfV2 = null;
+// ISO unit -> SAP commercial unit (EN), from T006 on DS4 (ISOCODE, primary flag), 28 Sep 2026. The V2 API expects SAP units,
+// the template and the V4 API use ISO codes.
+const ISO_TO_SAP = {"23":"RHO","28":"KGF","2J":"C3S","2M":"CMS","2Q":"KBQ","2X":"000","2Z":"MV","3B":"MEJ","4G":"\u00b5L","4H":"\u00b5M","4K":"MA","4N":"MBQ","4O":"\u00b5F","4P":"NM","4T":"PF","59":"PPM","61":"PPB","77":"Ml.",A18:"BQK",A87:"GOH",A93:"GM3",A97:"HPA",ACR:"ACR",AMP:"A",ANN:"YR",B0:"bft",B11:"JKK",B15:"JMO",B22:"KA",B25:"KBK",B34:"KD3",B42:"KJK",B44:"KJM",B45:"KML",B47:"NI",B49:"KOH",B73:"MN",B75:"MGO",B78:"MHV",B84:"\u00b5A",B98:"MIS",BAR:"BAR",BG:"BAG",BO:"BT",BQL:"BQ",C10:"RF",C15:"MIJ",C16:"MMS",C18:"MMO",C19:"MOK",C22:"MNM",C24:"MPS",C26:"MSE",C29:"MTE",C31:"MW",C34:"MOL",C38:"M/L",C39:"NA",C41:"R-U",C45:"NAM",C47:"NS",C56:"NMM",C60:"OCM",C61:"OM",C62:"AU",C65:"PAS",CA:"CAN",CCK:"CCK",CDL:"CD",CEL:"\u00b0C",CLT:"CL",CMK:"CM2",CMQ:"CCM",CMT:"CM",CR:"CRT",CS:"CV",CT:"CAR",D10:"S/M",D21:"M2K",D33:"TES",D41:"TOM",D46:"VAM",D53:"WMK",D87:"MMK",D95:"JG",DAY:"DAY",DD:"DEG",DMQ:"CD3",DMT:"DM",DR:"DR",DZN:"DZ",E22:"TEU",EA:"EA",FAH:"\u00b0F",FAR:"F",FOT:"FT",FTK:"FT2",FTQ:"FT3",GBQ:"GBQ",GE:"lbg",GK:"GKG",GL:"GLI",GLL:"GAL",GM:"GM2",GP:"MGQ",GQ:"\u00b5GQ",GRM:"G",GRO:"GRO",GV:"GJ",HAR:"HA",HLT:"HL",HR:"HR",HTZ:"HZ",HUR:"H",IE:"PRS",INH:"\"",INK:"\"2",INQ:"\"3",J2:"JKG",JOU:"J",KEL:"K",KGM:"KG",KGS:"KGS",KHZ:"KHZ",KJO:"KJ",KMH:"KMH",KMK:"KM2",KMQ:"KGV",KMT:"KM",KPA:"KPA",KVA:"KVA",KVT:"KV",KWH:"KWH",KWT:"KW",L2:"LMI",LBR:"LB",LTR:"L",M1:"MGL",MAW:"MGW",MBR:"MBA",MGM:"MG",MHZ:"MHZ",MIK:"MI2",MIL:"TS",MIN:"MIN",MLT:"ML",MMK:"MM2",MMQ:"MM3",MMT:"MM",MON:"MON",MPA:"MPA",MQH:"M3H",MQS:"M3S",MSK:"MS2",MTK:"M2",MTQ:"M3",MTR:"M",MTS:"M/S",MVA:"MVA",MWH:"MWH",NA:"MGK",NEW:"N",OHM:"OHM",ONZ:"OZ",OZA:"FOZ",P1:"%",PAL:"PA",PCE:"PC",PF:"PAL",PK:"PAC",PR:"PAA",PT:"PT",QT:"QT",RO:"ROL",S4:"M2S",SEC:"S",SMI:"MI",STN:"TON",TNE:"TO",VLT:"V",WEE:"WK",WTT:"W",YDK:"YD2",YDQ:"YD3",YRD:"YD"};
 let schema = null;          // entity type -> { props, navs }
 const results = new Map();  // source product -> result
 let stopRequested = false;
@@ -993,7 +1001,12 @@ function validateAll(hs) {
 $('btnDry').onclick = () => {
   buildIndex(); const hs = selected();
   if (validateAll(hs) < 0) return;
-  hs.slice(0, 3).forEach(h => logBlock(`POST Product — source ${prodOf(h)}`, toPayload(buildProduct(h))));
+  hs.slice(0, 3).forEach(h => {
+    const it = buildProduct(h);
+    if (mode() === 'create' && !$('extNum').checked) {
+      try { logBlock(`V2 POST A_Product — source ${prodOf(h)} (then the rest via V4)`, v2Payload(it)); } catch (e) { log(`${prodOf(h)}: ${e.message}`, 'err'); }
+    } else logBlock(`POST Product — source ${prodOf(h)}`, toPayload(it));
+  });
   if (hs.length > 3) log(`Payload shown for the first 3 of ${hs.length} selected products.`);
 };
 
@@ -1032,6 +1045,35 @@ async function upsert(h, item, product, createdNow) {
     logBlock(`Change set for ${product}`, ops);
   }
 }
+// Create with internal number through the V2 API: basic data (type, industry sector, base unit) and descriptions.
+// Everything else goes through V4 afterwards (step-wise create), compared with what SAP has then.
+function v2Payload(item) {
+  const d = item.data, sapUnit = ISO_TO_SAP[d.BaseISOUnit];
+  if (!sapUnit) throw new Error(`base unit ${d.BaseISOUnit}: no SAP unit for this ISO code in the unit table (T006)`);
+  const desc = (item.children._ProductDescription || []).map(x => ({ Product: '', Language: x.data.Language, ProductDescription: x.data.ProductDescription }));
+  return { Product: '', ProductType: d.ProductType, IndustrySector: d.IndustrySector, BaseUnit: sapUnit, ...(desc.length ? { to_Description: { results: desc } } : {}) };
+}
+function v2Base() { let p = $('svcV2').value.trim(); if (!p.endsWith('/')) p += '/'; return p; }
+async function createV2(body) {
+  const go = () => fetch(withParams(v2Base() + 'A_Product'), { method: 'POST', credentials: 'include', body: JSON.stringify(body),
+    headers: Object.assign({ 'Content-Type': 'application/json', 'Accept': 'application/json' }, csrfV2 ? { 'X-CSRF-Token': csrfV2 } : {}) });
+  const fetchV2Token = async () => {
+    const r = await fetch(withParams(v2Base()), { credentials: 'include', headers: { 'X-CSRF-Token': 'Fetch', 'Accept': 'application/json' } });
+    if (!r.ok) throw new Error(`V2 service: HTTP ${r.status}${authHint(r.status)}`);
+    csrfV2 = r.headers.get('x-csrf-token');
+  };
+  if (!csrfV2) await fetchV2Token();
+  let r = await go();
+  if (r.status === 403 && (r.headers.get('x-csrf-token') || '').toLowerCase() === 'required') { await fetchV2Token(); r = await go(); }
+  const t = await r.text(); let j = null; try { j = t ? JSON.parse(t) : null; } catch (e) { /* XML */ }
+  if (looksLikeLogonPage(r, t)) throw new Error('V2 POST A_Product → logon page: session expired.');
+  if (!r.ok) {
+    const e = j && j.error; const msg = e ? [e.message && (e.message.value || e.message), ...((e.innererror && e.innererror.errordetails) || []).map(x => x.message)].filter(Boolean) : [t.substring(0, 300)];
+    throw new Error(`V2 POST A_Product → HTTP ${r.status}: ${[...new Set(msg)].join(' | ')}`);
+  }
+  const product = j && j.d && j.d.Product; if (!product) throw new Error('V2 POST A_Product: no product number in the response');
+  return product;
+}
 function setProduct(item, product) {
   if (item.data.Product !== undefined) item.data.Product = product;
   for (const c of Object.values(item.children)) (Array.isArray(c) ? c : [c]).forEach(x => setProduct(x, product));
@@ -1045,14 +1087,20 @@ async function runOne(h) {
     await upsert(h, item, product, false);
     return;
   }
-  // step-wise create: product (basic data only) first, then everything else as one change set
-  const rootOnly = { ...item.data };
-  const created = await call('POST', 'Product', rootOnly);
-  const product = created.Product; result(h).product = product; result(h).status = 'partial'; h.target = product;
-  log(`  ${prodOf(h)}: basic data created as ${product}`);
+  // step-wise create: product first, then everything else as one change set
+  let product;
+  if (!$('extNum').checked) {   // internal number: V2 creates the product, V4 does the rest (incl. the other basic data fields)
+    product = await createV2(v2Payload(item));
+    log(`  ${prodOf(h)}: created through V2 with internal number ${product}`);
+  } else {
+    const created = await call('POST', 'Product', { ...item.data });
+    product = created.Product;
+    log(`  ${prodOf(h)}: basic data created as ${product}`);
+  }
+  result(h).product = product; result(h).status = 'partial'; h.target = product;
   setProduct(item, product);
   delete item.data.Product;
-  item.data = {};   // basic data is in SAP now; only the views are compared
+  if ($('extNum').checked) item.data = {};   // V4 POST had all basic data; after V2 the rest of the basic data is compared and PATCHed
   await upsert(h, item, product, true);
 }
 
@@ -1076,7 +1124,8 @@ $('btnRun').onclick = async () => {
   try {
     await fetchToken();
     validateAll(hs);
-    const deep = m === 'create' && $('createMethod').value === 'deep';
+    const deep = m === 'create' && $('createMethod').value === 'deep' && $('extNum').checked;
+    if (m === 'create' && !$('extNum').checked) log('Create without product number: product via V2 (internal number), then the views via V4.');
     const queue = []; for (let i = 0; i < hs.length; i += deep ? size : 1) queue.push(hs.slice(i, i + (deep ? size : 1)));
     const worker = async () => {
       while (queue.length && !stopRequested) {

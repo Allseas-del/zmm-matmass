@@ -5,6 +5,7 @@ const http = require('http'), fs = require('fs'), path = require('path'), vm = r
 const PORT = parseInt(process.env.PORT || '8099', 10);
 const SVC = '/sap/opu/odata4/sap/api_product/srvd_a2x/sap/product/0002/';
 const TOOL = path.join(__dirname, '../webapp/tool.html');
+const SVC_V2 = '/sap/opu/odata/sap/API_PRODUCT_SRV/'; const TOKEN_V2 = 'tokv2-' + Date.now();
 
 // --- property lists taken from the tool's own mapping table (what the tool can send) plus keys/computed fields
 const html = fs.readFileSync(TOOL, 'utf8');
@@ -201,9 +202,9 @@ function handle(method, p, body, headers) {   // returns { status, body }
     if (!body.ProductType) throw new ODataError(400, 'Enter a product type');
     if (!body.BaseISOUnit) throw new ODataError(400, 'Enter a base unit of measure');
     // DS4 (25 Sep 2026): no internal number assignment through API_PRODUCT_2
-    // DS4: without Product → 'key cannot be initial'. Product '' → next internal number (hypothesis, as MM01; to be confirmed on DS4)
-    if (body.Product === undefined) throw new ODataError(400, 'Property PRODUCT is a key and cannot be initial');
-    const product = body.Product || String(4000000 + seq++);
+    // DS4 / SAP Community: API_PRODUCT_2 does not assign internal numbers ('Property PRODUCT is a key and cannot be initial')
+    if (!body.Product) throw new ODataError(400, 'Property PRODUCT is a key and cannot be initial');
+    const product = body.Product;
     if (store.has(product)) throw new ODataError(400, `Product ${product} already exists`);
     const prod = makeNode('Product_Type', { ...body, Product: product }, {});
     prod.data.BaseUnit = UNIT_SAP[prod.data.BaseISOUnit]; prod.data.LastChangeDateTime = stamp(); prod.data.CreatedByUser = 'TESTUSER';
@@ -274,6 +275,26 @@ const server = http.createServer((req, res) => {
     if (u.pathname === '/__stats') return send(200, JSON.stringify({ ...stats, products: [...store.keys()] }));
     if (u.pathname === '/__product') return send(200, JSON.stringify(store.has(u.searchParams.get('id')) ? serialize(store.get(u.searchParams.get('id')), store.get(u.searchParams.get('id'))) : null));
     if (u.pathname === '/__reset') { store = new Map(); Object.keys(stats).forEach(k => stats[k] = 0); return send(200, '{}'); }
+    // V2 API_PRODUCT_SRV: only POST A_Product with internal number assignment (DS4, 28 Sep 2026: Product "" -> 201, number assigned)
+    if (u.pathname.startsWith(SVC_V2)) {
+      const rel2 = u.pathname.substring(SVC_V2.length);
+      if (req.method === 'GET' && rel2 === '') return send(200, '{"d":{"EntitySets":["A_Product"]}}', 'application/json', { 'x-csrf-token': TOKEN_V2 });
+      if (req.headers['x-csrf-token'] !== TOKEN_V2) return send(403, '{"error":{"message":{"value":"CSRF token validation failed"}}}', 'application/json', { 'x-csrf-token': 'Required' });
+      if (req.method === 'POST' && rel2 === 'A_Product') {
+        stats.v2post = (stats.v2post || 0) + 1;
+        const b = JSON.parse(data); const iso = Object.keys(UNIT_SAP).find(k => UNIT_SAP[k] === b.BaseUnit);
+        const v2err = m => send(400, JSON.stringify({ error: { code: 'MM/000', message: { lang: 'en', value: m } } }));
+        if (b.Product !== '') return v2err('Mock expects internal numbering (Product "")');
+        if (!iso) return v2err(`Unit ${b.BaseUnit} is not defined`);
+        const product = String(4000000 + seq++);
+        const prod = makeNode('Product_Type', { Product: product, ProductType: b.ProductType, IndustrySector: b.IndustrySector, BaseISOUnit: iso,
+          _ProductDescription: ((b.to_Description || {}).results || []).map(x => ({ Product: product, Language: x.Language, ProductDescription: x.ProductDescription })) }, {});
+        prod.data.BaseUnit = b.BaseUnit; prod.data.LastChangeDateTime = stamp(); prod.data.CreatedByUser = 'TESTUSER';
+        store.set(product, prod);
+        return send(201, JSON.stringify({ d: { Product: product, ProductType: b.ProductType, BaseUnit: b.BaseUnit } }));
+      }
+      return send(404, '{"error":{"message":{"value":"Resource not found"}}}');
+    }
     if (!u.pathname.startsWith(SVC)) return send(404, JSON.stringify(errBody(new ODataError(404, 'No service'))));
     const rel = decodeURI(u.pathname.substring(SVC.length)) + (u.search || '');
     if (req.method === 'GET' && rel === '') return send(200, JSON.stringify({ value: [] }), 'application/json', { 'x-csrf-token': TOKEN });
