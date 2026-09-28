@@ -85,6 +85,11 @@
   "info": "created ZTEST-001 | created ZTEST-002 | HTTP 400: Plant ZZZZ does not exist"
  },
  {
+  "name": "16a progress meter: 100%, green for created, red for errors",
+  "pass": true,
+  "info": "100%  (3/3) | 66.6667% | 33.3333%"
+ },
+ {
   "name": "17 repeated create sends only the failed product again",
   "pass": true,
   "info": "1 POST"
@@ -147,7 +152,7 @@
  {
   "name": "25a internal numbering: product created through V2 (Product \"\", SAP unit), views and other basic data through V4; number in column SAP product",
   "pass": true,
-  "info": "v2post=2 targets=4001082,4001091, plants=1"
+  "info": "v2post=2 targets=4001011,4001020, plants=1"
  },
  {
   "name": "25b example template: download, load (2 products, 2 MARC, 2 MARD, 2 MBEW), no validation problems, V2 units M and AU",

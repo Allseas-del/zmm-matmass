@@ -64,6 +64,8 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   const status = await page.$$eval('#grid td.st', t => t.map(x => x.textContent));
   ok('16 message column: created number / SAP return message', status[0] === 'created ZTEST-001' && /Plant ZZZZ does not exist/.test(status[2]), status.join(' | '));
 
+  const mt = await page.evaluate(() => [document.getElementById('meterPct').textContent, document.getElementById('meterOk').style.width, document.getElementById('meterErr').style.width]);
+  ok('16a progress meter: 100%, green for created, red for errors', /^100%/.test(mt[0]) && parseFloat(mt[1]) > 66 && parseFloat(mt[2]) > 33, mt.join(' | '));
   // repeat create: done products are skipped
   const postsBefore = st.post; await page.click('#btnRun'); await waitIdle(); st = await api('/__stats');
   ok('17 repeated create sends only the failed product again', st.post - postsBefore === 1, `${st.post - postsBefore} POST`);
