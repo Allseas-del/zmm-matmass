@@ -104,7 +104,7 @@ function metadata() {
 // --- store: product -> node { type, data, navs }
 let store = new Map(); let seq = 1000; const TOKEN = 'tok-' + Date.now();
 const UNIT_SAP = { PCE: 'PC', BX: 'BOX', KGM: 'KG', EA: 'EA', MTR: 'M' };
-const PLANTS = new Set(['NL01', 'NL02']); const stats = { post: 0, patch: 0, batch: 0, get: 0, changesets: 0, preconditionFailed: 0 };
+const PLANTS = new Set(['NL01', 'NL02']); const AREA_CUR = { NL01: 'EUR', NL02: 'EUR' }; const stats = { post: 0, patch: 0, batch: 0, get: 0, changesets: 0, preconditionFailed: 0 };
 class ODataError extends Error { constructor(status, msg) { super(msg); this.status = status; } }
 function stamp() { return new Date(Date.now() + (seq++)).toISOString(); }
 function etagOf(prod) { return `W/"${prod.data.LastChangeDateTime}"`; }
@@ -138,6 +138,8 @@ function makeNode(t, obj, parentKeys, prod, implicit) {
   if (t === 'ProductUnitOfMeasure_Type') { data.AlternativeUnit = UNIT_SAP[data.AlternativeISOUnit]; data.AlternativeSAPUnit = data.AlternativeUnit; }
   if (t === 'ProductPlant_Type' && !PLANTS.has(data.Plant)) throw new ODataError(400, `Plant ${data.Plant} does not exist`);
   if (t === 'ProductValuation_Type' && data.ValuationType === undefined) data.ValuationType = '';
+  if (t === 'ProductValuation_Type' && AREA_CUR[data.ValuationArea] && data.Currency && data.Currency !== AREA_CUR[data.ValuationArea])
+    throw new ODataError(400, `Currency ${data.Currency} provided is incorrect for Product ${data.Product} Valuation ${data.ValuationArea}`);
   for (const k of T[t].keys) if (data[k] === undefined || data[k] === '' && k !== 'ValuationType') throw new ODataError(400, `Key ${k} missing for ${SET(t)}`);
   const keys = Object.fromEntries(T[t].keys.map(k => [k, data[k]]));
   for (const [n, [tt, many]] of Object.entries(T[t].navs || {})) {
@@ -183,6 +185,11 @@ function handle(method, p, body, headers) {   // returns { status, body }
   const [pathOnly] = p.split('?');
   if (method === 'GET') {
     stats.get++;
+    const fa = /^(\w+)$/.test(pathOnly) && decodeURIComponent(p.split('?')[1] || '').match(/\$filter=ValuationArea eq '([^']*)'/);
+    if (fa) {   // ProductValuation?$filter=ValuationArea eq '…'&$top=1 -> currency of the valuation area
+      const out = []; for (const prod of store.values()) for (const v of prod.navs._ProductValuation || []) if (v.data.ValuationArea === fa[1]) out.push({ ValuationArea: fa[1], Currency: v.data.Currency });
+      return { status: 200, body: { value: out.slice(0, 1) } };
+    }
     const fm = /^(\w+)$/.test(pathOnly) && decodeURIComponent(p.split('?')[1] || '').match(/\$filter=Product eq '([^']*)'/);
     if (fm) {   // Set?$filter=Product eq '…' -> all nodes of that type in the product
       stats.filterGets = (stats.filterGets || 0) + 1;

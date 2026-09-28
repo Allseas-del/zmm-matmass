@@ -65,9 +65,9 @@
   "info": "ZTEST-001,ZTEST-002"
  },
  {
-  "name": "13 split: 3 products in 2 $batch requests",
+  "name": "13 split: 3 products in 2 $batch requests (+1 $batch for the valuation currencies)",
   "pass": true,
-  "info": "batches=2"
+  "info": "batches=3"
  },
  {
   "name": "14 SAP error per product, others continue (plant ZZZZ)",
@@ -105,9 +105,9 @@
   "info": "filterGets=11 expandGets=0"
  },
  {
-  "name": "19b change: other currency in file than in SAP — price not sent, warning, rest of the change set passes",
+  "name": "19b valuation currency read from SAP per valuation area; file currency ignored with warning; amount sent",
   "pass": true,
-  "info": "map=1.5 cur=EUR"
+  "info": "map=9.99 cur=EUR"
  },
  {
   "name": "20 change without differences: nothing sent",
@@ -142,7 +142,7 @@
  {
   "name": "25a internal numbering: product created through V2 (Product \"\", SAP unit), views and other basic data through V4; number in column SAP product",
   "pass": true,
-  "info": "v2post=2 targets=4001008,4001017, plants=1"
+  "info": "v2post=2 targets=4001055,4001064, plants=1"
  },
  {
   "name": "26 no JavaScript errors on the page",

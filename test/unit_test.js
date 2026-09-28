@@ -30,7 +30,7 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   const tabs = await page.$$eval('#tabs button', b => b.map(x => x.textContent));
   ok('05 grid shows the sheets with data / mapped sheets', tabs.some(t => /Basic Data \(3\)/.test(t)) && tabs.some(t => /Plant \(3\)/.test(t)), tabs.slice(0, 6).join(' | '));
 
-  await page.click('#btnDry');
+  await page.click('#btnDry'); await page.waitForFunction(() => /Validation against/.test(fullLog.join('\n')));
   L = await logText();
   ok('06 dry run: validation against $metadata without problems', /Validation against \$metadata: no problems/.test(L));
   const payload = await page.evaluate(() => toPayload(buildProduct(sheets.S_MARA.rows[0])));
@@ -45,16 +45,16 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
 
   // validation catches a too long description
   await page.evaluate(() => { const c = sheets.S_MARA.rows[1].cells.MAKTX; c.keep = c.value; c.value = 'X'.repeat(45); });
-  await page.click('#btnDry');
+  await page.click('#btnDry'); await page.waitForFunction(() => /45 characters/.test(fullLog.join('\n'))).catch(() => {});
   ok('11 validation reports a description longer than 40 characters', /ProductDescription: 45 characters, max 40/.test(await logText()));
   await page.evaluate(() => { const c = sheets.S_MARA.rows[1].cells.MAKTX; c.value = c.keep; });
 
   // create, deep insert, split into $batch packages of 2
-  await page.fill('#batchSize', '2');
+  await page.fill('#batchSize', '2'); const b0 = (await api('/__stats')).batch;
   await page.click('#btnRun'); await waitIdle();
   L = await logText(); let st = await api('/__stats');
   ok('12 deep create: ZTEST-001 and ZTEST-002 created', st.products.includes('ZTEST-001') && st.products.includes('ZTEST-002'), st.products.join(','));
-  ok('13 split: 3 products in 2 $batch requests', st.batch === 2, 'batches=' + st.batch);
+  ok('13 split: 3 products in 2 $batch requests (+1 $batch for the valuation currencies)', st.batch - b0 === 3, 'batches=' + (st.batch - b0));
   ok('14 SAP error per product, others continue (plant ZZZZ)', /ZTEST-003: HTTP 400: Plant ZZZZ does not exist/.test(L));
   const p1 = await api('/__product?id=ZTEST-001');
   ok('15 SAP content: plant NL01 MRP type PD, storage location 0001, BOX with GTIN, 2 languages, custom fields',
@@ -79,14 +79,14 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   await page.click('#btnRun'); await waitIdle();
   ok('19a change: current state read with filtered GETs per entity set in one $batch, no $expand; PATCH only on canonical URLs',
     !st.expandGets && st.filterGets >= 5, `filterGets=${st.filterGets} expandGets=${st.expandGets || 0}`);
-  // currency of a valuation differs between file and SAP: amounts not sent, warning logged
+  // currency in the file differs from the company code currency: SAP's currency used, amount sent as it is
   await page.evaluate(() => { sheets.S_MBEW.rows[0].cells.WAERS.value = 'USD'; sheets.S_MBEW.rows[0].cells.VERPR.value = '9.99'; });
   await page.click('#btnRun'); await waitIdle(); L = await logText();
   const p1c = await api('/__product?id=ZTEST-001');
-  ok('19b change: other currency in file than in SAP — price not sent, warning, rest of the change set passes',
-    /currency USD in the file, EUR in SAP — not changed: MovingAveragePrice/.test(L) && p1c._ProductValuation[0].MovingAveragePrice === 1.5 && p1c._ProductValuation[0].Currency === 'EUR',
+  ok('19b valuation currency read from SAP per valuation area; file currency ignored with warning; amount sent',
+    /NL01: currency USD in the file ignored, company code currency EUR used/.test(L) && p1c._ProductValuation[0].MovingAveragePrice === 9.99 && p1c._ProductValuation[0].Currency === 'EUR',
     `map=${p1c._ProductValuation[0].MovingAveragePrice} cur=${p1c._ProductValuation[0].Currency}`);
-  await page.evaluate(() => { sheets.S_MBEW.rows[0].cells.WAERS.value = 'EUR'; sheets.S_MBEW.rows[0].cells.VERPR.value = '1.5'; });
+  await page.evaluate(() => { sheets.S_MBEW.rows[0].cells.WAERS.value = 'EUR'; });
   ok('20 change without differences: nothing sent', /ZTEST-001 → ZTEST-001: no differences/.test(await logText()));
 
   // step-wise create for the corrected ZTEST-003

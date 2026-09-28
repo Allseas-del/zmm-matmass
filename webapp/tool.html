@@ -555,6 +555,7 @@ function buildProduct(hdr) {
   if (mode() === 'change') root.data.Product = hdr.target || prodOf(hdr);
   else if (!$('extNum').checked) root.data.Product = '';
   for (const c of Object.values(root.children)) (Array.isArray(c) ? c : [c]).forEach(x => fillParentKeys(x, root));
+  applyValuationCurrency(root);
   if (root.data.BaseISOUnit) for (const c of Object.values(root.children)) (Array.isArray(c) ? c : [c]).forEach(x => fillBaseUnit(x, root.data.BaseISOUnit));
   return root;
 }
@@ -875,15 +876,11 @@ function diffOps(item, cur, url, ops, label) {
   const d = {};
   for (const [k, v] of Object.entries(item.data)) if (!keys.includes(k) && !same(v, cur[k])) d[k] = v;
   // The currency of a valuation is the company code currency and cannot be changed ("Currency EUR provided is incorrect
-  // for Product … Valuation US10"). If the file has another currency, its amounts are in that currency: they are not
-  // sent, and the entity keeps SAP's currency.
+  // for Product … Valuation US10"). The amounts in the template are in that currency (MBEW has no currency field; checked
+  // on DS4 28 Sep 2026: JM10 1718.11 in the file vs. 1771.62 JMD in SAP). SAP's currency is kept, amounts are sent as they are.
   if (d.Currency !== undefined && cur.Currency) {
-    const e = schema && schema[type], fileCur = d.Currency;
-    const isAmount = k => (e && e.props[k] && e.props[k].ref === 'Currency') || /Price|Crcy/.test(k);
-    const skipped = Object.keys(d).filter(isAmount);
-    skipped.forEach(k => delete d[k]); delete d.Currency;
-    item.data = { ...item.data, Currency: cur.Currency }; skipped.forEach(k => delete item.data[k]);
-    (ops.warnings = ops.warnings || []).push(`${label}: currency ${fileCur} in the file, ${cur.Currency} in SAP — not changed: ${skipped.join(', ') || 'currency'}`);
+    (ops.warnings = ops.warnings || []).push(`${label}: currency ${d.Currency} in the file ignored, SAP currency ${cur.Currency} kept`);
+    delete d.Currency; item.data = { ...item.data, Currency: cur.Currency };
   }
   // amounts and quantities go together with their currency/unit ("Together with property 'MovingAveragePrice' also
   // property 'Currency' needs to be provided"): from $metadata (Measures annotations), plus Currency/BaseISOUnit as fallback
@@ -998,8 +995,9 @@ function validateAll(hs) {
   log(total ? `Validation against $metadata: ${total} problem(s).` : 'Validation against $metadata: no problems.', total ? 'warn' : 'ok');
   return total;
 }
-$('btnDry').onclick = () => {
+$('btnDry').onclick = async () => {
   buildIndex(); const hs = selected();
+  if (schema) { try { await loadValuationCurrencies(hs); } catch (e) { log('Valuation currencies: ' + e.message, 'warn'); } }
   if (validateAll(hs) < 0) return;
   hs.slice(0, 3).forEach(h => {
     const it = buildProduct(h);
@@ -1074,6 +1072,27 @@ async function createV2(body) {
   const product = j && j.d && j.d.Product; if (!product) throw new Error('V2 POST A_Product: no product number in the response');
   return product;
 }
+// Company code currency per valuation area, read from SAP (any product valued in that area). Used instead of the
+// template's currency, which is not a field of MBEW and can be wrong (test file: EUR for all areas).
+const valCurrency = {}; const curWarned = new Set();
+async function loadValuationCurrencies(hs) {
+  const areas = new Set();
+  for (const h of hs) for (const r of (index.S_MBEW && index.S_MBEW.get(prodOf(h))) || []) { const a = val(r, 'BWKEY'); if (a && !valCurrency[a]) areas.add(a); }
+  if (!areas.size) return;
+  const list = [...areas];
+  const answers = await batchAll(list.map(a => ({ req: { method: 'GET', path: `ProductValuation?$filter=ValuationArea%20eq%20${q(a)}&$top=1&$select=ValuationArea,Currency` } })));
+  list.forEach((a, i) => { const x = answers[i]; const v = x && x.status < 300 && x.body && x.body.value && x.body.value[0]; valCurrency[a] = v ? v.Currency : null; });
+  const known = list.filter(a => valCurrency[a]);
+  log(`Valuation currency read from SAP for ${known.length} of ${list.length} valuation area(s)${known.length < list.length ? '; unknown (no product valued there yet, file currency used): ' + list.filter(a => !valCurrency[a]).join(', ') : ''}.`);
+}
+function applyValuationCurrency(root) {
+  for (const v of root.children._ProductValuation || []) {
+    const a = v.data.ValuationArea, c = valCurrency[a]; if (!c) continue;
+    if (v.data.Currency && v.data.Currency !== c && !curWarned.has(a)) { curWarned.add(a); log(`  Valuation area ${a}: currency ${v.data.Currency} in the file ignored, company code currency ${c} used (amounts unchanged).`, 'warn'); }
+    v.data.Currency = c;
+    for (const sub of Object.values(v.children)) (Array.isArray(sub) ? sub : [sub]).forEach(x => { if (x.data.Currency !== undefined) x.data.Currency = c; });
+  }
+}
 function setProduct(item, product) {
   if (item.data.Product !== undefined) item.data.Product = product;
   for (const c of Object.values(item.children)) (Array.isArray(c) ? c : [c]).forEach(x => setProduct(x, product));
@@ -1123,6 +1142,7 @@ $('btnRun').onclick = async () => {
   };
   try {
     await fetchToken();
+    await loadValuationCurrencies(hs);
     validateAll(hs);
     const deep = m === 'create' && $('createMethod').value === 'deep' && $('extNum').checked;
     if (m === 'create' && !$('extNum').checked) log('Create without product number: product via V2 (internal number), then the views via V4.');
