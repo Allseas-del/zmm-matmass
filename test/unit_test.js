@@ -124,6 +124,16 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   await page.setInputFiles('#file', xPath); await page.waitForFunction(() => sheets.S_MARA && /roundtrip/.test(fileName));
   ok('25 "Save changed file" round trip: file readable again, change kept', await page.evaluate(() => sheets.S_MARA.rows[0].cells.GROES.value) === 'EXPORTED');
 
+  // internal numbering: Product '' → SAP assigns the next number (deep insert and step-wise)
+  await page.uncheck('#extNum'); await page.check('input[name=mode][value=create]');
+  await page.evaluate(() => { results.clear(); sheets.S_MARA.rows.forEach(r => { r.include = prodOf(r) === 'ZTEST-001'; r.target = ''; }); });
+  const pl0 = await page.evaluate(() => toPayload(buildProduct(sheets.S_MARA.rows[0])));
+  await page.selectOption('#createMethod', 'deep'); await page.click('#btnRun'); await waitIdle();
+  await page.evaluate(() => sheets.S_MARA.rows.forEach(r => r.include = prodOf(r) === 'ZTEST-002'));
+  await page.selectOption('#createMethod', 'step'); await page.click('#btnRun'); await waitIdle();
+  const tg = await page.evaluate(() => sheets.S_MARA.rows.map(r => r.target));
+  ok('25a internal numbering: Product "" sent, number assigned by SAP and shown in column SAP product (deep and step-wise)',
+    pl0.Product === '' && pl0._ProductPlant[0].Product === '' && /^4\d{6}$/.test(tg[0]) && /^4\d{6}$/.test(tg[1]) && tg[0] !== tg[1], tg.join(','));
   ok('26 no JavaScript errors on the page', errors.length === 0, errors.join(' | '));
   await page.screenshot({ path: path.join(__dirname, 'screenshot.png'), fullPage: true });
   await browser.close();

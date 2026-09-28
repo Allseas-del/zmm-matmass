@@ -542,7 +542,10 @@ function fillParentKeys(item, parent) {
 }
 function buildProduct(hdr) {
   const root = buildNode(NODE.Product, hdr, null);
-  if (!$('extNum').checked) delete root.data.Product;
+  // Product number: Change → the SAP product; Create with "send number" → number from the file; Create without →
+  // empty string, so SAP assigns the next internal number (as MM01 with an empty material field)
+  if (mode() === 'change') root.data.Product = hdr.target || prodOf(hdr);
+  else if (!$('extNum').checked) root.data.Product = '';
   for (const c of Object.values(root.children)) (Array.isArray(c) ? c : [c]).forEach(x => fillParentKeys(x, root));
   if (root.data.BaseISOUnit) for (const c of Object.values(root.children)) (Array.isArray(c) ? c : [c]).forEach(x => fillBaseUnit(x, root.data.BaseISOUnit));
   return root;
@@ -1029,6 +1032,10 @@ async function upsert(h, item, product, createdNow) {
     logBlock(`Change set for ${product}`, ops);
   }
 }
+function setProduct(item, product) {
+  if (item.data.Product !== undefined) item.data.Product = product;
+  for (const c of Object.values(item.children)) (Array.isArray(c) ? c : [c]).forEach(x => setProduct(x, product));
+}
 async function runOne(h) {
   const item = buildProduct(h);
   if (mode() === 'change') {
@@ -1043,6 +1050,7 @@ async function runOne(h) {
   const created = await call('POST', 'Product', rootOnly);
   const product = created.Product; result(h).product = product; result(h).status = 'partial'; h.target = product;
   log(`  ${prodOf(h)}: basic data created as ${product}`);
+  setProduct(item, product);
   delete item.data.Product;
   item.data = {};   // basic data is in SAP now; only the views are compared
   await upsert(h, item, product, true);

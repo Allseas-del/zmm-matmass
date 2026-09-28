@@ -125,7 +125,7 @@
 <tr><td>Descriptions</td><td>MAKTX/SPRAS of Basic Data and the rows of Additional Descriptions are merged per language.</td></tr>
 <tr><td>GTINs</td><td>Additional GTINs are attached to the unit of measure with the same <code>MEINH</code>; the consecutive number is assigned 00001, 00002 … per unit.</td></tr>
 <tr><td>Tax classification</td><td>MLAN is per country only, the API keeps sales tax per sales organization/distribution channel. Each MLAN row (TATYP1..9/TAXM1..9) is sent under every distribution chain of the product (<span class="open">to be confirmed in integration test</span>). Without a distribution chain the rows cannot be sent.</td></tr>
-<tr><td>Material number</td><td>"Send product number from the file" (default on) sends <code>PRODUCT</code> (<code>Product</code> is Immutable, not Computed). Off: SAP assigns the number; it is returned in the results.</td></tr>
+<tr><td>Material number</td><td>"Send product number from the file" (default on) sends <code>PRODUCT</code> (<code>Product</code> is Immutable, not Computed). Off: the tool sends <code>"Product": ""</code> (also in the children), as MM01 with an empty material field; SAP assigns the next internal number, which appears in column <i>SAP product</i> and in the results. Without the property DS4 answers <i>Property PRODUCT is a key and cannot be initial</i> (25 Sep 2026); the empty string is to be confirmed on DS4.</td></tr>
 </table>
 <h4>5.4 Field mapping (generated from the tool's mapping table)</h4>
 <details><summary>Show the complete mapping per sheet</summary>

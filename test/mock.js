@@ -130,6 +130,7 @@ function makeNode(t, obj, parentKeys, prod, implicit) {
   for (const k of computedKeys(t)) {
     if (implicit) { data[k] = parentKeys[k]; continue; }   // 1:1 view that SAP creates on its own
     if (k === 'AlternativeUnit' && data[k] === undefined) { data[k] = parentKeys[k]; continue; }   // computed in the parent (from AlternativeISOUnit)
+    if (data[k] === '' && parentKeys[k]) data[k] = parentKeys[k];   // empty Product in a deep insert with internal numbering
     if (data[k] === undefined || data[k] === '') throw new ODataError(400, `Property ${k.toUpperCase()} is a key and cannot be initial`);
     if (String(data[k]) !== String(parentKeys[k])) throw new ODataError(400, `Key ${k} ${data[k]} does not match the parent (${parentKeys[k]})`);
   }
@@ -200,8 +201,9 @@ function handle(method, p, body, headers) {   // returns { status, body }
     if (!body.ProductType) throw new ODataError(400, 'Enter a product type');
     if (!body.BaseISOUnit) throw new ODataError(400, 'Enter a base unit of measure');
     // DS4 (25 Sep 2026): no internal number assignment through API_PRODUCT_2
-    if (!body.Product) throw new ODataError(400, 'Property PRODUCT is a key and cannot be initial');
-    const product = body.Product;
+    // DS4: without Product → 'key cannot be initial'. Product '' → next internal number (hypothesis, as MM01; to be confirmed on DS4)
+    if (body.Product === undefined) throw new ODataError(400, 'Property PRODUCT is a key and cannot be initial');
+    const product = body.Product || String(4000000 + seq++);
     if (store.has(product)) throw new ODataError(400, `Product ${product} already exists`);
     const prod = makeNode('Product_Type', { ...body, Product: product }, {});
     prod.data.BaseUnit = UNIT_SAP[prod.data.BaseISOUnit]; prod.data.LastChangeDateTime = stamp(); prod.data.CreatedByUser = 'TESTUSER';

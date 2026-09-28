@@ -140,6 +140,11 @@
   "info": ""
  },
  {
+  "name": "25a internal numbering: Product \"\" sent, number assigned by SAP and shown in column SAP product (deep and step-wise)",
+  "pass": true,
+  "info": "4001008,4001010,"
+ },
+ {
   "name": "26 no JavaScript errors on the page",
   "pass": true,
   "info": ""
