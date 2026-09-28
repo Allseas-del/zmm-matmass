@@ -36,7 +36,7 @@
   th.unmapped { background:#f7efe3; }
   td input { border:none; background:transparent; font:inherit; width:100%; min-width:60px; padding:2px; }
   td input.dirty { background:#fff4c2; }
-  td.st { font-weight:600; }
+  td.st { font-weight:600; max-width:480px; overflow:hidden; text-overflow:ellipsis; }
   .ok { color:var(--ok); } .err { color:var(--err); } .warn { color:var(--warn); }
   #log { font:12px/1.4 Consolas, monospace; background:#0f1720; color:#d7e0ea; padding:10px; border-radius:4px; max-height:380px; overflow:auto; white-space:pre-wrap; }
   #log .ok { color:#6fdc8c; } #log .err { color:#ff8a8a; } #log .warn { color:#ffd479; }
@@ -749,7 +749,7 @@ function renderGrid() {
   const t = document.createElement('table'); const hr = t.insertRow();
   const th = (html, cls) => { const c = document.createElement('th'); c.innerHTML = html; if (cls) c.className = cls; hr.appendChild(c); };
   th('✓');
-  if (isHdr) { th('Status'); th('SAP product<span class="api">target for Change</span>'); }
+  if (isHdr) { th('SAP product<span class="api">created number / target for Change</span>'); th('Message<span class="api">SAP return message</span>'); }
   for (const f of sh.fields) {
     const api = NOT_SUPPORTED[activeTab] ? '' : apiOf(activeTab, f);
     th(`${f}<span class="api">${api || '— not in API'}</span>`, api ? '' : 'unmapped');
@@ -763,8 +763,8 @@ function renderGrid() {
     const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = r.include; cb.onchange = () => r.include = cb.checked;
     tr.insertCell().appendChild(cb);
     if (isHdr) {
-      const st = tr.insertCell(); st.className = 'st ' + (r.statusCls || ''); st.textContent = r.status || ''; r.statusEl = st;
-      const inp = document.createElement('input'); inp.value = r.target || ''; inp.oninput = () => r.target = inp.value.trim(); tr.insertCell().appendChild(inp);
+      const inp = document.createElement('input'); inp.value = r.target || ''; inp.oninput = () => r.target = inp.value.trim(); tr.insertCell().appendChild(inp); r.targetEl = inp;
+      const st = tr.insertCell(); st.className = 'st ' + (r.statusCls || ''); st.textContent = r.status || ''; st.title = r.status || ''; r.statusEl = st;
     }
     for (const f of sh.fields) {
       const c = r.cells[f]; const inp = document.createElement('input'); inp.value = c.value; inp.title = f;
@@ -946,7 +946,11 @@ async function readCurrent(item, product) {
 /* ------------------------------------------------------------------ */
 function selected() { return (sheets.S_MARA ? sheets.S_MARA.rows : []).filter(r => r.include); }
 function mode() { return document.querySelector('input[name=mode]:checked').value; }
-function setStatus(r, text, cls) { r.status = text; r.statusCls = cls; if (r.statusEl && r.statusEl.isConnected) { r.statusEl.textContent = text; r.statusEl.className = 'st ' + (cls || ''); } }
+function setStatus(r, text, cls) {
+  r.status = text; r.statusCls = cls;
+  if (r.statusEl && r.statusEl.isConnected) { r.statusEl.textContent = text; r.statusEl.title = text; r.statusEl.className = 'st ' + (cls || ''); }
+  if (r.targetEl && r.targetEl.isConnected && r.target !== undefined) r.targetEl.value = r.target;
+}
 function result(h) {
   const k = prodOf(h); let r = results.get(k);
   if (!r) { r = { src: k, product: '', status: 'open', steps: 0, message: '' }; results.set(k, r); }
@@ -955,7 +959,11 @@ function result(h) {
 function finish(h, status, product, message, steps) {
   const r = result(h); Object.assign(r, { status, product: product || r.product, message: message || '', steps: steps || 0 });
   if (product) h.target = product;
-  setStatus(h, status === 'done' ? `${mode() === 'create' ? 'created' : 'changed'} ${product || ''}${steps !== undefined && mode() === 'change' ? ' (' + steps + ')' : ''}` : status === 'partial' ? `partial ${product}` : 'error', status === 'done' ? 'ok' : 'err');
+  // column "Message": what SAP returned (full text also as tooltip), like the task list tool
+  const text = status === 'done'
+    ? (mode() === 'create' ? `created ${product || ''}` : message === 'no differences' ? 'no differences' : `changed: ${steps || 0} change(s)`)
+    : status === 'partial' ? `partial ${product || ''}: ${message || ''}` : message || 'error';
+  setStatus(h, text, status === 'done' ? 'ok' : 'err');
 }
 
 // Rows that miss an identifying field (e.g. a plant row without plant) cannot be created

@@ -67,7 +67,7 @@ const STEPS = [
   ['Open the tabs Basic Data, Plant and Valuation. Change one description in the grid.', 'Data of the file is shown; under each column the API field. The changed cell turns yellow.'],
   ['Click "Save changed file (XML)" and open the saved file in Excel.', 'The file opens in Excel and contains the change.'],
   ['Click "Show payload (dry run)".', 'Log: "Validation against $metadata: no problems" (or a clear list of problems) and the payload of the first products.'],
-  ['Mode Create, "Send product number from the file" as agreed, method "deep insert". Click "Execute in SAP".', 'Correct materials: status "created <number>". Material with the error: status "error" with SAP\'s message (e.g. plant does not exist). The other materials are not affected.'],
+  ['Mode Create, "Send product number from the file" as agreed, method "deep insert". Click "Execute in SAP".', 'Tab Basic Data, left columns: "SAP product" shows the number, "Message" shows "created <number>". Material with the error: "Message" shows SAP\'s return message (e.g. plant does not exist). The other materials are not affected.'],
   ['Check one created material in the Fiori app "Manage Product Master Data" or MM03.', 'Basic data, descriptions, custom fields (noun/modifier, manufacturer, MFRPN …), plant data, storage location and valuation are as in the file.'],
   ['Click "Download results (CSV)" and "Download full log".', 'CSV with one row per material: source number, SAP number, status, message. Log file with all steps.'],
   ['Correct the faulty material in the grid and click "Execute in SAP" again.', 'Only the corrected material is sent; it is created. Materials already done are skipped.'],

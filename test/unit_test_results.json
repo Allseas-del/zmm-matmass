@@ -80,9 +80,9 @@
   "info": ""
  },
  {
-  "name": "16 status column: created / error",
+  "name": "16 message column: created number / SAP return message",
   "pass": true,
-  "info": "created ZTEST-001 | created ZTEST-002 | error"
+  "info": "created ZTEST-001 | created ZTEST-002 | HTTP 400: Plant ZZZZ does not exist"
  },
  {
   "name": "17 repeated create sends only the failed product again",

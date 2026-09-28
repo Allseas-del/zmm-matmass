@@ -142,7 +142,7 @@ __MAPPING__
 <p>ETag: all entities share the product's <code>LastChangeDateTime</code>. The first PATCH of a change set carries the ETag read by the GET, the following ones <code>If-Match: *</code> (the first change already moves the timestamp; the change set is atomic, so the concurrency check stays effective).</p>
 
 <h3>7. Errors, results and restart</h3>
-<p>Errors are handled per product, never per run. A product ends as <code>done</code>, <code>failed</code> (nothing in SAP) or <code>partial</code> (step-wise create: basic data in SAP, views not). SAP's message is shown per product and in the results CSV (<code>src;product;status;steps;message</code>). When SAP returns a logon page (session expired), the run stops starting new work and the log explains how to resume.</p>
+<p>Errors are handled per product, never per run. A product ends as <code>done</code>, <code>failed</code> (nothing in SAP) or <code>partial</code> (step-wise create: basic data in SAP, views not). On tab Basic Data the two left columns show per product the SAP number (<i>SAP product</i>, also the target for Change) and SAP's return message (<i>Message</i>, full text as tooltip), as in the task list tool; the message is also in the results CSV (<code>src;product;status;steps;message</code>). When SAP returns a logon page (session expired), the run stops starting new work and the log explains how to resume.</p>
 
 <h3>8. Authorizations</h3>
 <h4>8.1 Who can start the app</h4>

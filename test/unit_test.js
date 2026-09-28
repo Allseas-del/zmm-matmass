@@ -62,7 +62,7 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
     p1._ProductUnitOfMeasure[0].AlternativeUnit === 'BOX' && p1._ProductUnitOfMeasure[0]._ProductUnitOfMeasureEAN[0].ProductStandardID === '4006381333931' &&
     p1._ProductDescription.length === 2 && p1.ZZ1_MFRPN_PRD === 'ABC-123' && p1.ZZ1_NMOD_PRD === 'BOLT, HEX');
   const status = await page.$$eval('#grid td.st', t => t.map(x => x.textContent));
-  ok('16 status column: created / error', status[0] === 'created ZTEST-001' && status[2] === 'error', status.join(' | '));
+  ok('16 message column: created number / SAP return message', status[0] === 'created ZTEST-001' && /Plant ZZZZ does not exist/.test(status[2]), status.join(' | '));
 
   // repeat create: done products are skipped
   const postsBefore = st.post; await page.click('#btnRun'); await waitIdle(); st = await api('/__stats');
