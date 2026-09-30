@@ -140,6 +140,11 @@
   "info": "groes=undefined"
  },
  {
+  "name": "24a after reload: log and results of the last run available",
+  "pass": true,
+  "info": "Last run: 9/30/2026, 8:54:31 AM · test_products.xml · finished: 0 ok, 1 with errors of 1"
+ },
+ {
   "name": "24 resume: results loaded, done products deselected",
   "pass": true,
   "info": "false,false,false"
@@ -163,6 +168,11 @@
   "name": "25c unit translation: AU → C62 (T006), STK → MTR (own line), logged",
   "pass": true,
   "info": "MTR,C62"
+ },
+ {
+  "name": "25d end of run: log and results downloaded automatically, last run kept in the browser (after reload too)",
+  "pass": true,
+  "info": "template_download_log_2026-09-30-06-54-33.txt, template_download_results_2026-09-30-06-54-33.csv | finished: 0 ok, 1 with errors of 1"
  },
  {
   "name": "26 no JavaScript errors on the page",

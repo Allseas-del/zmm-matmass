@@ -107,6 +107,7 @@
     <label>Filter (product) <input type="text" id="gridFilter" size="14"></label>
     <button id="btnSelAll" class="sec">Select all</button>
     <button id="btnSelNone" class="sec">Select none</button>
+    <button id="btnPrev" class="sec">&lsaquo; Prev</button> <span id="pageInfo" class="muted"></span> <button id="btnNext" class="sec">Next &rsaquo;</button>
     <span id="gridInfo" class="muted"></span>
   </div>
   <div class="tabs" id="tabs"></div>
@@ -144,6 +145,12 @@
     <button id="btnResults" class="sec" disabled>Download results (CSV)</button>
     <label>Resume from results <input type="file" id="resFile" accept=".csv"></label>
     <button id="btnLog" class="sec">Download full log</button>
+    <label><input type="checkbox" id="autoDl" checked> Download log and results automatically when the run ends</label>
+  </div>
+  <div class="row" id="lastRun" hidden>
+    <span id="lastRunInfo" class="muted"></span>
+    <button id="btnLastLog" class="sec">Log of last run</button>
+    <button id="btnLastRes" class="sec">Results of last run</button>
   </div>
   <div class="meter" id="meter" hidden><div class="seg ok" id="meterOk"></div><div class="seg err" id="meterErr"></div><span id="meterPct">0%</span></div>
   <div id="progress" class="muted" style="font-weight:600"></div>
@@ -353,18 +360,27 @@ const $ = id => document.getElementById(id);
 const logEl = $('log');
 const fullLog = [];
 const MAX_LOG_LINES = 800;
+// The screen log is written in batches (once per animation frame): appending and scrolling per line forces a layout of
+// the whole page each time, which froze the browser in a run of 500 products (DS4, 30 Sep 2026). fullLog keeps everything.
+let logQueue = [], logFlushPending = false;
+function flushLog() {
+  logFlushPending = false; if (!logQueue.length) return;
+  const frag = document.createDocumentFragment(); logQueue.forEach(n => frag.appendChild(n)); logQueue = [];
+  logEl.appendChild(frag);
+  let extra = logEl.childNodes.length - MAX_LOG_LINES; while (extra-- > 0) logEl.removeChild(logEl.firstChild);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function queueLog(node) { logQueue.push(node); if (!logFlushPending) { logFlushPending = true; requestAnimationFrame(flushLog); } }
 function log(msg, cls) {
   const text = `[${new Date().toLocaleTimeString()}] ${msg}`;
   fullLog.push((cls === 'err' ? 'ERROR ' : cls === 'warn' ? 'WARN  ' : '      ') + text);
   const line = document.createElement('div'); if (cls) line.className = cls; line.textContent = text;
-  logEl.appendChild(line);
-  while (logEl.childNodes.length > MAX_LOG_LINES) logEl.removeChild(logEl.firstChild);
-  logEl.scrollTop = logEl.scrollHeight;
+  queueLog(line);
 }
 function logBlock(title, obj) {
   const d = document.createElement('details'); const s = document.createElement('summary'); s.textContent = title; d.appendChild(s);
   const pre = document.createElement('pre'); pre.textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
-  d.appendChild(pre); logEl.appendChild(d); logEl.scrollTop = logEl.scrollHeight;
+  d.appendChild(pre); queueLog(d);
   fullLog.push('      ' + title + '\n' + pre.textContent);   // also in "Download full log"
 }
 function download(name, text, type) {
@@ -797,7 +813,7 @@ function renderTabs() {
     tabs.appendChild(b);
   }
 }
-const MAX_GRID_ROWS = 500;
+const PAGE_ROWS = 100; let gridPage = 0;   // rows per page: a page of 100 rows x ~150 fields stays responsive
 function renderGrid() {
   const sh = sheets[activeTab]; const grid = $('grid');
   if (!sh) { grid.innerHTML = '<div class="muted" style="padding:8px">No data.</div>'; return; }
@@ -812,8 +828,10 @@ function renderGrid() {
   }
   const flt = $('gridFilter').value.trim().toUpperCase();
   const rows = flt ? sh.rows.filter(r => prodOf(r).toUpperCase().includes(flt)) : sh.rows;
-  const shown = rows.slice(0, MAX_GRID_ROWS);
-  $('gridInfo').textContent = `${shown.length} of ${rows.length} row(s) shown` + (rows.length > MAX_GRID_ROWS ? ` (max ${MAX_GRID_ROWS}; use the filter)` : '');
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE_ROWS)); gridPage = Math.min(gridPage, pages - 1);
+  const shown = rows.slice(gridPage * PAGE_ROWS, (gridPage + 1) * PAGE_ROWS);
+  $('gridInfo').textContent = rows.length ? `rows ${gridPage * PAGE_ROWS + 1}–${gridPage * PAGE_ROWS + shown.length} of ${rows.length}` : '0 rows';
+  $('pageInfo').textContent = `page ${gridPage + 1} / ${pages}`; $('btnPrev').disabled = gridPage === 0; $('btnNext').disabled = gridPage >= pages - 1;
   shown.forEach(r => {
     const tr = t.insertRow();
     const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = r.include; cb.onchange = () => r.include = cb.checked;
@@ -1008,7 +1026,9 @@ function result(h) {
   if (!r) { r = { src: k, product: '', status: 'open', steps: 0, message: '' }; results.set(k, r); }
   return r;
 }
+const runCount = { ok: 0, bad: 0 };   // counters of the current run (progress meter), no rescans of all products
 function finish(h, status, product, message, steps) {
+  if (status === 'done') runCount.ok++; else if (status === 'failed' || status === 'partial') runCount.bad++;
   const r = result(h); Object.assign(r, { status, product: product || r.product, message: message || '', steps: steps || 0 });
   if (product) h.target = product;
   // column "Message": what SAP returned (full text also as tooltip), like the task list tool
@@ -1178,16 +1198,16 @@ $('btnRun').onclick = async () => {
   const size = Math.max(1, parseInt($('batchSize').value, 10) || 1);
   stopRequested = false; $('btnRun').disabled = true; $('btnStop').disabled = false;
   const t0 = Date.now(); let finished = 0;
-  hs.forEach(h => { const r = results.get(prodOf(h)); if (r) r.status = 'open'; });   // meter counts this run only (hs holds no done products in Create)
+  hs.forEach(h => { const r = results.get(prodOf(h)); if (r) r.status = 'open'; }); runCount.ok = 0; runCount.bad = 0; let lastSave = Date.now();   // meter counts this run only (hs holds no done products in Create)
   const progress = () => {
     const sec = (Date.now() - t0) / 1000, rate = finished / Math.max(sec, 1);
-    const st = hs.map(h => results.get(prodOf(h))).filter(Boolean); const ok = st.filter(r => r.status === 'done').length;
+    const ok = runCount.ok;
     const eta = rate > 0 ? Math.round((hs.length - finished) / rate / 60) : '?';
-    const n = Math.max(hs.length, 1), bad = st.filter(r => r.status === 'failed' || r.status === 'partial').length;
+    const n = Math.max(hs.length, 1), bad = runCount.bad;
     $('meter').hidden = false;
     $('meterOk').style.width = (100 * ok / n) + '%'; $('meterErr').style.width = (100 * bad / n) + '%';
     $('meterPct').textContent = `${Math.round(100 * finished / n)}%  (${finished}/${hs.length})`;
-    $('progress').textContent = `${finished}/${hs.length} products · ${ok} ok, ${st.filter(r => r.status === 'failed' || r.status === 'partial').length} with errors · ${rate.toFixed(2)}/s · ETA ${eta} min`;
+    $('progress').textContent = `${finished}/${hs.length} products · ${ok} ok, ${bad} with errors · ${rate.toFixed(2)}/s · ETA ${eta} min`;
   };
   progress();
   try {
@@ -1209,6 +1229,7 @@ $('btnRun').onclick = async () => {
           }
         }
         finished += chunk.length; progress();
+        if (Date.now() - lastSave > 20000) { lastSave = Date.now(); saveLastRun(`running: ${finished}/${hs.length}`); }   // every 20 s
       }
     };
     await Promise.all(Array.from({ length: parallel }, worker));
@@ -1216,7 +1237,16 @@ $('btnRun').onclick = async () => {
     log(`${stopRequested ? 'Stopped' : 'Done'}: ${st.filter(r => r.status === 'done').length} ok, ${st.filter(r => r.status !== 'done' && r.status !== 'open').length} with errors, ${hs.length - finished} not processed. ${Math.round((Date.now() - t0) / 1000)} s.`,
       stopRequested || st.some(r => r.status === 'failed' || r.status === 'partial') ? 'warn' : 'ok');
   } catch (e) { log(e.message, 'err'); if (/logon page/.test(e.message)) stopRequested = true; }
-  finally { $('btnRun').disabled = false; $('btnStop').disabled = true; progress(); renderGrid(); }
+  finally {
+    $('btnRun').disabled = false; $('btnStop').disabled = true; progress(); renderGrid();
+    const st = hs.map(h => results.get(prodOf(h))).filter(Boolean);
+    saveLastRun(`finished: ${st.filter(r => r.status === 'done').length} ok, ${st.filter(r => r.status === 'failed' || r.status === 'partial').length} with errors of ${hs.length}`); showLastRun();
+    if ($('autoDl').checked && hs.length) {
+      const stamp = runStamp(), base = fileName.replace(/\.xml$/i, '');
+      download(`${base}_log_${stamp}.txt`, fullLog.join('\r\n'));
+      setTimeout(() => download(`${base}_results_${stamp}.csv`, resultsCsv(), 'text/csv'), 500);
+    }
+  }
 };
 
 /* ------------------------------------------------------------------ */
@@ -1224,10 +1254,27 @@ $('btnRun').onclick = async () => {
 /* ------------------------------------------------------------------ */
 const RES_COLS = ['src', 'product', 'status', 'steps', 'message'];
 function csvCell(v) { v = String(v ?? ''); return /[;"\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
-$('btnResults').onclick = () => {
-  const lines = [RES_COLS.join(';')]; for (const r of results.values()) lines.push(RES_COLS.map(c => csvCell(r[c])).join(';'));
-  download(fileName.replace(/\.xml$/i, '') + '_results.csv', '﻿' + lines.join('\r\n'), 'text/csv');
-};
+function resultsCsv() { const lines = [RES_COLS.join(';')]; for (const r of results.values()) lines.push(RES_COLS.map(c => csvCell(r[c])).join(';')); return '\ufeff' + lines.join('\r\n'); }
+const runStamp = () => new Date().toISOString().replace(/[:T]/g, '-').substring(0, 19);
+$('btnResults').onclick = () => download(fileName.replace(/\.xml$/i, '') + '_results.csv', resultsCsv(), 'text/csv');
+// The log and the results of the last run are kept in the browser (localStorage), written during the run, so they can
+// be downloaded after a reload even if the page hung or was closed.
+const LAST_RUN_KEY = 'zmmmatmass.lastRun';
+function saveLastRun(state) {
+  try {
+    let log = fullLog.join('\r\n'); if (log.length > 3000000) log = '… (start of log cut off)\r\n' + log.slice(-3000000);
+    localStorage.setItem(LAST_RUN_KEY, JSON.stringify({ at: new Date().toISOString(), state, file: fileName, log, results: resultsCsv() }));
+  } catch (e) { /* storage full or not available */ }
+}
+function showLastRun() {
+  let lr = null; try { lr = JSON.parse(localStorage.getItem(LAST_RUN_KEY) || 'null'); } catch (e) { /* none */ }
+  $('lastRun').hidden = !lr;
+  if (lr) $('lastRunInfo').textContent = `Last run: ${new Date(lr.at).toLocaleString()} · ${lr.file || ''} · ${lr.state}`;
+  return lr;
+}
+$('btnLastLog').onclick = () => { const lr = showLastRun(); if (lr) download('matmass_log_' + lr.at.replace(/[:T]/g, '-').substring(0, 19) + '.txt', lr.log); };
+$('btnLastRes').onclick = () => { const lr = showLastRun(); if (lr) download((lr.file || 'matmass').replace(/\.xml$/i, '') + '_results_' + lr.at.replace(/[:T]/g, '-').substring(0, 19) + '.csv', lr.results, 'text/csv'); };
+showLastRun();
 function parseCsv(text) {
   const rows = []; let row = [], cur = '', inq = false;
   for (let i = 0; i < text.length; i++) {
@@ -1256,7 +1303,9 @@ $('resFile').onchange = async ev => {
 $('btnStop').onclick = () => { stopRequested = true; log('Stop requested: running requests finish, no new ones start.', 'warn'); };
 $('btnLog').onclick = () => download('matmass_log.txt', fullLog.join('\r\n'));
 $('btnClear').onclick = () => { logEl.innerHTML = ''; fullLog.length = 0; };
-$('gridFilter').oninput = () => renderGrid();
+$('gridFilter').oninput = () => { gridPage = 0; renderGrid(); };
+$('btnPrev').onclick = () => { gridPage = Math.max(0, gridPage - 1); renderGrid(); };
+$('btnNext').onclick = () => { gridPage++; renderGrid(); };
 $('btnSelAll').onclick = () => { const sh = sheets[activeTab]; if (sh) sh.rows.forEach(r => r.include = true); renderGrid(); };
 $('btnSelNone').onclick = () => { const sh = sheets[activeTab]; if (sh) sh.rows.forEach(r => r.include = false); renderGrid(); };
 $('btnTest').onclick = testConnection;

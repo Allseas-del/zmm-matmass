@@ -18,6 +18,7 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   page = await ctx.newPage();
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto(BASE + '/tool.html');
+  await page.uncheck('#autoDl');   // downloads are tested separately
   await page.waitForFunction(() => document.getElementById('connState').textContent !== 'testing…' && document.getElementById('connState').textContent !== 'not tested');
   ok('01 connection test runs on start-up (launchpad session), $metadata read', (await page.textContent('#connState')) === 'OK', await page.textContent('#connState'));
   ok('02 effective SAP user reported', /SAP user TESTUSER/.test(await logText()));
@@ -119,7 +120,8 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   ok('23 rejected change set is atomic: nothing of it saved, error logged', p2.SizeOrDimensionText !== 'NEW' && /change set rejected, nothing of it saved — HTTP 400: Unit of measure XXX/.test(L), 'groes=' + p2.SizeOrDimensionText);
 
   const page2 = await ctx.newPage(); page = page2;
-  await page.goto(BASE + '/tool.html'); await page.setInputFiles('#file', FILE);
+  await page.goto(BASE + '/tool.html'); await page.uncheck('#autoDl');
+  ok('24a after reload: log and results of the last run available', await page.isVisible('#lastRun') && /Last run: /.test(await page.textContent('#lastRunInfo')), await page.textContent('#lastRunInfo')); await page.setInputFiles('#file', FILE);
   await page.waitForFunction(() => /File loaded/.test(fullLog.join('\n')));
   await page.setInputFiles('#resFile', csvPath);
   await page.waitForFunction(() => /Results loaded/.test(fullLog.join('\n')), null, { timeout: 10000 });
@@ -164,6 +166,15 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   const tu = await page.evaluate(() => sheets.S_MARA.rows.map(r => toPayload(buildProduct(r)).BaseISOUnit));
   L = await logText();
   ok('25c unit translation: AU → C62 (T006), STK → MTR (own line), logged', tu.join(',') === 'MTR,C62' && /Unit AU translated to ISO C62 \(T006\)/.test(L) && /Unit STK translated to ISO MTR \(own table\)/.test(L), tu.join(','));
+  // auto download at the end of a run + last run kept in the browser
+  await page.check('#autoDl');
+  const dls = []; page.on('download', d => dls.push(d.suggestedFilename()));
+  await page.check('input[name=mode][value=change]'); await page.evaluate(() => sheets.S_MARA.rows.forEach((r, i) => r.include = i === 0));
+  await page.click('#btnRun'); await waitIdle(); await page.waitForTimeout(1500);
+  const lr = await page.evaluate(() => JSON.parse(localStorage.getItem('zmmmatmass.lastRun') || 'null'));
+  ok('25d end of run: log and results downloaded automatically, last run kept in the browser (after reload too)',
+    dls.some(n => /_log_.*\.txt$/.test(n)) && dls.some(n => /_results_.*\.csv$/.test(n)) && lr && /finished: /.test(lr.state) && lr.log.length > 100 && /src;product;status/.test(lr.results), dls.join(', ') + ' | ' + (lr && lr.state));
+  await page.uncheck('#autoDl');
   ok('26 no JavaScript errors on the page', errors.length === 0, errors.join(' | '));
   await page.screenshot({ path: path.join(__dirname, 'screenshot.png'), fullPage: true });
   await browser.close();
