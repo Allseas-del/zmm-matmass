@@ -129,6 +129,11 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   const inc = await page.evaluate(() => sheets.S_MARA.rows.map(r => r.include));
   ok('24 resume: results loaded, done products deselected', /Results loaded: 3 done/.test(L) && inc.every(x => !x), inc.join(','));
 
+  // resume from this browser (IndexedDB) without a results file
+  await page.evaluate(() => { results.clear(); sheets.S_MARA.rows.forEach(r => { r.include = true; r.target = ''; }); });
+  await page.click('#btnResume'); await page.waitForFunction(() => /Resumed from this browser/.test(fullLog.join('\n')));
+  L = await logText(); const inc2 = await page.evaluate(() => sheets.S_MARA.rows.map(r => r.include + ':' + r.target));
+  ok('24b "Resume last run": results of this file taken from the browser, done deselected, failed (ZTEST-002, change set rejected in test 23) selected again, SAP numbers filled', /Resumed from this browser \(\d+ result\(s\)/.test(L) && inc2.join(',') === 'false:ZTEST-001,true:ZTEST-002,false:ZTEST-003', inc2.join(','));
   // export changed XML and read it again
   await page.evaluate(() => { sheets.S_MARA.rows[0].cells.GROES.value = 'EXPORTED'; });
   const [dl2] = await Promise.all([page.waitForEvent('download'), page.click('#btnExport')]);

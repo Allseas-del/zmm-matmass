@@ -144,6 +144,7 @@
   <div class="row">
     <button id="btnResults" class="sec" disabled>Download results (CSV)</button>
     <label>Resume from results <input type="file" id="resFile" accept=".csv"></label>
+    <button id="btnResume" class="sec" title="Take over the result of every product of this file that was processed before in this browser (also after a hang or reload)">Resume last run</button>
     <button id="btnLog" class="sec">Download full log</button>
     <label><input type="checkbox" id="autoDl" checked> Download log and results automatically when the run ends</label>
   </div>
@@ -1027,9 +1028,51 @@ function result(h) {
   return r;
 }
 const runCount = { ok: 0, bad: 0 };   // counters of the current run (progress meter), no rescans of all products
+// Every product result is written to IndexedDB at once (key: file name + source product), so a run that hung or was
+// closed can be resumed with "Resume last run" without re-sending what was done — essential for internal numbering,
+// where a repeated create would make a second material.
+let idb = null;
+function openIdb() {
+  if (idb) return idb;
+  idb = new Promise(res => {
+    try {
+      const rq = indexedDB.open('zmmmatmass', 1);
+      rq.onupgradeneeded = () => rq.result.createObjectStore('res', { keyPath: 'key' });
+      rq.onsuccess = () => res(rq.result); rq.onerror = () => res(null);
+    } catch (e) { res(null); }
+  });
+  return idb;
+}
+function persistResult(h) {
+  const r = results.get(prodOf(h)); if (!r) return;
+  openIdb().then(db => { try { if (db) db.transaction('res', 'readwrite').objectStore('res').put({ key: fileName + '|' + r.src, file: fileName, at: Date.now(), ...r }); } catch (e) { /* ignore */ } });
+}
+async function storedResults(file) {
+  const db = await openIdb(); if (!db) return [];
+  return new Promise(res => {
+    try {
+      const out = []; const rq = db.transaction('res').objectStore('res').openCursor(IDBKeyRange.bound(file + '|', file + '|\uffff'));
+      rq.onsuccess = () => { const c = rq.result; if (c) { out.push(c.value); c.continue(); } else res(out); }; rq.onerror = () => res(out);
+    } catch (e) { res([]); }
+  });
+}
+function applyResults(list, source) {
+  let done = 0, partial = 0, failed = 0;
+  for (const r of list) results.set(r.src, { src: r.src, product: r.product || '', status: r.status, steps: r.steps || 0, message: r.message || '' });
+  for (const h of sheets.S_MARA.rows) {
+    const r = results.get(prodOf(h)); if (!r) continue;
+    if (r.product) h.target = r.product;
+    if (r.status === 'done') { h.include = false; setStatus(h, `done ${r.product}`, 'ok'); done++; }
+    else if (r.status === 'partial') { h.include = true; setStatus(h, `partial ${r.product}: ${r.message || ''}`, 'err'); partial++; }
+    else if (r.status === 'failed') { h.include = true; setStatus(h, r.message || 'error', 'err'); failed++; }
+  }
+  renderGrid();
+  log(`${source}: ${done} done (deselected), ${partial} partial, ${failed} failed.` + (partial ? ' Partial products exist in SAP with their number in column "SAP product": complete them in mode Change.' : ''), 'ok');
+}
 function finish(h, status, product, message, steps) {
   if (status === 'done') runCount.ok++; else if (status === 'failed' || status === 'partial') runCount.bad++;
   const r = result(h); Object.assign(r, { status, product: product || r.product, message: message || '', steps: steps || 0 });
+  persistResult(h);
   if (product) h.target = product;
   // column "Message": what SAP returned (full text also as tooltip), like the task list tool
   const text = status === 'done'
@@ -1180,7 +1223,7 @@ async function runOne(h) {
     product = created.Product;
     log(`  ${prodOf(h)}: basic data created as ${product}`);
   }
-  result(h).product = product; result(h).status = 'partial'; h.target = product;
+  result(h).product = product; result(h).status = 'partial'; h.target = product; persistResult(h);   // number is safe before the change set
   setProduct(item, product);
   delete item.data.Product;
   if ($('extNum').checked) item.data = {};   // V4 POST had all basic data; after V2 the rest of the basic data is compared and PATCHed
@@ -1289,15 +1332,15 @@ function parseCsv(text) {
 $('resFile').onchange = async ev => {
   const f = ev.target.files[0]; if (!f) return;
   if (!sheets.S_MARA) return log('Load the XML file first, then the results.', 'warn');
-  const rows = parseCsv((await f.text()).replace(/^﻿/, '')); const head = rows.shift(); let done = 0, partial = 0;
-  for (const cols of rows) { if (cols.length < 2) continue; const r = {}; head.forEach((h, i) => r[h] = cols[i] || ''); results.set(r.src, r); }
-  for (const h of sheets.S_MARA.rows) {
-    const r = results.get(prodOf(h)); if (!r) continue;
-    if (r.product) h.target = r.product;
-    if (r.status === 'done') { h.include = false; setStatus(h, `done ${r.product}`, 'ok'); done++; }
-    else if (r.status === 'partial') { setStatus(h, `partial ${r.product}`, 'err'); partial++; }
-  }
-  renderGrid(); log(`Results loaded: ${done} done (deselected), ${partial} partial — complete those with "Change".`, 'ok');
+  const rows = parseCsv((await f.text()).replace(/^\ufeff/, '')); const head = rows.shift(); const list = [];
+  for (const cols of rows) { if (cols.length < 2) continue; const r = {}; head.forEach((x, i) => r[x] = cols[i] || ''); list.push(r); }
+  applyResults(list, 'Results loaded');
+};
+$('btnResume').onclick = async () => {
+  if (!sheets.S_MARA) return log('Load the XML file first (the same file as in the run).', 'warn');
+  const list = await storedResults(fileName);
+  if (!list.length) return log(`No stored results for "${fileName}" in this browser.`, 'warn');
+  applyResults(list, `Resumed from this browser (${list.length} result(s) of "${fileName}", last ${new Date(Math.max(...list.map(r => r.at))).toLocaleString()})`);
 };
 
 $('btnStop').onclick = () => { stopRequested = true; log('Stop requested: running requests finish, no new ones start.', 'warn'); };
