@@ -212,6 +212,17 @@ __MAPPING__
 <li>Launchpad: target mapping semantic object <code>Material</code>, action <code>massUpload</code>, app type SAPUI5, ID <code>com.allseas.zmmmatmass</code>, URL <code>/sap/bc/ui5_ui5/sap/zmmmatmass</code>; tile in a catalog for the migration role (<span class="open">open point 4</span>).</li>
 <li>Test in DS4/410 after transport, then QS4, PS4.</li>
 </ol>
+<h4>14.1 Fiori tile (open point 4)</h4>
+<p>The app already declares the inbound in its manifest: semantic object <code>Material</code>, action <code>massUpload</code>, app ID <code>com.allseas.zmmmatmass</code>, title "Material Master Mass Upload". The launchpad objects below are maintained in DS4/400 (object names are a proposal; adjust to the Allseas naming convention).</p>
+<table>
+<tr><th>#</th><th>Object</th><th>Transaction / app</th><th>Values</th><th>Transport</th></tr>
+<tr><td>1</td><td>Technical catalog <code>ZMM_TC_MATMASS</code> with tile + target mapping</td><td><code>/UI2/FLPAM</code> (Launchpad App Manager)</td><td>Tile: static, title <i>Material Master Mass Upload</i>, subtitle <i>LTMC Product template</i>, icon <code>sap-icon://upload-to-cloud</code>, semantic object <code>Material</code>, action <code>massUpload</code>.<br>Target mapping: semantic object <code>Material</code>, action <code>massUpload</code>, application type SAPUI5 Fiori app, title <i>Material Master Mass Upload</i>, URL <code>/sap/bc/ui5_ui5/sap/zmmmatmass</code>, ID <code>com.allseas.zmmmatmass</code>, device types desktop, parameters: additional parameters allowed.</td><td>workbench (cross-client)</td></tr>
+<tr><td>2</td><td>Business catalog <code>ZMM_BC_MATMASS</code> with a reference to tile and target mapping of #1</td><td><code>/UI2/FLPCM_CONF</code> (Launchpad Content Manager, cross-client)</td><td>title <i>Material Master Mass Upload</i></td><td>workbench</td></tr>
+<tr><td>3</td><td>Space <code>ZMM_SP_MATMASS</code> with page <code>ZMM_PG_MATMASS</code>, section <i>Material master</i> with the tile</td><td>Manage Launchpad Spaces / Manage Launchpad Pages (<code>/UI2/FLP_CONF</code> cross-client)</td><td>If the Allseas launchpad still runs without spaces: a group in the business catalog's role instead.</td><td>workbench</td></tr>
+<tr><td>4</td><td>Role <code>ZMM_MATMASS_USER</code></td><td><code>PFCG</code></td><td>Menu: launchpad catalog <code>ZMM_BC_MATMASS</code>, launchpad space <code>ZMM_SP_MATMASS</code>.<br>Authorizations: <code>S_START</code> R3TR G4BA <code>API_PRODUCT</code>; <code>S_SERVICE</code> for <code>API_PRODUCT_SRV</code> (V2, create with internal number); <code>M_MATE_*</code> as in chapter 8.</td><td>customizing (role)</td></tr>
+<tr><td>5</td><td>Test</td><td>Launchpad DS4/410 with a test user that has only <code>ZMM_MATMASS_USER</code> plus the basic launchpad role</td><td>Tile visible, app starts (URL hash <code>#Material-massUpload</code>), connection test OK; without M_MATE authorization the write requests are rejected by SAP.</td><td>–</td></tr>
+</table>
+<p>As long as the tool has no official status (open point 11), the role is assigned to the test users only.</p>
 
 <h3>15. Test evidence</h3>
 <h4>15.1 Unit test (test double)</h4>
@@ -242,7 +253,7 @@ __TESTS__
 <tr><td>1</td><td>LTMC product template</td><td class="pass">closed – received 25 Sep 2026</td></tr>
 <tr><td>2</td><td>Service path and service group on DS4</td><td class="pass">closed – <code>…/api_product/srvd_a2x/sap/product/0002/</code>, group API_PRODUCT</td></tr>
 <tr><td>3</td><td>ZZ1_MFRPN_PRD in the V4 service</td><td class="pass">closed – present in $metadata 25 Sep 2026</td></tr>
-<tr><td>4</td><td>Launchpad catalog, target mapping, role</td><td class="open">open</td></tr>
+<tr><td>4</td><td>Launchpad catalog, target mapping, role</td><td class="open">designed (14.1), to be maintained in DS4/400</td></tr>
 <tr><td>5</td><td>MDG bypass and who gets write access – confirm with data owner</td><td class="open">open</td></tr>
 <tr><td>6</td><td>Internal or external material numbering for the material types in scope</td><td class="pass">decided 28 Sep 2026 – internal numbering through V2 API_PRODUCT_SRV (create) + V4 (rest); external numbering stays available</td></tr>
 <tr><td>7</td><td>Deep insert accepted by DS4 (otherwise step-wise)</td><td class="open">integration test</td></tr>
