@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup – Read from SAP</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --ink:#1d2330; --muted:#667085; --line:#d9dde5; --acc:#0a6ed1; --ok:#107e3e; --err:#bb0000; --warn:#b36b00; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 "72", Arial, sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:#354a5f; color:#fff; padding:12px 20px; }
+  header h1 { margin:0; font-size:18px; font-weight:600; }
+  header small { opacity:.75; }
+  .mock { background:#fff4c2; color:#5a4500; padding:6px 20px; font-size:13px; border-bottom:1px solid #e6d58a; }
+  main { padding:16px 20px; display:grid; gap:14px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:6px; padding:14px 16px; min-width:0; }
+  section h2 { margin:0 0 10px; font-size:15px; }
+  h3 { font-size:13.5px; margin:14px 0 6px; }
+  label { display:inline-flex; gap:6px; align-items:center; margin-right:14px; }
+  input[type=text], textarea { padding:5px 7px; border:1px solid var(--line); border-radius:4px; font:inherit; }
+  select { padding:4px 6px; border:1px solid var(--line); border-radius:4px; font:inherit; }
+  button { padding:6px 12px; border:1px solid var(--acc); background:var(--acc); color:#fff; border-radius:4px; font:inherit; cursor:pointer; }
+  button.sec { background:#fff; color:var(--acc); }
+  button.icon { padding:2px 8px; background:#fff; color:var(--acc); }
+  .row { display:flex; flex-wrap:wrap; gap:8px 4px; align-items:center; margin-bottom:8px; }
+  .muted { color:var(--muted); }
+  .note { margin:4px 0 8px; padding:6px 10px; border-left:3px solid var(--acc); background:#eef4fb; font-size:13px; }
+  .seg { display:inline-flex; border:1px solid var(--acc); border-radius:4px; overflow:hidden; }
+  .seg button { border:none; border-radius:0; background:#fff; color:var(--acc); }
+  .seg button.on { background:var(--acc); color:#fff; }
+  .tokens { display:flex; flex-wrap:wrap; gap:4px; align-items:center; border:1px solid var(--line); border-radius:4px; padding:4px; min-height:34px; width:min(900px,100%); }
+  .tok { background:#eef1f5; border:1px solid var(--line); border-radius:3px; padding:1px 6px; font-size:12.5px; }
+  .tok b { font-weight:400; color:var(--muted); }
+  .tok i { font-style:normal; color:var(--acc); cursor:pointer; margin-left:4px; }
+  .crit { display:grid; grid-template-columns:minmax(180px,260px) 120px minmax(120px,1fr) minmax(120px,1fr) 70px; gap:6px; align-items:center; max-width:980px; margin-bottom:6px; }
+  .crit input, .crit select { width:100%; }
+  .picker { display:grid; grid-template-columns:220px 1fr; border:1px solid var(--line); border-radius:4px; max-width:980px; margin-top:8px; }
+  .picker .sheets { border-right:1px solid var(--line); max-height:260px; overflow:auto; }
+  .picker .sheets div { padding:5px 10px; cursor:pointer; border-bottom:1px solid #eef1f5; font-size:13px; }
+  .picker .sheets div.on { background:#eef4fb; color:var(--acc); font-weight:600; }
+  .picker .fields { padding:8px 10px; max-height:260px; overflow:auto; }
+  .picker .fields label { display:flex; margin:0 0 4px; font-size:13px; }
+  .picker .fields label span.t { color:var(--muted); font-size:12px; }
+  .picker .fields label.key { color:var(--muted); }
+  .tabs { display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--line); margin-bottom:8px; }
+  .tabs button { background:#fff; color:var(--ink); border:1px solid var(--line); border-bottom:none; border-radius:4px 4px 0 0; }
+  .tabs button.on { background:var(--acc); color:#fff; border-color:var(--acc); }
+  .tabs button.empty { color:var(--muted); }
+  .grid { overflow:auto; border:1px solid var(--line); }
+  table { border-collapse:collapse; font-size:12.5px; }
+  th, td { border:1px solid var(--line); padding:2px 6px; white-space:nowrap; }
+  th { background:#eef1f5; text-align:left; }
+  th .api { display:block; font-weight:400; color:var(--muted); font-size:11px; }
+  th.key { background:#e3e8ef; }
+  th.hid, td.hid { display:none; }
+  .showhid th.hid, .showhid td.hid { display:table-cell; background:#f7f7f7; color:#9aa3b2; }
+  .callout { font-size:12px; color:var(--warn); }
+  .split { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:900px) { .split, .picker, .crit { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Material Master Mass Upload</h1>
+  <small>Migration Cockpit template "Product" &rarr; OData V4 Product API (API_PRODUCT_2)</small>
+</header>
+<div class="mock">MOCKUP – section 2 "File" with the new option "Read from SAP". Not built. Values are examples (DS4/410, materials 1000181 and 1000198).</div>
+<main>
+
+<section>
+  <h2>2. File</h2>
+  <div class="row">
+    <span class="seg"><button class="sec">Load file</button><button class="on">Read from SAP</button></span>
+    <span class="muted">The result is the same "Product" template as with Load file: same sheets, same columns, values from SAP.</span>
+  </div>
+
+  <h3>Define scope (fields)</h3>
+  <div class="row">
+    <label><input type="radio" name="scope" checked> Select specific fields</label>
+    <label><input type="radio" name="scope"> Select sheets</label>
+    <label><input type="radio" name="scope"> All fields of all sheets</label>
+  </div>
+  <div class="tokens">
+    <span class="tok">Gross Weight <b>(Alt. Units – MARM-BRGEW)</b><i>×</i></span>
+    <span class="tok">Cross Reference <b>(Basic Data – ZZ1_MFRPN)</b><i>×</i></span>
+    <span class="tok">MRP Type <b>(Plant – MARC-DISMM)</b><i>×</i></span>
+    <button class="icon" id="btnPick">+ Add fields</button>
+  </div>
+  <div class="picker" id="picker">
+    <div class="sheets" id="sheets"></div>
+    <div class="fields">
+      <div class="row"><input type="text" placeholder="Search field name or technical name (e.g. BRGEW)" style="width:100%"></div>
+      <div id="fields"></div>
+    </div>
+  </div>
+  <p class="muted" style="font-size:12.5px;margin:6px 0 0">Keys (PRODUCT, WERKS, LGORT, BWKEY, MEINH …) are always read and always visible; they cannot be deselected.</p>
+
+  <div class="split">
+  <div>
+  <h3>Select products</h3>
+  <div class="row">
+    <label><input type="radio" name="sel" checked> By selection criteria</label>
+    <label><input type="radio" name="sel"> Paste list of material numbers</label>
+  </div>
+  <div class="muted" style="font-size:12.5px;margin-bottom:4px">Include</div>
+  <div class="crit"><select><option>Material Number (MARA-MATNR)</option></select><select><option>equal to</option><option>between</option><option>starts with</option></select><input type="text" value="1000181"><input type="text" placeholder="to" disabled><span><button class="icon">×</button></span></div>
+  <div class="crit"><select><option>Material Number (MARA-MATNR)</option></select><select><option>equal to</option></select><input type="text" value="1000198"><input type="text" placeholder="to" disabled><span><button class="icon">×</button> <button class="icon">+</button></span></div>
+  <div class="crit"><select><option>Material Type (MARA-MTART)</option><option>Material Group (MARA-MATKL)</option><option>Plant (MARC-WERKS)</option><option>Created on (MARA-ERSDA)</option></select><select><option>equal to</option></select><input type="text" placeholder="e.g. HAWA"><input type="text" placeholder="to" disabled><span><button class="icon">×</button> <button class="icon">+</button></span></div>
+  <details><summary>Exclude</summary>
+    <div class="crit" style="margin-top:6px"><select><option>Material Number (MARA-MATNR)</option></select><select><option>equal to</option></select><input type="text"><input type="text" placeholder="to" disabled><span><button class="icon">+</button></span></div>
+  </details>
+  </div>
+  <div>
+  <h3>Options</h3>
+  <div class="row"><label><input type="checkbox" checked> Hide columns that are empty for all selected products</label></div>
+  <div class="row"><label><input type="checkbox" checked> Hide columns of fields that were not selected</label></div>
+  <div class="row"><label><input type="checkbox"> Only rows that have a value in a selected field <span class="muted">(e.g. only alternative units with a gross weight)</span></label></div>
+  <div class="row"><label>Max. products <input type="text" value="25000" size="7"></label><span class="muted">read in packages of "Products per $batch" (section 4)</span></div>
+  <div class="note">Values come from SAP as they are. In mode Change only the cells you change afterwards are sent; untouched cells give "no differences".</div>
+  </div>
+  </div>
+
+  <div class="row" style="margin-top:10px">
+    <button>Count products</button>
+    <button>Read from SAP</button>
+    <button class="sec">Save as template (XML)</button>
+    <span class="ok">2 products found · read in 0.8 s · 3 sheets with data · 41 columns hidden</span>
+  </div>
+</section>
+
+<section>
+  <h2>3. Data (editable)</h2>
+  <div class="tabs">
+    <button>Basic Data (2)</button><button>Plant (4)</button><button class="on">Alt. Units (2)</button>
+    <button class="empty">Storage Locations (0)</button><button class="empty">Valuation (0)</button>
+  </div>
+  <div class="row">
+    <label><input type="checkbox" id="showHid"> Show hidden columns (41)</label>
+    <span class="muted">Hidden columns stay in the file, so the template is unchanged and can be loaded by the tool and opened in Excel.</span>
+  </div>
+  <div class="grid" id="grid">
+  <table>
+    <tr><th>SAP product</th><th>Message</th><th class="key">PRODUCT<span class="api">Product</span></th><th class="key">MEINH<span class="api">AlternativeUnit</span></th>
+      <th class="hid">UMREZ<span class="api">QuantityNumerator</span></th><th class="hid">UMREN<span class="api">QuantityDenominator</span></th>
+      <th>BRGEW<span class="api">GrossWeight</span></th><th class="hid">GEWEI<span class="api">WeightISOUnit</span></th><th class="hid">VOLUM<span class="api">MaterialVolume</span></th><th class="hid">LAENG<span class="api">UnitSpecificProductLength</span></th></tr>
+    <tr><td>1000181</td><td class="muted">read from SAP</td><td>1000181</td><td>ST</td><td class="hid">1</td><td class="hid">1</td><td>0.063</td><td class="hid">KG</td><td class="hid"></td><td class="hid"></td></tr>
+    <tr><td>1000198</td><td class="muted">read from SAP</td><td>1000198</td><td>ST</td><td class="hid">1</td><td class="hid">1</td><td>0.001</td><td class="hid">KG</td><td class="hid"></td><td class="hid"></td></tr>
+  </table>
+  </div>
+  <p class="callout">Open point for the design: GEWEI (weight unit) is hidden because it was not selected, but SAP needs it together with BRGEW (unit reference). The tool adds it automatically when writing, as today.</p>
+</section>
+
+</main>
+<script>
+const SHEETS = {
+  'Basic Data (MARA)': [['PRODUCT', 'Material number', 1], ['MTART', 'Material type'], ['MATKL', 'Material group'], ['MEINS', 'Base unit'], ['BRGEW', 'Gross weight'], ['ZZ1_MFRPN', 'Cross Reference', 0, 1], ['BISMT', 'Old material number']],
+  'Plant (MARC)': [['PRODUCT', 'Material number', 1], ['WERKS', 'Plant', 1], ['DISMM', 'MRP type', 0, 1], ['DISPO', 'MRP controller'], ['EKGRP', 'Purchasing group'], ['PLIFZ', 'Planned delivery time']],
+  'Storage Locations (MARD)': [['PRODUCT', 'Material number', 1], ['WERKS', 'Plant', 1], ['LGORT', 'Storage location', 1], ['LGPBE', 'Storage bin']],
+  'Valuation (MBEW)': [['PRODUCT', 'Material number', 1], ['BWKEY', 'Valuation area', 1], ['BKLAS', 'Valuation class'], ['VERPR', 'Moving average price'], ['PEINH', 'Price unit']],
+  'Alt. Units (MARM)': [['PRODUCT', 'Material number', 1], ['MEINH', 'Alternative unit', 1], ['UMREZ', 'Numerator'], ['UMREN', 'Denominator'], ['BRGEW', 'Gross weight', 0, 1], ['VOLUM', 'Volume']],
+  'Descriptions (MAKT)': [['PRODUCT', 'Material number', 1], ['SPRAS', 'Language', 1], ['MAKTX', 'Description']]
+};
+let cur = 'Alt. Units (MARM)';
+function draw() {
+  document.getElementById('sheets').innerHTML = Object.keys(SHEETS).map(s => `<div class="${s === cur ? 'on' : ''}">${s}</div>`).join('');
+  document.querySelectorAll('#sheets div').forEach(d => d.onclick = () => { cur = d.textContent; draw(); });
+  document.getElementById('fields').innerHTML = SHEETS[cur].map(([f, t, key, on]) =>
+    `<label class="${key ? 'key' : ''}"><input type="checkbox" ${key || on ? 'checked' : ''} ${key ? 'disabled' : ''}> ${t} <span class="t">${f}${key ? ' · key' : ''}</span></label>`).join('');
+}
+draw();
+document.getElementById('btnPick').onclick = () => { const p = document.getElementById('picker'); p.style.display = p.style.display === 'none' ? '' : 'none'; };
+document.getElementById('showHid').onchange = e => document.getElementById('grid').classList.toggle('showhid', e.target.checked);
+</script>
+</body>
+</html>
