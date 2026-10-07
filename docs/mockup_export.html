@@ -123,7 +123,7 @@
   <div class="row" style="margin-top:10px">
     <button>Count products</button>
     <button>Read from SAP</button>
-    <button class="sec">Save as template (XML)</button>
+    <button class="sec dl">Download template (XML)</button>
     <span class="ok">2 products found · read in 0.8 s · 3 sheets with data · 41 columns hidden</span>
   </div>
 </section>
@@ -135,6 +135,7 @@
     <button class="empty">Storage Locations (0)</button><button class="empty">Valuation (0)</button>
   </div>
   <div class="row">
+    <button class="dl">Download template (XML)</button>
     <label><input type="checkbox" id="showHid"> Show hidden columns (41)</label>
     <span class="muted">Hidden columns stay in the file, so the template is unchanged and can be loaded by the tool and opened in Excel.</span>
   </div>
@@ -169,6 +170,20 @@ function draw() {
 }
 draw();
 document.getElementById('btnPick').onclick = () => { const p = document.getElementById('picker'); p.style.display = p.style.display === 'none' ? '' : 'none'; };
+// Mockup download: Product template (SpreadsheetML) with the not selected / empty columns hidden (ss:Hidden="1")
+function sample() {
+  const cols = [['PRODUCT', 0], ['MEINH', 0], ['UMREZ', 1], ['UMREN', 1], ['BRGEW', 0], ['GEWEI', 1], ['VOLUM', 1], ['LAENG', 1]];
+  const rows = [['1000181', 'ST', '1', '1', '0.063', 'KG', '', ''], ['1000198', 'ST', '1', '1', '0.001', 'KG', '', '']];
+  const cell = v => `<Cell><Data ss:Type="String">${v}</Data></Cell>`;
+  return `<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n<Worksheet ss:Name="Alt. Units"><Table>\n` +
+    cols.map(([, h]) => `<Column ss:Width="90"${h ? ' ss:Hidden="1"' : ''}/>`).join('\n') + '\n' +
+    `<Row>${cols.map(([c]) => cell(c)).join('')}</Row>\n` + rows.map(r => `<Row>${r.map(cell).join('')}</Row>`).join('\n') +
+    `\n</Table></Worksheet>\n</Workbook>\n`;
+}
+document.querySelectorAll('button.dl').forEach(b => b.onclick = () => {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([sample()], { type: 'application/xml' }));
+  a.download = 'Product_from_SAP_DS4-410_mockup.xml'; document.body.appendChild(a); a.click(); a.remove();
+});
 document.getElementById('showHid').onchange = e => document.getElementById('grid').classList.toggle('showhid', e.target.checked);
 </script>
 </body>
