@@ -5,118 +5,151 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Material Master Mass Upload</title>
 <style>
-  :root { --bg:#f5f6f8; --card:#fff; --ink:#1d2330; --muted:#667085; --line:#d9dde5; --acc:#0a6ed1; --ok:#107e3e; --err:#bb0000; --warn:#b36b00; }
+  /* Layout and colours after the Lovable redesign (Oct 2026), as plain CSS: no external fonts or libraries */
+  :root { --bg:#f5f7fa; --card:#fff; --ink:#2c3e4f; --muted:#f1f5f9; --muted-ink:#64748b; --line:#e2e8f0; --acc:#2f6bc4; --acc-ink:#f8fafc;
+    --ok:#2e8b62; --err:#d92d20; --warn:#b7791f; --warn-bg:#fdf3dc; --header:#2c3e4f; --console:#1b2128; --console-ink:#d3d9df; }
   * { box-sizing:border-box; }
-  body { margin:0; font:14px/1.45 "72", Arial, sans-serif; background:var(--bg); color:var(--ink); }
-  header { background:#354a5f; color:#fff; padding:12px 20px; }
-  header h1 { margin:0; font-size:18px; font-weight:600; }
-  header small { opacity:.75; }
-  main { padding:16px 20px; display:grid; gap:14px; }
-  main > section { min-width:0; }
-  section { background:var(--card); border:1px solid var(--line); border-radius:6px; padding:14px 16px; }
-  section h2 { margin:0 0 10px; font-size:15px; }
-  label { display:inline-flex; gap:6px; align-items:center; margin-right:14px; }
-  input[type=text] { padding:5px 7px; border:1px solid var(--line); border-radius:4px; font:inherit; }
-  select { padding:4px 6px; border:1px solid var(--line); border-radius:4px; font:inherit; }
-  #svcUrl { width:min(720px,70vw); }
-  button { padding:6px 12px; border:1px solid var(--acc); background:var(--acc); color:#fff; border-radius:4px; font:inherit; cursor:pointer; }
-  a.btn { display:inline-block; text-decoration:none; padding:6px 12px; border:1px solid var(--acc); border-radius:4px; color:var(--acc); background:#fff; font:inherit; }
-  button.sec { background:#fff; color:var(--acc); }
-  button:disabled { opacity:.45; cursor:default; }
-  .row { display:flex; flex-wrap:wrap; gap:8px 4px; align-items:center; margin-bottom:8px; }
-  .muted { color:var(--muted); }
-  .tabs { display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--line); margin-bottom:8px; }
-  .tabs button { background:#fff; color:var(--ink); border:1px solid var(--line); border-bottom:none; border-radius:4px 4px 0 0; }
-  .tabs button.on { background:var(--acc); color:#fff; border-color:var(--acc); }
-  .tabs button.empty { color:var(--muted); }
-  .grid { overflow:auto; max-height:420px; border:1px solid var(--line); }
-  table { border-collapse:collapse; font-size:12.5px; }
-  th, td { border:1px solid var(--line); padding:2px 4px; white-space:nowrap; }
-  th { position:sticky; top:0; background:#eef1f5; z-index:1; text-align:left; }
-  th .api { display:block; font-weight:400; color:var(--muted); font-size:11px; }
-  th.unmapped { background:#f7efe3; }
-  td input { border:none; background:transparent; font:inherit; width:100%; min-width:60px; padding:2px; }
-  td input.dirty { background:#fff4c2; }
-  td.st { font-weight:600; max-width:480px; overflow:hidden; text-overflow:ellipsis; }
-  .meter { position:relative; height:22px; margin:8px 0 4px; border:1px solid var(--line); border-radius:11px; background:#f1f3f6; overflow:hidden; display:flex; }
-  .meter .seg { height:100%; transition:width .3s; width:0; }
-  .meter .seg.ok { background:#2e9e5b; } .meter .seg.err { background:#d64545; }
-  .meter span { position:absolute; inset:0; text-align:center; font:600 12px/22px inherit; color:#1d2330; }
-  .note { margin:4px 0 8px; padding:6px 10px; border-left:3px solid var(--acc); background:#eef4fb; font-size:13px; }
-  .ok { color:var(--ok); } .err { color:var(--err); } .warn { color:var(--warn); }
-  #log { font:12px/1.4 Consolas, monospace; background:#0f1720; color:#d7e0ea; padding:10px; border-radius:4px; max-height:380px; overflow:auto; white-space:pre-wrap; }
-  #log .ok { color:#6fdc8c; } #log .err { color:#ff8a8a; } #log .warn { color:#ffd479; }
-  details summary { cursor:pointer; color:var(--acc); }
-  .pill { display:inline-block; padding:1px 7px; border-radius:10px; background:#eef1f5; margin:2px 4px 2px 0; font-size:12px; }
-  .pill.none { background:#f7efe3; }
-  .seg { display:inline-flex; border:1px solid var(--acc); border-radius:4px; overflow:hidden; }
-  .seg button { border:none; border-radius:0; background:#fff; color:var(--acc); }
-  .seg button.on { background:var(--acc); color:#fff; }
-  h3 { font-size:13.5px; margin:14px 0 6px; }
-  .tokens { display:flex; flex-wrap:wrap; gap:4px; align-items:center; border:1px solid var(--line); border-radius:4px; padding:4px; min-height:34px; max-width:980px; }
-  .tok { background:#eef1f5; border:1px solid var(--line); border-radius:3px; padding:1px 6px; font-size:12.5px; }
-  .tok b { font-weight:400; color:var(--muted); }
-  .tok i { font-style:normal; color:var(--acc); cursor:pointer; margin-left:4px; }
-  button.icon { padding:2px 8px; background:#fff; color:var(--acc); }
-  .crit { display:grid; grid-template-columns:100px minmax(170px,240px) 110px minmax(110px,1fr) minmax(110px,1fr) 40px; gap:6px; align-items:center; max-width:980px; margin-bottom:6px; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:12px/1.6 "72", "Segoe UI", Arial, sans-serif; }
+  main { max-width:1180px; margin:0 auto; padding:28px 20px; }
+  h1, h2 { margin:0; letter-spacing:0; }
+  h3 { font-size:12px; font-weight:700; margin:16px 0 8px; }
+  .top { background:var(--header); color:#fff; padding:16px 24px; border-radius:6px 6px 0 0; }
+  .top h1 { font-size:20px; font-weight:600; }
+  .top p { margin:4px 0 0; font-size:11px; opacity:.65; }
+  .card { background:var(--card); border:1px solid var(--line); border-top:0; border-radius:0 0 6px 6px; overflow:hidden; }
+  .step { border-bottom:1px solid var(--line); padding:20px 24px; }
+  .step:last-child { border-bottom:0; }
+  .step-h { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .step-h h2 { font-size:14px; font-weight:600; }
+  .num { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--header); color:#fff; font-size:10px; font-weight:700; flex-shrink:0; }
+  .num.light { background:var(--muted); color:var(--muted-ink); }
+  details summary { cursor:pointer; list-style:none; }
+  details summary::-webkit-details-marker { display:none; }
+  .conn > summary { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; padding:12px 24px; }
+  .conn > summary:hover { background:#f8fafc; }
+  .conn > summary .l { display:flex; align-items:center; gap:12px; min-width:0; }
+  .conn > summary .l b { font-size:14px; font-weight:600; }
+  .conn > summary .r { display:flex; align-items:center; gap:12px; font-size:10px; }
+  .chev { width:16px; height:16px; color:var(--muted-ink); transition:transform .2s; }
+  .conn[open] .chev { transform:rotate(180deg); }
+  .conn-body { display:grid; grid-template-columns:1fr 1fr; gap:20px; border-top:1px solid var(--line); background:#f8fafc; padding:20px 24px; }
+  .conn { border-bottom:1px solid var(--line); }
+  .stack { display:flex; flex-direction:column; align-items:stretch !important; gap:4px !important; width:100%; }
+  input[type=text], select, textarea { border:1px solid var(--line); background:var(--card); border-radius:4px; padding:6px 9px; font:inherit; color:inherit; max-width:100%; min-width:0; }
+  input:focus, select:focus, textarea:focus { outline:2px solid rgba(47,107,196,.35); outline-offset:1px; }
+  input[type=checkbox], input[type=radio] { accent-color:var(--acc); width:13px; height:13px; flex-shrink:0; margin:0; }
+  label { display:inline-flex; align-items:center; gap:7px; }
+  .row { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-bottom:12px; }
+  .muted { color:var(--muted-ink); } .ok { color:var(--ok); } .err { color:var(--err); } .warn { color:var(--warn); }
+  [hidden] { display:none !important; }
+  .small { font-size:11px; }
+  /* buttons: outline by default, .pri = primary */
+  button, a.btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; height:32px; padding:0 12px; border:1px solid var(--line); border-radius:6px;
+    background:var(--card); color:var(--ink); font:500 12px/1 inherit; font-family:inherit; cursor:pointer; white-space:nowrap; text-decoration:none; box-shadow:0 1px 2px rgba(15,23,42,.05); }
+  button:hover, a.btn:hover { background:var(--muted); }
+  button.pri, .seg button.on { background:var(--acc); border-color:var(--acc); color:var(--acc-ink); }
+  button.pri:hover, .seg button.on:hover { background:#285ca9; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  a.btn.ghost { border-color:transparent; box-shadow:none; color:var(--acc); }
+  button svg, a.btn svg { width:15px; height:15px; flex-shrink:0; }
+  button.icon { height:auto; border:0; box-shadow:none; background:transparent; color:var(--acc); padding:4px 8px; }
+  .seg { display:inline-flex; gap:8px; }
+  .drop { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px; border:1px dashed #cbd5e1; border-radius:4px; background:#f8fafc; padding:16px; margin-bottom:12px; }
+  .drop svg { width:20px; height:20px; color:var(--acc); }
+  .note { margin:4px 0 12px; padding:6px 10px; border-left:3px solid var(--acc); background:#eef4fb; font-size:11px; }
+  .tokens { display:flex; flex-wrap:wrap; align-items:center; gap:4px; border:1px solid var(--line); border-radius:4px; padding:4px; min-height:34px; }
+  .pill, .tok { display:inline-flex; align-items:center; gap:6px; background:var(--muted); border:1px solid var(--line); border-radius:4px; padding:2px 8px; margin:2px 4px 2px 0; font-size:11px; }
+  .pill.none { background:var(--warn-bg); }
+  .tok b { font-weight:400; color:var(--muted-ink); } .tok i { cursor:pointer; color:var(--acc); font-style:normal; }
+  .picker { display:grid; grid-template-columns:230px 1fr; border:1px solid var(--line); border-radius:4px; margin-top:12px; }
+  .picker .sheets { max-height:280px; overflow:auto; border-right:1px solid var(--line); }
+  .picker .sheets div { padding:7px 12px; cursor:pointer; border-bottom:1px solid var(--line); }
+  .picker .sheets div.on { color:var(--acc); background:var(--muted); font-weight:700; }
+  .picker .fields { max-height:280px; overflow:auto; padding:12px; }
+  .picker .fields label { display:flex; margin-bottom:6px; }
+  .picker .fields .t, .picker .key { color:var(--muted-ink); }
+  .split { display:grid; grid-template-columns:3fr 2fr; gap:20px; margin-top:16px; }
+  .crit { display:grid; grid-template-columns:90px minmax(160px,1fr) 110px minmax(90px,.7fr) minmax(90px,.7fr) 28px; gap:6px; margin-bottom:8px; }
   .crit input, .crit select { width:100%; }
-  .picker { display:grid; grid-template-columns:230px 1fr; border:1px solid var(--line); border-radius:4px; max-width:980px; margin-top:8px; }
-  .picker .sheets { border-right:1px solid var(--line); max-height:280px; overflow:auto; }
-  .picker .sheets div { padding:5px 10px; cursor:pointer; border-bottom:1px solid #eef1f5; font-size:13px; }
-  .picker .sheets div.on { background:#eef4fb; color:var(--acc); font-weight:600; }
-  .picker .fields { padding:8px 10px; max-height:280px; overflow:auto; }
-  .picker .fields label { display:flex; margin:0 0 4px; font-size:13px; }
-  .picker .fields label span.t { color:var(--muted); font-size:12px; }
-  .picker .fields label.key { color:var(--muted); }
-  .split { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-  @media (max-width:900px) { .split, .picker, .crit { grid-template-columns:1fr; } }
+  .crit button { height:auto; padding:0; color:var(--acc); }
+  .tabs { display:flex; overflow-x:auto; border-bottom:1px solid var(--line); }
+  .tabs button { height:auto; border:0; border-bottom:2px solid transparent; border-radius:0; box-shadow:none; padding:10px 14px; background:var(--card); color:var(--muted-ink); font-weight:400; }
+  .tabs button.on { color:var(--acc); border-bottom-color:var(--acc); font-weight:700; }
+  .tabs button.empty { opacity:.7; }
+  .grid { overflow:auto; max-height:420px; border:1px solid var(--line); border-top:0; border-radius:0 0 4px 4px; }
+  .grid .empty-msg { display:flex; min-height:112px; align-items:center; justify-content:center; color:var(--muted-ink); }
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  th { position:sticky; top:0; z-index:1; padding:10px 12px; background:var(--muted); border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; }
+  th .api { display:block; color:var(--muted-ink); font-size:10px; font-weight:400; }
+  th.unmapped { background:var(--warn-bg); }
+  td { padding:6px 10px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  td input { min-width:85px; width:100%; border:1px solid transparent; padding:3px 2px; background:transparent; font:inherit; color:inherit; }
+  td input[type=checkbox] { min-width:13px; width:13px; }
+  td input.dirty { background:#fbecc6; }
+  td.st { font-weight:600; max-width:360px; overflow:hidden; text-overflow:ellipsis; }
+  .settings > summary, .disclose > summary { color:var(--acc); font-size:11px; }
+  .meter { position:relative; display:flex; height:8px; margin-top:16px; border-radius:4px; background:var(--muted); overflow:hidden; }
+  .meter .seg { height:100%; width:0; transition:width .3s; }
+  .meter .seg.ok { background:var(--ok); } .meter .seg.err { background:var(--err); }
+  #meterPct { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+  .console { margin-top:16px; border-radius:6px; background:var(--console); color:var(--console-ink); overflow:hidden; }
+  .console-h { display:flex; align-items:center; justify-content:space-between; padding:8px 16px; border-bottom:1px solid rgba(211,217,223,.1); }
+  .console-h h2 { font-size:12px; font-weight:500; }
+  .console-h button { height:24px; border:0; box-shadow:none; background:transparent; color:rgba(211,217,223,.6); font-size:10px; }
+  .console-h button:hover { background:rgba(211,217,223,.1); color:var(--console-ink); }
+  #log { padding:16px; min-height:110px; max-height:250px; overflow:auto; font:11px/1.9 Consolas, ui-monospace, monospace; white-space:pre-wrap; overflow-wrap:anywhere; }
+  #log .ok { color:#8fd3ad; } #log .err { color:#f19a93; } #log .warn { color:#f2cf7a; }
+  #log summary { color:var(--console-ink); } #log pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+  footer { margin-top:16px; text-align:center; font-size:10px; color:var(--muted-ink); }
+  ul.hints { margin:0; padding-left:18px; }
+  @media (max-width:760px) { .conn-body, .split { grid-template-columns:1fr; } .picker { grid-template-columns:1fr; } .crit { grid-template-columns:1fr 1fr; } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration:0s !important; } }
 </style>
 </head>
 <body>
-<header>
-  <h1>Material Master Mass Upload</h1>
-  <small>Migration Cockpit template "Product" &rarr; OData V4 Product API (API_PRODUCT_2)</small>
-</header>
 <main>
+<header class="top">
+  <h1>Material Master Mass Upload</h1>
+  <p>Migration Cockpit template “Product” → OData V4 Product API (API_PRODUCT_2)</p>
+</header>
+<div class="card">
 
-<section>
-  <h2>1. Connection</h2>
-  <div class="row">
-    <label>Service path <input type="text" id="svcUrl" value="/sap/opu/odata4/sap/api_product/srvd_a2x/sap/product/0002/"></label>
-    <label>sap-client <input type="text" id="client" size="4" placeholder="session"></label>
+<details class="conn">
+  <summary>
+    <span class="l"><span class="num light">1</span><b>Connection</b><span class="muted small">SAP S/4HANA · OData V4</span></span>
+    <span class="r"><span id="connState" class="muted">not tested</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></span>
+  </summary>
+  <div class="conn-body">
+    <div>
+      <label class="stack">Service path<input type="text" id="svcUrl" value="/sap/opu/odata4/sap/api_product/srvd_a2x/sap/product/0002/"></label>
+      <div class="row" style="margin-top:12px"><label>sap-client <input type="text" id="client" size="7" placeholder="session"></label><button id="btnTest">Test connection</button></div>
+    </div>
+    <div>
+      <label class="stack">V2 service (create with internal number)<input type="text" id="svcV2" value="/sap/opu/odata/sap/API_PRODUCT_SRV/"></label>
+      <details class="disclose" style="margin-top:12px"><summary>▸ Details</summary>
+        <ul class="hints muted small">
+          <li>The app runs inside the Fiori launchpad of the same SAP system; requests use your launchpad session. No password is entered or stored.</li>
+          <li>Service path: /IWFND/V4_ADMIN → service group of the Product API → "Service Test". Editable in case the path differs.</li>
+          <li>sap-client: leave empty to use the client of the launchpad session.</li>
+          <li>V2 service: only for "Create" without "Send product number": API_PRODUCT_2 (V4) cannot assign an internal number, API_PRODUCT_SRV (V2) can.</li>
+          <li>Authorization: S_START for the service group (R3TR G4BA), S_SERVICE for the V2 service, plus the material master authorizations; see the design document, chapter 8.</li>
+        </ul>
+      </details>
+    </div>
   </div>
-  <div class="row">
-    <label>V2 service (create with internal number) <input type="text" id="svcV2" value="/sap/opu/odata/sap/API_PRODUCT_SRV/"></label>
-  </div>
-  <div class="row">
-    <button id="btnTest" class="sec">Test connection</button>
-    <span id="connState" class="muted">not tested</span>
-  </div>
-  <details>
-    <summary>Details</summary>
-    <ul class="muted">
-      <li>The app runs inside the Fiori launchpad of the same SAP system; requests use your launchpad session. No password is entered or stored.</li>
-      <li>Service path: /IWFND/V4_ADMIN &rarr; service group of the Product API &rarr; "Service Test". The field is editable in case the path differs.</li>
-      <li>sap-client: leave empty to use the client of the launchpad session.</li>
-      <li>V2 service: only used for "Create" without "Send product number": API_PRODUCT_2 (V4) cannot assign an internal number, API_PRODUCT_SRV (V2) can (DS4, 28 Sep 2026). The product is created there with basic data and descriptions; all other data follows through V4.</li>
-      <li>Authorization: S_START for the service group (R3TR G4BA) plus the normal material master authorizations; see the design document, chapter 8.</li>
-    </ul>
-  </details>
-</section>
+</details>
 
-<section>
-  <h2>2. File</h2>
-  <div class="row">
-    <span class="seg"><button id="srcFile" class="on">Load file</button><button id="srcSap">Read from SAP</button></span>
-    <span class="muted" id="srcHint">Load a filled template, or read products from SAP into the same template.</span>
-  </div>
+<section class="step">
+  <div class="step-h"><span class="num">2</span><h2>File</h2></div>
+  <div class="row"><span class="seg"><button id="srcFile" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="m9 15 3-3 3 3"/></svg>Load file</button><button id="srcSap">Read from SAP</button></span>
+    <span class="muted small" id="srcHint">Load a filled template, or read products from SAP into the same template.</span></div>
   <div id="filePanel">
-  <div class="row">
-    <input type="file" id="file" accept=".xml">
-    <button id="btnExport" class="sec" disabled>Save changed file (XML)</button>
-    <a class="btn sec" id="lnkTemplate" href="template_product.xml" download="Source data for Product - example.xml">Download example template</a>
-  </div>
-  <div class="muted">Example: Migration Cockpit template "Product" (S/4HANA 2023) with one HAWA and one SERV product, plant/valuation area NL10, 2 storage locations for the HAWA product (a service has none). Open it in Excel, replace the example rows and save as XML Spreadsheet 2003.</div>
+    <div class="drop">
+      <label><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="m9 15 3-3 3 3"/></svg><input type="file" id="file" accept=".xml" aria-label="Load material XML file"></label>
+      <a class="btn ghost" id="lnkTemplate" href="template_product.xml" download="Source data for Product - example.xml"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Example template</a>
+    </div>
+    <div class="muted small" style="margin:-4px 0 12px">Example: Migration Cockpit template "Product" (S/4HANA 2023) with one HAWA and one SERV product, plant/valuation area NL10, 2 storage locations for the HAWA product. Open it in Excel, replace the example rows and save as XML Spreadsheet 2003.</div>
+    <div class="row"><button id="btnExport" disabled>Save changed file (XML)</button></div>
   </div>
   <div id="readPanel" hidden>
     <div class="note">The result is the same "Product" template as with Load file (same sheets and columns), filled with the values from SAP. Columns can be hidden; they stay in the file.</div>
@@ -128,12 +161,9 @@
     <div class="tokens" id="selTokens"></div>
     <div class="picker" id="picker" hidden>
       <div class="sheets" id="pkSheets"></div>
-      <div class="fields">
-        <div class="row"><input type="text" id="pkSearch" placeholder="Search field name or technical name (e.g. BRGEW)" style="width:100%"></div>
-        <div id="pkFields"></div>
-      </div>
+      <div class="fields"><input type="text" id="pkSearch" placeholder="Search field name or technical name (e.g. BRGEW)" style="width:100%;margin-bottom:12px"><div id="pkFields"></div></div>
     </div>
-    <div class="muted" style="font-size:12.5px;margin-top:6px">Keys (PRODUCT, WERKS, LGORT, BWKEY, MEINH …) are always read and always visible.</div>
+    <div class="muted small" style="margin-top:6px">Keys (PRODUCT, WERKS, LGORT, BWKEY, MEINH …) are always read and always visible.</div>
     <div class="split">
       <div>
         <h3>Select products</h3>
@@ -141,100 +171,111 @@
           <label><input type="radio" name="selBy" value="crit" checked> By selection criteria</label>
           <label><input type="radio" name="selBy" value="list"> Paste list of material numbers</label>
         </div>
-        <div id="critBox"><div id="critRows"></div><button class="icon" id="btnCritAdd">+ criterion</button>
-          <div class="muted" style="font-size:12.5px;margin-top:4px">Every field of the template can be a criterion (fields that the service marks as not filterable are not offered). Lines with the same field: OR; different fields of the same sheet: AND on the same row (e.g. plant NL10 and MRP type PD); different sheets: AND per product. Exclude removes the products that have a matching row. Values as in the template (ISO units, X for yes, dates YYYY-MM-DD).</div></div>
-        <div id="listBox" hidden><textarea id="selList" rows="6" cols="40" placeholder="One material number per line (or separated by space, comma, semicolon)"></textarea></div>
+        <div id="critBox"><div id="critRows"></div><button id="btnCritAdd">+ Criterion</button>
+          <div class="muted small" style="margin-top:6px">Every field of the template can be a criterion (fields the service marks as not filterable are not offered). Same field: OR; fields of the same sheet: AND on the same row (e.g. plant NL10 and MRP type PD); different sheets: AND per product. Exclude removes the products that have a matching row. Values as in the template (ISO units, X for yes, dates YYYY-MM-DD).</div></div>
+        <div id="listBox" hidden><textarea id="selList" rows="5" style="width:100%" placeholder="One material number per line (or separated by space, comma, semicolon)"></textarea></div>
       </div>
       <div>
         <h3>Options</h3>
         <div class="row"><label><input type="checkbox" id="optHideEmpty" checked> Hide columns that are empty for all products</label></div>
         <div class="row"><label><input type="checkbox" id="optHideUnsel" checked> Hide columns of fields that were not selected</label></div>
-        <div class="row"><label><input type="checkbox" id="optOnlyFilled"> Only rows with a value in a selected field <span class="muted">(e.g. only alternative units with a gross weight)</span></label></div>
-        <div class="row"><label>Max. products <input type="text" id="maxProducts" value="25000" size="7"></label><span class="muted">read in packages of "Products per $batch", "Parallel requests" at a time (section 4)</span></div>
-        <div class="note">Values come from SAP as they are. In mode Change only the cells you change afterwards are sent; untouched cells give "no differences".</div>
+        <div class="row"><label><input type="checkbox" id="optOnlyFilled"> Only rows with a value in a selected field</label></div>
+        <div class="row"><label>Max. products <input type="text" id="maxProducts" value="25000" size="7"></label></div>
+        <div class="muted small">Read in packages of "Products per $batch", "Parallel requests" at a time (Execute → settings). Values come from SAP as they are; in mode Change only the cells you change afterwards are sent.</div>
       </div>
     </div>
-    <div class="row" style="margin-top:10px">
-      <button id="btnCount" class="sec">Count products</button>
-      <button id="btnRead">Read from SAP</button>
-      <button id="btnReadDl" class="sec" disabled>Download template (XML)</button>
+    <div class="row" style="margin-top:20px">
+      <button id="btnCount">Count products</button>
+      <button id="btnRead" class="pri">Read from SAP</button>
+      <button id="btnReadDl" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Download template (XML)</button>
       <span id="readState" class="muted"></span>
     </div>
   </div>
-  <div id="fileInfo" class="muted">No file loaded yet.</div>
-  <details id="unitBox">
-    <summary>Unit translation (supplied value &rarr; ISO code)</summary>
-    <p class="muted">The API needs ISO unit codes. A supplied value that is not an ISO code is translated: first with the lines below, then with the built-in table from T006 of DS4 (SAP and commercial unit &rarr; ISO, e.g. AU &rarr; C62, M &rarr; MTR, PC &rarr; PCE, KG &rarr; KGM). One line per unit: <code>SUPPLIED=ISO</code>. Saved in this browser.</p>
-    <textarea id="unitMap" rows="5" cols="40" placeholder="ST=PCE&#10;STK=PCE"></textarea>
-    <div><button id="btnUnitSave" class="sec">Apply</button> <span id="unitState" class="muted"></span></div>
-    <details><summary>Built-in table (T006, DS4, 28 Sep 2026)</summary><div id="unitBuiltin" class="muted" style="columns:6 120px; font:12px Consolas, monospace"></div></details>
+  <div id="fileInfo" class="muted" style="margin-top:8px">No file loaded yet.</div>
+  <details id="unitBox" class="disclose" style="margin-top:12px">
+    <summary>▸ Unit translation (supplied value → ISO code)</summary>
+    <p class="muted small">The API needs ISO unit codes. A supplied value that is not an ISO code is translated: first with the lines below, then with the built-in table from T006 of DS4 (e.g. AU → C62, M → MTR, PC → PCE, KG → KGM). One line per unit: <code>SUPPLIED=ISO</code>. Saved in this browser.</p>
+    <textarea id="unitMap" rows="4" cols="40" placeholder="ST=PCE&#10;STK=PCE" aria-label="Unit translation rules"></textarea>
+    <div class="row" style="margin-top:8px"><button id="btnUnitSave">Apply</button><span id="unitState" class="muted"></span></div>
+    <details class="disclose"><summary>▸ Built-in table (T006, DS4, 28 Sep 2026)</summary><div id="unitBuiltin" class="muted" style="columns:6 120px; font:11px Consolas, monospace; max-height:160px; overflow:auto; margin-top:8px"></div></details>
   </details>
 </section>
 
-<section>
-  <h2>3. Data (editable)</h2>
+<section class="step">
+  <div class="step-h"><span class="num">3</span><h2>Data (editable)</h2></div>
   <div class="row">
-    <label>Filter (product) <input type="text" id="gridFilter" size="14"></label>
-    <button id="btnSelAll" class="sec">Select all</button>
-    <button id="btnSelNone" class="sec">Select none</button>
-    <button id="btnPrev" class="sec">&lsaquo; Prev</button> <span id="pageInfo" class="muted"></span> <button id="btnNext" class="sec">Next &rsaquo;</button>
-    <span id="gridInfo" class="muted"></span>
-    <label><input type="checkbox" id="showHidden"> Show hidden columns <span id="hidCount" class="muted"></span></label>
-    <button id="btnGridDl" class="sec" disabled>Download (XML)</button>
+    <label><span class="muted">Filter</span><input type="text" id="gridFilter" size="14" placeholder="Product number"></label>
+    <span style="margin-left:auto; display:flex; flex-wrap:wrap; gap:8px">
+      <button id="btnSelAll">Select all</button><button id="btnSelNone">Select none</button>
+      <button id="btnGridDl" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Download (XML)</button>
+    </span>
   </div>
   <div class="tabs" id="tabs"></div>
-  <div class="grid" id="grid"><div class="muted" style="padding:8px">Load a file first.</div></div>
-  <div class="muted" style="margin-top:6px">Selection applies per product (tab Basic Data). Empty cell = leave as it is; <code>#</code> = clear the field in SAP (mode Change). Yellow cells differ from the file. Orange columns have no property in the API and are not sent.</div>
+  <div class="grid" id="grid"><div class="empty-msg">No material data loaded</div></div>
+  <div class="row" style="margin:12px 0 0">
+    <span id="gridInfo" class="muted"></span>
+    <label class="muted small"><input type="checkbox" id="showHidden"> Show hidden columns <span id="hidCount"></span></label>
+    <span style="margin-left:auto; display:flex; align-items:center; gap:8px"><button id="btnPrev" disabled>‹ Prev</button><span id="pageInfo" class="muted small"></span><button id="btnNext" disabled>Next ›</button></span>
+  </div>
+  <div class="muted small" style="margin-top:8px">Selection applies per product (tab Basic Data). Empty cell = leave as it is; <b>#</b> = clear the field in SAP (mode Change). Yellow cells differ from the file. Orange columns have no property in the API and are not sent.</div>
 </section>
 
-<section>
-  <h2>4. Execute</h2>
+<section class="step">
+  <div class="step-h"><span class="num">4</span><h2>Execute</h2></div>
   <div class="row">
     <label><input type="radio" name="mode" value="create" checked> Create</label>
     <label><input type="radio" name="mode" value="change"> Change (existing products in SAP)</label>
+    <span style="margin-left:auto; display:flex; flex-wrap:wrap; gap:8px">
+      <button id="btnRun" class="pri" disabled><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8-14 8z"/></svg>Execute in SAP</button>
+      <button id="btnDry" disabled>Dry run (show payload)</button>
+      <button id="btnStop" disabled><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>Stop</button>
+    </span>
   </div>
   <div class="note">Tip: to delete a value in SAP, fill the cell with <b>#</b> (mode Change). Empty cells are not changed.</div>
+  <details class="settings" style="margin:12px 0 16px">
+    <summary>▸ Execution settings</summary>
+    <div style="margin-top:16px">
+      <div class="row">
+        <label><input type="checkbox" id="extNum" checked> Send product number from the file (external numbering)</label>
+        <label>Create method <select id="createMethod">
+          <option value="deep" selected>deep insert (product with all views in one request)</option>
+          <option value="step">product first, then views in one change set</option>
+        </select></label>
+      </div>
+      <div class="muted small" style="margin:-4px 0 12px">Without "Send product number": always product via V2 first, then the rest via V4.</div>
+      <div class="row">
+        <label>Parallel requests <input type="text" id="parallel" size="3" value="8"></label>
+        <label>Products per $batch <input type="text" id="batchSize" size="4" value="20"></label>
+      </div>
+      <div class="muted small" style="margin:-4px 0 12px">Create with deep insert and Change: the selection is cut into $batch packages of this size; Change reads and writes each package in one $batch each.</div>
+      <div class="row">
+        <label>Resume from results <input type="file" id="resFile" accept=".csv"></label>
+        <button id="btnResume" title="Take over the result of every product of this file that was processed before in this browser (also after a hang or reload)">Resume last run</button>
+      </div>
+      <label><input type="checkbox" id="autoDl" checked> Download log and results automatically when the run ends</label>
+    </div>
+  </details>
   <div class="row">
-    <label><input type="checkbox" id="extNum" checked> Send product number from the file (external numbering)</label>
-    <label>Create method <select id="createMethod">
-      <option value="deep" selected>deep insert (product with all views in one request)</option>
-      <option value="step">product first, then views in one change set</option>
-    </select></label>
-    <span class="muted">Without "Send product number": always product via V2 first, then the rest via V4.</span>
-  </div>
-  <div class="row">
-    <button id="btnDry" class="sec" disabled>Show payload (dry run)</button>
-    <button id="btnRun" disabled>Execute in SAP</button>
-    <button id="btnStop" class="sec" disabled>Stop</button>
-    <button id="btnClear" class="sec">Clear log</button>
-  </div>
-  <div class="row">
-    <label>Parallel requests <input type="text" id="parallel" size="3" value="8"></label>
-    <label>Products per $batch <input type="text" id="batchSize" size="4" value="20"></label>
-    <span class="muted">(Create with deep insert and Change: the selection is cut into $batch packages of this size; Change reads and writes each package in one $batch each)</span>
-  </div>
-  <div class="row">
-    <button id="btnResults" class="sec" disabled>Download results (CSV)</button>
-    <label>Resume from results <input type="file" id="resFile" accept=".csv"></label>
-    <button id="btnResume" class="sec" title="Take over the result of every product of this file that was processed before in this browser (also after a hang or reload)">Resume last run</button>
-    <button id="btnLog" class="sec">Download full log</button>
-    <label><input type="checkbox" id="autoDl" checked> Download log and results automatically when the run ends</label>
+    <button id="btnResults" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Results (CSV)</button>
+    <button id="btnLog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Full log</button>
   </div>
   <div class="row" id="lastRun" hidden>
     <span id="lastRunInfo" class="muted"></span>
-    <button id="btnLastLog" class="sec">Log of last run</button>
-    <button id="btnLastRes" class="sec">Results of last run</button>
+    <button id="btnLastLog">Log of last run</button>
+    <button id="btnLastRes">Results of last run</button>
   </div>
   <div class="meter" id="meter" hidden><div class="seg ok" id="meterOk"></div><div class="seg err" id="meterErr"></div><span id="meterPct">0%</span></div>
-  <div id="progress" class="muted" style="font-weight:600"></div>
-  <div class="muted">"Change" mode uses the column <b>SAP product</b> (tab Basic Data): filled automatically after a create, from a results file, or with the product number from the file.</div>
+  <div id="progress" class="muted" style="font-weight:600; margin-top:8px"></div>
+  <div class="muted small">"Change" uses the column <b>SAP product</b> (tab Basic Data): filled automatically after a create, from a results file, or with the product number from the file.</div>
 </section>
 
-<section>
-  <h2>Log</h2>
+</div>
+
+<section class="console">
+  <div class="console-h"><h2>Log</h2><button id="btnClear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Clear</button></div>
   <div id="log"></div>
 </section>
-
+<footer>SAP S/4HANA · API_PRODUCT_2</footer>
 </main>
 
 <script>

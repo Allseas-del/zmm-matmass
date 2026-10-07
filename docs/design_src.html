@@ -30,7 +30,7 @@
 <table class="meta">
 <tr><td>Customer</td><td>Allseas – S/4HANA 2023 FPS01, DS4 (build 400, test 410) → QS4 → PS4</td></tr>
 <tr><td>Author</td><td>Pjotr Dassen</td></tr>
-<tr><td>Version</td><td>0.8 – "Read from SAP": products and fields selected in the tool, read into the Product template, empty and not selected columns hidden; 0.7 – Change in packages (one read $batch and one write $batch per package, $select on the filled fields), default 8 parallel requests; 0.6 – large runs and resume; background option designed (not built); V2 create for internal numbering; deployed to DS4 (BSP ZMMMATMASS, DS4K915674); integration test on DS4/410 in progress</td></tr>
+<tr><td>Version</td><td>0.9 – new screen layout after the Lovable redesign (same functions and element IDs; plain HTML/CSS in tool.html, no React, no external fonts); 0.8 – "Read from SAP": products and fields selected in the tool, read into the Product template, empty and not selected columns hidden; 0.7 – Change in packages (one read $batch and one write $batch per package, $select on the filled fields), default 8 parallel requests; 0.6 – large runs and resume; background option designed (not built); V2 create for internal numbering; deployed to DS4 (BSP ZMMMATMASS, DS4K915674); integration test on DS4/410 in progress</td></tr>
 <tr><td>Date</td><td>25 September 2026</td></tr>
 <tr><td>Package / transport</td><td><code>ZMM_MATMASS</code> / <code>DS4K915674</code>, BSP <code>ZMMMATMASS</code></td></tr>
 <tr><td>Repository</td><td><code>C:\dev\zmm-matmass</code> – github.com/Allseas-del/zmm-matmass</td></tr>
@@ -92,7 +92,7 @@
 </table>
 
 <h3>4. User interface</h3>
-<p>Sections: 1 Connection (service path, sap-client), 2 File, 3 Data (tabs per sheet, filter on product, max. 500 rows shown), 4 Execute (mode, numbering, create method, parallel requests, products per $batch, results/resume), Log. Screenshot from the unit test:</p>
+<p>Layout (version 0.9, after the redesign made in Lovable on 7 Oct 2026; taken over as plain HTML/CSS in <code>tool.html</code>, the engine is unchanged): header bar, then one card with the steps. 1 Connection is collapsed by default (status OK/error in the header line; service path, sap-client, V2 service, details). 2 File: "Load file" (file, example template, save changed file) or "Read from SAP" (6.1); unit translation collapsed. 3 Data: tabs per sheet, filter, select all/none, download, show hidden columns, paging (100 rows). 4 Execute: Create/Change, Execute, Dry run, Stop; "Execution settings" collapsed (numbering, create method, parallel requests, products per $batch, resume, automatic download); results and log downloads, progress bar. Log as a dark console below the card. Not taken over from the Lovable project: the React/TanStack Start shell with its own server, the Lovable error reporting, the Google Fonts and the template URL on Lovable. Screenshot from the unit test:</p>
 <p>__SCREENSHOT__</p>
 
 <h3>5. Data: template and mapping</h3>
@@ -323,7 +323,7 @@ __TESTS__
 <li>The browser tool gets a switch "run in SAP background" next to the current direct mode; the direct mode stays for small runs.</li>
 </ul>
 
-<p class="muted">Material Master Mass Upload – FD/TD – version 0.8 – 7 October 2026</p>
+<p class="muted">Material Master Mass Upload – FD/TD – version 0.9 – 7 October 2026</p>
 </main>
 </body>
 </html>

@@ -17,7 +17,7 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   const ctx = await browser.newContext({ acceptDownloads: true });
   page = await ctx.newPage();
   const errors = []; page.on('pageerror', e => errors.push(e.message));
-  await page.goto(BASE + '/tool.html');
+  await page.goto(BASE + '/tool.html'); await page.evaluate(() => document.querySelectorAll('details').forEach(d => d.open = true));   // settings are in collapsed sections
   await page.uncheck('#autoDl');   // downloads are tested separately
   await page.waitForFunction(() => document.getElementById('connState').textContent !== 'testing…' && document.getElementById('connState').textContent !== 'not tested');
   ok('01 connection test runs on start-up (launchpad session), $metadata read', (await page.textContent('#connState')) === 'OK', await page.textContent('#connState'));
@@ -133,7 +133,7 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   ok('23 rejected change set is atomic: nothing of it saved, error logged', p2.SizeOrDimensionText !== 'NEW' && /change set rejected, nothing of it saved — HTTP 400: Unit of measure XXX/.test(L), 'groes=' + p2.SizeOrDimensionText);
 
   const page2 = await ctx.newPage(); page = page2;
-  await page.goto(BASE + '/tool.html'); await page.uncheck('#autoDl');
+  await page.goto(BASE + '/tool.html'); await page.evaluate(() => document.querySelectorAll('details').forEach(d => d.open = true));   // settings are in collapsed sections await page.uncheck('#autoDl');
   ok('24a after reload: log and results of the last run available', await page.isVisible('#lastRun') && /Last run: /.test(await page.textContent('#lastRunInfo')), await page.textContent('#lastRunInfo')); await page.setInputFiles('#file', FILE);
   await page.waitForFunction(() => /File loaded/.test(fullLog.join('\n')));
   await page.setInputFiles('#resFile', csvPath);
@@ -239,8 +239,8 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   const opts = await page.$$eval('#critRows .crit:first-child .cField option', o => o.map(x => x.value));
   await page.evaluate(() => { $('critRows').innerHTML = ''; addCrit('I', 'S_MARC.WERKS', 'eq', 'NL01'); addCrit('I', 'S_MARC.DISMM', 'eq', 'VB'); addCrit('I', 'S_MARA.PRODUCT', 'sw', 'ztest'); });
   const opsDismm = await page.$$eval('#critRows .crit:nth-child(2) .cOp option', o => o.map(x => x.value).join(','));
-  const g0 = await api('/__stats');
-  await page.click('#btnCount'); await page.waitForFunction(() => /found|rror|Enter|not filterable/.test(document.getElementById('readState').textContent));
+  const g0 = await api('/__stats'); await page.evaluate(() => { $('readState').textContent = ''; });
+  await page.click('#btnCount'); await page.waitForFunction(() => /found|Error|Enter|not filterable/.test(document.getElementById('readState').textContent));
   const cnt2 = await page.textContent('#readState'); L = await logText(); const fl2 = ((await api('/__stats')).filters || []).slice((g0.filters || []).length);
   const want = (await Promise.all(['ZTEST-001', 'ZTEST-002', 'ZTEST-003'].map(id => api('/__product?id=' + id))))
     .filter(pr => pr && pr._ProductPlant.some(pl => pl.Plant === 'NL01' && pl._ProductPlantSupplyPlanning.MRPType === 'VB')).length;

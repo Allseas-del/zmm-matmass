@@ -147,7 +147,7 @@
  {
   "name": "24a after reload: log and results of the last run available",
   "pass": true,
-  "info": "Last run: 10/7/2026, 3:45:16 PM · test_products.xml · finished: 0 ok, 1 with errors of 1"
+  "info": "Last run: 10/7/2026, 6:37:11 PM · test_products.xml · finished: 0 ok, 1 with errors of 1"
  },
  {
   "name": "24 resume: results loaded, done products deselected",
@@ -167,7 +167,7 @@
  {
   "name": "25a internal numbering: product created through V2 (Product \"\", SAP unit), views and other basic data through V4; number in column SAP product",
   "pass": true,
-  "info": "v2post=2 targets=4001013,4001022, plants=1"
+  "info": "v2post=2 targets=4001040,4001049, plants=1"
  },
  {
   "name": "25b example template: download, load (2 products, 2 MARC, 2 MARD, 2 MBEW), no validation problems, V2 units M and AU",
@@ -182,7 +182,7 @@
  {
   "name": "25d end of run: log and results downloaded automatically, last run kept in the browser (after reload too)",
   "pass": true,
-  "info": "template_download_log_2026-10-07-13-45-18.txt, template_download_results_2026-10-07-13-45-18.csv | finished: 0 ok, 1 with errors of 1"
+  "info": "roundtrip_results_2026-10-07-16-37-11.csv, template_download_log_2026-10-07-16-37-12.txt, roundtrip_results_2026-10-07-16-37-12.csv, template_download_results_2026-10-07-16-37-12.csv | finished: 0 ok, 1 with errors of 1"
  },
  {
   "name": "27 read from SAP: criteria (starts with ZTEST, exclude ZTEST-003) → 2 products; selected fields of 3 sheets in the Product template (description EN, base unit), one $batch read, $select",
@@ -197,7 +197,7 @@
  {
   "name": "27b download: Product template with the SAP rows and hidden columns (ss:Hidden), loads again (hidden columns kept), Change on the unchanged file gives \"no differences\"",
   "pass": true,
-  "info": "Product_from_SAP_session_2026-10-07-13-45.xml rows=2 hiddenKept=true"
+  "info": "Product_from_SAP_session_2026-10-07-16-37.xml rows=2 hiddenKept=true"
  },
  {
   "name": "27c any template field as criterion: Plant NL01 and MRP type VB on the same plant row (ProductPlantSupplyPlanning filtered on Plant too), material number \"ztest\" upper-cased; not filterable field (BISMT) not offered; operators by type",
