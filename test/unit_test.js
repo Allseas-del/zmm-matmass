@@ -193,6 +193,47 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   ok('25d end of run: log and results downloaded automatically, last run kept in the browser (after reload too)',
     dls.some(n => /_log_.*\.txt$/.test(n)) && dls.some(n => /_results_.*\.csv$/.test(n)) && lr && /finished: /.test(lr.state) && lr.log.length > 100 && /src;product;status/.test(lr.results), dls.join(', ') + ' | ' + (lr && lr.state));
   await page.uncheck('#autoDl');
+  // Read from SAP: selection of fields and products into the Product template; columns hidden; round trip with Change
+  await page.click('#srcSap'); await page.waitForFunction(() => typeof tpl !== 'undefined' && tpl && document.querySelector('#selTokens button'));
+  await page.evaluate(() => { readSel.clear(); ['S_MARA.GROES', 'S_MARA.MAKTX', 'S_MARC.DISMM', 'S_MARM.BRGEW'].forEach(k => readSel.add(k)); renderTokens(); });
+  await page.click('#selTokens button'); await page.waitForSelector('#pkFields label');
+  const pk = await page.$$eval('#pkFields label', ls => ls.length);
+  await page.selectOption('#critRows .crit .cOp', 'sw'); await page.fill('#critRows .crit .cLow', 'ZTEST');
+  await page.click('#btnCritAdd');
+  await page.selectOption('#critRows .crit:last-child .cSign', 'E'); await page.fill('#critRows .crit:last-child .cLow', 'ZTEST-003');
+  await page.click('#btnCount'); await page.waitForFunction(() => /found|rror|Enter/.test(document.getElementById('readState').textContent));
+  const cnt = await page.textContent('#readState'); const flt = (await api('/__stats')).lastFilter;
+  const r0 = await api('/__stats');
+  await page.click('#btnRead'); await page.waitForFunction(() => /hidden|rror|No /.test(document.getElementById('readState').textContent) && !document.getElementById('btnRead').disabled);
+  const rs = await page.textContent('#readState'); st = await api('/__stats');
+  const sap1 = await api('/__product?id=ZTEST-001'), sap2 = await api('/__product?id=ZTEST-002');
+  const rd = await page.evaluate(() => ({
+    mara: sheets.S_MARA.rows.map(r => [prodOf(r), r.cells.GROES.value, r.cells.SPRAS.value, r.cells.MAKTX.value, r.cells.MEINS.value, r.cells.BISMT.value].join('|')),
+    marc: sheets.S_MARC.rows.map(r => [prodOf(r), r.cells.WERKS.value, r.cells.DISMM.value].join('|')),
+    marm: sheets.S_MARM.rows.map(r => [prodOf(r), r.cells.MEINH.value, r.cells.BRGEW.value].join('|')),
+    mbew: (sheets.S_MBEW || { rows: [] }).rows.length,
+    hid: [sheets.S_MARA.hidden.has('BISMT'), sheets.S_MARA.hidden.has('GROES'), sheets.S_MARA.hidden.has('PRODUCT'), sheets.S_MARM.hidden.has('BRGEW'), sheets.S_MARM.hidden.has('UMREZ')].join(','),
+    mode: mode(), grid: document.querySelectorAll('#grid th').length }));
+  const want1 = ['ZTEST-001', sap1.SizeOrDimensionText, 'EN', sap1._ProductDescription.find(d => d.Language === 'EN').ProductDescription, sap1.BaseISOUnit, ''].join('|');
+  ok('27 read from SAP: criteria (starts with ZTEST, exclude ZTEST-003) → 2 products; selected fields of 3 sheets in the Product template (description EN, base unit), one $batch read, $select',
+    /2 product\(s\) found/.test(cnt) && /startswith\(Product,'ZTEST'\) and not \(Product eq 'ZTEST-003'\)/.test(flt) && rd.mara.length === 2 && rd.mara[0] === want1 &&
+    rd.mara[1].startsWith('ZTEST-002|' + sap2.SizeOrDimensionText + '|') && rd.marc.length === sap1._ProductPlant.length + sap2._ProductPlant.length &&
+    rd.marc[0] === `ZTEST-001|${sap1._ProductPlant[0].Plant}|${sap1._ProductPlant[0]._ProductPlantSupplyPlanning.MRPType}` &&
+    rd.marm.includes(`ZTEST-001|${sap1._ProductUnitOfMeasure[0].AlternativeISOUnit}|${sap1._ProductUnitOfMeasure[0].GrossWeight}`) && rd.mbew === 0 && st.batch - r0.batch === 1 && pk > 10,
+    `${cnt} | filter=${flt} | ${rd.mara.join(' ; ')} | marc=${rd.marc.join(',')} | marm=${rd.marm.join(',')} | batches=${st.batch - r0.batch}`);
+  ok('27a columns: not selected and empty hidden (BISMT), selected and keys visible (GROES, PRODUCT, BRGEW), grid shows only visible columns; mode set to Change',
+    rd.hid === 'true,false,false,false,true' && rd.mode === 'change' && rd.grid < 10, `hidden=${rd.hid} mode=${rd.mode} gridColumns=${rd.grid} | ${rs}`);
+  const [dlr] = await Promise.all([page.waitForEvent('download'), page.click('#btnReadDl')]);
+  const rPath = path.join(__dirname, 'read_from_sap.xml'); await dlr.saveAs(rPath); const rx = fs.readFileSync(rPath, 'utf8');
+  await page.click('#srcFile'); await page.evaluate(() => fullLog.length = 0);
+  await page.setInputFiles('#file', rPath); await page.waitForFunction(() => /File loaded/.test(fullLog.join('\n')));
+  const back = await page.evaluate(() => ({ n: sheets.S_MARA.rows.length, hid: sheets.S_MARA.hidden ? sheets.S_MARA.hidden.has('BISMT') : false, groes: sheets.S_MARA.rows[0].cells.GROES.value }));
+  await page.check('input[name=mode][value=change]'); await page.evaluate(() => sheets.S_MARA.rows.forEach(r => r.include = true));
+  await page.click('#btnRun'); await waitIdle(); L = await logText();
+  ok('27b download: Product template with the SAP rows and hidden columns (ss:Hidden), loads again (hidden columns kept), Change on the unchanged file gives "no differences"',
+    /Product_from_SAP_/.test(dlr.suggestedFilename()) && /<Column[^>]*ss:Hidden="1"/.test(rx) && /S_MARM/.test(rx) && back.n === 2 && back.hid && back.groes === sap1.SizeOrDimensionText &&
+    /ZTEST-001 → ZTEST-001: no differences/.test(L) && /ZTEST-002 → ZTEST-002: no differences/.test(L),
+    `${dlr.suggestedFilename()} rows=${back.n} hiddenKept=${back.hid}`);
   ok('26 no JavaScript errors on the page', errors.length === 0, errors.join(' | '));
   await page.screenshot({ path: path.join(__dirname, 'screenshot.png'), fullPage: true });
   await browser.close();

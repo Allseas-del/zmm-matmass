@@ -181,6 +181,23 @@ function resolve(p) {   // "Set(keys)[/nav]..." -> { node, prod, nav }
   }
   return { node, prod, nav };
 }
+// Minimal OData $filter: and/or/not, parentheses, eq ne ge le gt lt, startswith(prop,'v'), strings and dates
+function compileFilter(expr) {
+  const toks = expr.match(/'(?:[^']|'')*'|\(|\)|,|\d{4}-\d{2}-\d{2}|[A-Za-z_]\w*|-?\d+(?:\.\d+)?/g) || []; let i = 0;
+  const peek = () => toks[i], next = () => toks[i++], val = t => t.startsWith("'") ? t.slice(1, -1).replace(/''/g, "'") : t;
+  const cmp = (a, b) => { a = String(a ?? ''); return a < b ? -1 : a > b ? 1 : 0; };
+  function primary() {
+    const t = next();
+    if (t === '(') { const e = orE(); next(); return e; }
+    if (t === 'not') { const e = primary(); return o => !e(o); }
+    if (t === 'startswith') { next(); const f = next(); next(); const v = val(next()); next(); return o => String(o[f] ?? '').startsWith(v); }
+    const op = next(), v = val(next());
+    return o => { const c = cmp(o[t], v); return { eq: c === 0, ne: c !== 0, ge: c >= 0, le: c <= 0, gt: c > 0, lt: c < 0 }[op]; };
+  }
+  function andE() { let e = primary(); while (peek() === 'and') { next(); const a = e, b = primary(); e = o => a(o) && b(o); } return e; }
+  function orE() { let e = andE(); while (peek() === 'or') { next(); const a = e, b = andE(); e = o => a(o) || b(o); } return e; }
+  return orE();
+}
 function handle(method, p, body, headers) {   // returns { status, body }
   const [pathOnly] = p.split('?');
   if (method === 'GET') {
@@ -202,6 +219,15 @@ function handle(method, p, body, headers) {   // returns { status, body }
       const out = [];
       for (const id of fps) { const prod = store.get(id); const walk = n => { if (n.type === t) out.push(pick(serialize({ ...n, navs: {} }, prod))); Object.values(n.navs).forEach(v => (Array.isArray(v) ? v : [v]).forEach(walk)); }; if (prod) walk(prod); }
       return { status: 200, body: { value: out } };
+    }
+    if (/^(\w+)$/.test(pathOnly) && TYPE_OF_SET[pathOnly] && (fl || /\$top|\$count/.test(qs))) {   // collection query (Read from SAP: selection)
+      stats.collectionGets = (stats.collectionGets || 0) + 1; stats.lastFilter = fl || '';
+      const t = TYPE_OF_SET[pathOnly], test = fl ? compileFilter(fl) : () => true; let out = [];
+      for (const prod of store.values()) { const walk = n => { if (n.type === t) { const o = serialize({ ...n, navs: {} }, prod); if (test(o)) out.push(o); } Object.values(n.navs).forEach(v => (Array.isArray(v) ? v : [v]).forEach(walk)); }; walk(prod); }
+      out.sort((a, b) => String(a.Product).localeCompare(String(b.Product)));
+      const count = out.length, top = (qs.match(/\$top=(\d+)/) || [])[1];
+      if (top !== undefined) out = out.slice(0, parseInt(top, 10));
+      return { status: 200, body: Object.assign(/\$count=true/.test(qs) ? { '@odata.count': count } : {}, { value: out.map(pick) }) };
     }
     if (/\$expand=/.test(decodeURIComponent(p))) stats.expandGets = (stats.expandGets || 0) + 1;
     const { node, prod, nav } = resolve(pathOnly);

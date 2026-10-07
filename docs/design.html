@@ -30,7 +30,7 @@
 <table class="meta">
 <tr><td>Customer</td><td>Allseas – S/4HANA 2023 FPS01, DS4 (build 400, test 410) → QS4 → PS4</td></tr>
 <tr><td>Author</td><td>Pjotr Dassen</td></tr>
-<tr><td>Version</td><td>0.7 – Change in packages (one read $batch and one write $batch per package, $select on the filled fields), default 8 parallel requests; 0.6 – large runs and resume; background option designed (not built); V2 create for internal numbering; deployed to DS4 (BSP ZMMMATMASS, DS4K915674); integration test on DS4/410 in progress</td></tr>
+<tr><td>Version</td><td>0.8 – "Read from SAP": products and fields selected in the tool, read into the Product template, empty and not selected columns hidden; 0.7 – Change in packages (one read $batch and one write $batch per package, $select on the filled fields), default 8 parallel requests; 0.6 – large runs and resume; background option designed (not built); V2 create for internal numbering; deployed to DS4 (BSP ZMMMATMASS, DS4K915674); integration test on DS4/410 in progress</td></tr>
 <tr><td>Date</td><td>25 September 2026</td></tr>
 <tr><td>Package / transport</td><td><code>ZMM_MATMASS</code> / <code>DS4K915674</code>, BSP <code>ZMMMATMASS</code></td></tr>
 <tr><td>Repository</td><td><code>C:\dev\zmm-matmass</code> – github.com/Allseas-del/zmm-matmass</td></tr>
@@ -146,6 +146,15 @@
 </table>
 <p>ETag: all entities share the product's <code>LastChangeDateTime</code>. The first PATCH of a change set carries the ETag read by the GET, the following ones <code>If-Match: *</code> (the first change already moves the timestamp; the change set is atomic, so the concurrency check stays effective).</p>
 
+<h3>6.1 Read from SAP (template from a selection)</h3>
+<p>Section 2 offers next to <em>Load file</em> the option <em>Read from SAP</em>. The result is the bundled Product template (<code>template_product.xml</code>, the same sheets and columns as the Migration Cockpit file; the example rows are removed), filled with the current values from SAP. No separate template is introduced. Mockup: <code>docs/mockup_export.html</code>.</p>
+<table><tr><th>Part</th><th>Behaviour</th></tr>
+<tr><td>Fields</td><td>"Select specific fields" (field list per sheet with search and "all fields of this sheet", labels from the description row of the template) or "All fields of all sheets". Keys are always read and visible: PRODUCT and MEINS (base unit; unit reference for quantities in Change) on Basic Data, WERKS, LGORT, BERID, ART, BWKEY/BWTAR, MEINH, EAN11, SPRAS, VKORG/VTWEG on the child sheets. Added automatically: the currency/unit field that belongs to a selected amount or quantity (Measures annotation in $metadata, e.g. GEWEI with BRGEW) and SPRAS with MAKTX.</td></tr>
+<tr><td>Products</td><td>Selection criteria as in the MDG export screen: Include/Exclude, field (Material Number, Material Type, Material Group, Cross-plant Status, Created on, Plant), equal to / between / starts with. Same field = OR, different fields = AND, Exclude = <code>not (…)</code>. Or a pasted list of material numbers. "Count products" shows the number before reading. Max. products (default 25,000).</td></tr>
+<tr><td>Reading</td><td>Product list: <code>GET Product?$filter=…&amp;$select=Product&amp;$orderby=Product&amp;$top=…</code>; Plant via <code>GET ProductPlant?$filter=Plant eq '…'&amp;$select=Product</code>, intersected with the other criteria. Data: the same package read as Change (11), packages of "Products per $batch", "Parallel requests" at a time, <code>$select</code> on the selected fields.</td></tr>
+<tr><td>Template rows</td><td>One Basic Data row per product; one row per plant, storage location, unit, GTIN, MRP area, inspection type, valuation, distribution chain on the sheet of a selected field. Description on Basic Data: language EN, otherwise the first. Values as the template expects them: ISO units, booleans as X, dates YYYY-MM-DD, numbers as returned. Tax classification (MLAN) is not read: one template row holds up to 9 API entries.</td></tr>
+<tr><td>Columns</td><td>Options "Hide columns that are empty for all products" and "Hide columns of fields that were not selected" (both default on); "Only rows with a value in a selected field" (off). Hidden columns get <code>ss:Hidden="1"</code> in the file and stay in it; the grid shows only the visible columns ("Show hidden columns" shows all). A file with hidden columns loaded again keeps them hidden in the grid. In Excel the template sheets are protected: to unhide a column, unprotect the sheet first.</td></tr>
+<tr><td>Afterwards</td><td>Mode is set to Change, column SAP product filled. "Download template (XML)" saves the file. Unchanged cells equal SAP, so a Change run sends only what the user changed (unit test 27b: unchanged file → "no differences").</td></tr></table>
 <h3>7. Errors, results and restart</h3>
 <p>Errors are handled per product, never per run. A product ends as <code>done</code>, <code>failed</code> (nothing in SAP) or <code>partial</code> (step-wise create: basic data in SAP, views not). On tab Basic Data the two left columns show per product the SAP number (<i>SAP product</i>, also the target for Change) and SAP's return message (<i>Message</i>, full text as tooltip), as in the task list tool; the message is also in the results CSV (<code>src;product;status;steps;message</code>). When SAP returns a logon page (session expired), the run stops starting new work and the log explains how to resume.</p>
 <h4>7.1 Resuming a run that hung or was closed</h4>
@@ -167,6 +176,7 @@
 <tr><td>Start of the V2 service (create with internal number only)</td><td><code>S_SERVICE</code> for <code>API_PRODUCT_SRV</code> (TADIR R3TR IWSG, e.g. <code>ZAPI_PRODUCT_SRV_0001</code>; the hash value is shown in SU53/SU24)</td><td>HTTP 403 on <code>POST A_Product</code>.</td></tr>
 <tr><td>Start of the V4 service</td><td><code>S_START</code> AUTHPGMID=R3TR, AUTHOBJTYP=G4BA, AUTHOBJNAM=<code>API_PRODUCT</code> (service group, first path segment after <code>/sap/</code>)</td><td>HTTP 403 "no start authorization for R3TR G4BA …"; $metadata may still be readable.</td></tr>
 <tr><td>Material master</td><td>The checks of the product business object, as for MM01/MM02: <code>M_MATE_MAR</code> (material type), <code>M_MATE_WRK</code> (plant), <code>M_MATE_STA</code> (maintenance status), <code>M_MATE_BUK</code> (company code, valuation), <code>M_MATE_VKO</code> (sales org), <code>M_MATE_MAT</code> (authorization group). Exact set: SU24 of the service and SU53 after the integration test.</td><td>Error message per product.</td></tr>
+<tr><td>Read from SAP (6.1)</td><td>Same objects with display activity: <code>S_START</code> for the service group and the material master display checks (<code>M_MATE_*</code> activity 03). A product without display authorization is reported as an error and left out.</td><td>Error message per product; the others are read.</td></tr>
 <tr><td>CSRF</td><td>X-CSRF-Token, renewed automatically</td><td>Handled by the tool.</td></tr>
 </table>
 <h4>8.3 Where the protection sits</h4>
@@ -198,6 +208,7 @@
 <tr><td>CSRF / reachability</td><td><code>GET &lt;service root&gt;</code> with <code>X-CSRF-Token: Fetch</code></td></tr>
 <tr><td>Schema</td><td><code>GET $metadata</code></td></tr>
 <tr><td>Create (deep)</td><td><code>POST $batch</code> with n × <code>POST Product</code> {…, _ProductDescription:[…], _ProductPlant:[{…, _ProductPlantSupplyPlanning:{…}, _ProductPlantStorageLocation:[…]}], …}</td></tr>
+<tr><td>Read from SAP (6.1)</td><td>Selection: <code>GET Product?$filter=startswith(Product,'X') and not (Product eq 'Y')&amp;$select=Product&amp;$orderby=Product&amp;$top=n</code> (server-side paging followed); Plant via <code>GET ProductPlant?$filter=Plant eq 'NL10'&amp;$select=Product</code>. Data: as "Read for change".</td></tr>
 <tr><td>Read for change</td><td>One $batch per package: <code>GET Product(Product='X')?$select=…</code> for each product plus, for every entity type present in the file, <code>GET &lt;EntitySet&gt;?$filter=Product eq 'A' or Product eq 'B' …&amp;$select=…</code> for up to 20 products per GET (keeps the request line short); no $expand; server-side paging (<code>@odata.nextLink</code>) is followed. <code>$select</code> holds only the fields filled in the file for that entity type, plus the keys, the parent keys, the currency/unit reference of each field (Measures annotations) and LastChangeDateTime (ETag). The rows are assigned to the products by the property Product, the tree is rebuilt in the browser by matching the parent keys. A nested $expand took 260 s on DS4 for a product with 51 plants.</td></tr>
 <tr><td>Write for change</td><td>One $batch per package with one change set per product (<code>Prefer: odata.continue-on-error</code>): a rejected change set leaves nothing of that product saved and does not stop the other products of the package. If the whole $batch fails (not a single product), the products of the package are processed one by one.</td></tr>
 <tr><td>URLs in the change set</td><td>PATCH always on the canonical URL of the entity (<code>ProductPlantSupplyPlanning(Product='X',Plant='P')</code>); POST on the canonical URL of the parent plus one navigation (<code>ProductPlant(Product='X',Plant='P')/_ProductPlantStorageLocation</code>). DS4 rejects deeper paths: <i>Resource path is supported only with containment navigation properties for this request type</i>.</td></tr>
@@ -268,6 +279,7 @@
 <tr><td>8</td><td>Tax classification (MLAN) per distribution chain – result in MLAN</td><td class="open">integration test</td></tr>
 <tr><td>9</td><td>If-Match "*" for the 2nd+ PATCH in a change set accepted by DS4</td><td class="open">integration test</td></tr>
 <tr><td>10</td><td>Test materials with Allseas values for DS4/410</td><td class="open">open</td></tr>
+<tr><td>12</td><td>Read from SAP on DS4/410: selection by Plant with many plants (size of the ProductPlant list), throughput of the read for ~5,000 products, hidden columns in Excel (protected sheets)</td><td class="open">integration test</td></tr>
 <tr><td>11</td><td>Official status of the tool; decision on background processing (chapter 17)</td><td class="open">open – validate the browser tool first</td></tr>
 </table>
 <h2>17. Option: background processing in SAP (design only – not built)</h2>
@@ -311,7 +323,7 @@
 <li>The browser tool gets a switch "run in SAP background" next to the current direct mode; the direct mode stays for small runs.</li>
 </ul>
 
-<p class="muted">Material Master Mass Upload – FD/TD – version 0.7 – 7 October 2026</p>
+<p class="muted">Material Master Mass Upload – FD/TD – version 0.8 – 7 October 2026</p>
 </main>
 </body>
 </html>

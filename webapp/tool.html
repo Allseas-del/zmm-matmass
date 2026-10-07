@@ -49,6 +49,27 @@
   details summary { cursor:pointer; color:var(--acc); }
   .pill { display:inline-block; padding:1px 7px; border-radius:10px; background:#eef1f5; margin:2px 4px 2px 0; font-size:12px; }
   .pill.none { background:#f7efe3; }
+  .seg { display:inline-flex; border:1px solid var(--acc); border-radius:4px; overflow:hidden; }
+  .seg button { border:none; border-radius:0; background:#fff; color:var(--acc); }
+  .seg button.on { background:var(--acc); color:#fff; }
+  h3 { font-size:13.5px; margin:14px 0 6px; }
+  .tokens { display:flex; flex-wrap:wrap; gap:4px; align-items:center; border:1px solid var(--line); border-radius:4px; padding:4px; min-height:34px; max-width:980px; }
+  .tok { background:#eef1f5; border:1px solid var(--line); border-radius:3px; padding:1px 6px; font-size:12.5px; }
+  .tok b { font-weight:400; color:var(--muted); }
+  .tok i { font-style:normal; color:var(--acc); cursor:pointer; margin-left:4px; }
+  button.icon { padding:2px 8px; background:#fff; color:var(--acc); }
+  .crit { display:grid; grid-template-columns:100px minmax(170px,240px) 110px minmax(110px,1fr) minmax(110px,1fr) 40px; gap:6px; align-items:center; max-width:980px; margin-bottom:6px; }
+  .crit input, .crit select { width:100%; }
+  .picker { display:grid; grid-template-columns:230px 1fr; border:1px solid var(--line); border-radius:4px; max-width:980px; margin-top:8px; }
+  .picker .sheets { border-right:1px solid var(--line); max-height:280px; overflow:auto; }
+  .picker .sheets div { padding:5px 10px; cursor:pointer; border-bottom:1px solid #eef1f5; font-size:13px; }
+  .picker .sheets div.on { background:#eef4fb; color:var(--acc); font-weight:600; }
+  .picker .fields { padding:8px 10px; max-height:280px; overflow:auto; }
+  .picker .fields label { display:flex; margin:0 0 4px; font-size:13px; }
+  .picker .fields label span.t { color:var(--muted); font-size:12px; }
+  .picker .fields label.key { color:var(--muted); }
+  .split { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:900px) { .split, .picker, .crit { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
@@ -86,11 +107,60 @@
 <section>
   <h2>2. File</h2>
   <div class="row">
+    <span class="seg"><button id="srcFile" class="on">Load file</button><button id="srcSap">Read from SAP</button></span>
+    <span class="muted" id="srcHint">Load a filled template, or read products from SAP into the same template.</span>
+  </div>
+  <div id="filePanel">
+  <div class="row">
     <input type="file" id="file" accept=".xml">
     <button id="btnExport" class="sec" disabled>Save changed file (XML)</button>
     <a class="btn sec" id="lnkTemplate" href="template_product.xml" download="Source data for Product - example.xml">Download example template</a>
   </div>
   <div class="muted">Example: Migration Cockpit template "Product" (S/4HANA 2023) with one HAWA and one SERV product, plant/valuation area NL10, 2 storage locations for the HAWA product (a service has none). Open it in Excel, replace the example rows and save as XML Spreadsheet 2003.</div>
+  </div>
+  <div id="readPanel" hidden>
+    <div class="note">The result is the same "Product" template as with Load file (same sheets and columns), filled with the values from SAP. Columns can be hidden; they stay in the file.</div>
+    <h3>Define scope (fields)</h3>
+    <div class="row">
+      <label><input type="radio" name="scope" value="fields" checked> Select specific fields</label>
+      <label><input type="radio" name="scope" value="all"> All fields of all sheets</label>
+    </div>
+    <div class="tokens" id="selTokens"></div>
+    <div class="picker" id="picker" hidden>
+      <div class="sheets" id="pkSheets"></div>
+      <div class="fields">
+        <div class="row"><input type="text" id="pkSearch" placeholder="Search field name or technical name (e.g. BRGEW)" style="width:100%"></div>
+        <div id="pkFields"></div>
+      </div>
+    </div>
+    <div class="muted" style="font-size:12.5px;margin-top:6px">Keys (PRODUCT, WERKS, LGORT, BWKEY, MEINH …) are always read and always visible.</div>
+    <div class="split">
+      <div>
+        <h3>Select products</h3>
+        <div class="row">
+          <label><input type="radio" name="selBy" value="crit" checked> By selection criteria</label>
+          <label><input type="radio" name="selBy" value="list"> Paste list of material numbers</label>
+        </div>
+        <div id="critBox"><div id="critRows"></div><button class="icon" id="btnCritAdd">+ criterion</button>
+          <div class="muted" style="font-size:12.5px;margin-top:4px">Lines with the same field are combined with OR, different fields with AND. Exclude lines remove products.</div></div>
+        <div id="listBox" hidden><textarea id="selList" rows="6" cols="40" placeholder="One material number per line (or separated by space, comma, semicolon)"></textarea></div>
+      </div>
+      <div>
+        <h3>Options</h3>
+        <div class="row"><label><input type="checkbox" id="optHideEmpty" checked> Hide columns that are empty for all products</label></div>
+        <div class="row"><label><input type="checkbox" id="optHideUnsel" checked> Hide columns of fields that were not selected</label></div>
+        <div class="row"><label><input type="checkbox" id="optOnlyFilled"> Only rows with a value in a selected field <span class="muted">(e.g. only alternative units with a gross weight)</span></label></div>
+        <div class="row"><label>Max. products <input type="text" id="maxProducts" value="25000" size="7"></label><span class="muted">read in packages of "Products per $batch", "Parallel requests" at a time (section 4)</span></div>
+        <div class="note">Values come from SAP as they are. In mode Change only the cells you change afterwards are sent; untouched cells give "no differences".</div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button id="btnCount" class="sec">Count products</button>
+      <button id="btnRead">Read from SAP</button>
+      <button id="btnReadDl" class="sec" disabled>Download template (XML)</button>
+      <span id="readState" class="muted"></span>
+    </div>
+  </div>
   <div id="fileInfo" class="muted">No file loaded yet.</div>
   <details id="unitBox">
     <summary>Unit translation (supplied value &rarr; ISO code)</summary>
@@ -109,6 +179,8 @@
     <button id="btnSelNone" class="sec">Select none</button>
     <button id="btnPrev" class="sec">&lsaquo; Prev</button> <span id="pageInfo" class="muted"></span> <button id="btnNext" class="sec">Next &rsaquo;</button>
     <span id="gridInfo" class="muted"></span>
+    <label><input type="checkbox" id="showHidden"> Show hidden columns <span id="hidCount" class="muted"></span></label>
+    <button id="btnGridDl" class="sec" disabled>Download (XML)</button>
   </div>
   <div class="tabs" id="tabs"></div>
   <div class="grid" id="grid"><div class="muted" style="padding:8px">Load a file first.</div></div>
@@ -434,10 +506,11 @@ function parseWorkbook(text) {
     if (sIdx < 0) continue;
     const structure = rowValues(rows[sIdx])[0].trim();
     const fv = rowValues(rows[sIdx + 1]); const tv = rows[sIdx + 2] ? rowValues(rows[sIdx + 2]) : {};
-    const fields = [], types = {}, colOf = {};
+    const dv = rows[sIdx + 4] ? rowValues(rows[sIdx + 4]) : {};   // description row: label, blank line, explanation
+    const fields = [], types = {}, colOf = {}, descr = {};
     Object.keys(fv).map(Number).sort((a, b) => a - b).forEach(ix => {
       const f = (fv[ix] || '').trim(); if (!f) return;
-      fields.push(f); colOf[f] = ix; types[f] = (tv[ix] || '').split(';');
+      fields.push(f); colOf[f] = ix; types[f] = (tv[ix] || '').split(';'); descr[f] = (dv[ix] || '').split('\n')[0].replace(/\*\s*$/, '').trim();
     });
     const data = [];
     for (let i = sIdx + 5; i < rows.length; i++) {   // structure, fields, types, groups, descriptions, then data
@@ -451,7 +524,9 @@ function parseWorkbook(text) {
       }
       data.push({ el: rows[i], cells, include: true });
     }
-    result[structure] = { name, fields, types, colOf, rows: data };
+    const table = [...ws.children].find(n => n.localName === 'Table'), cols = table ? columnEls(table) : {};
+    const hid = fields.filter(f => cols[colOf[f]] && cols[colOf[f]].getAttributeNS(SS, 'Hidden') === '1');   // e.g. a file saved by "Read from SAP"
+    result[structure] = { name, ws, fields, types, colOf, descr, rows: data, hidden: hid.length ? new Set(hid) : undefined };
   }
   return { doc, sheets: result };
 }
@@ -823,7 +898,10 @@ function renderGrid() {
   const th = (html, cls) => { const c = document.createElement('th'); c.innerHTML = html; if (cls) c.className = cls; hr.appendChild(c); };
   th('✓');
   if (isHdr) { th('SAP product<span class="api">created number / target for Change</span>'); th('Message<span class="api">SAP return message</span>'); }
-  for (const f of sh.fields) {
+  const showAll = $('showHidden').checked, nHid = sh.hidden ? sh.hidden.size : 0;
+  const fields = showAll || !sh.hidden ? sh.fields : sh.fields.filter(f => !sh.hidden.has(f));
+  $('hidCount').textContent = nHid ? `(${nHid} on this sheet)` : '';
+  for (const f of fields) {
     const api = NOT_SUPPORTED[activeTab] ? '' : apiOf(activeTab, f);
     th(`${f}<span class="api">${api || '— not in API'}</span>`, api ? '' : 'unmapped');
   }
@@ -841,7 +919,7 @@ function renderGrid() {
       const inp = document.createElement('input'); inp.value = r.target || ''; inp.oninput = () => r.target = inp.value.trim(); tr.insertCell().appendChild(inp); r.targetEl = inp;
       const st = tr.insertCell(); st.className = 'st ' + (r.statusCls || ''); st.textContent = r.status || ''; st.title = r.status || ''; r.statusEl = st;
     }
-    for (const f of sh.fields) {
+    for (const f of fields) {
       const c = r.cells[f]; const inp = document.createElement('input'); inp.value = c.value; inp.title = f;
       if (c.value !== c.orig) inp.className = 'dirty';
       inp.oninput = () => { c.value = inp.value; inp.className = c.value !== c.orig ? 'dirty' : ''; };
@@ -877,7 +955,7 @@ $('file').onchange = async ev => {
     if (dup) log(`${dup} duplicate product number(s) in Basic Data.`, 'warn');
     if (sheets.S_MLAN && sheets.S_MLAN.rows.length) log('Tax classification rows are sent under every distribution chain of the product (the API keeps sales tax per sales organization / distribution channel).', 'warn');
     activeTab = 'S_MARA'; renderTabs(); renderGrid();
-    ['btnDry', 'btnRun', 'btnExport', 'btnResults'].forEach(id => $(id).disabled = false);
+    ['btnDry', 'btnRun', 'btnExport', 'btnResults', 'btnGridDl'].forEach(id => $(id).disabled = false);
     log(`File loaded: ${sheets.S_MARA.rows.length} product(s).`, 'ok');
     if (!sheets.S_MARA.rows.length) log('Basic Data has no rows.', 'warn');
   } catch (e) { log(e.message, 'err'); }
@@ -899,15 +977,19 @@ function setCell(rowEl, colIdx, value, typeInfo) {
   const next = cells.find(x => x.idx > colIdx);
   if (next) { next.el.setAttributeNS(SS, 'ss:Index', String(next.idx + 1)); rowEl.insertBefore(c, next.el); } else rowEl.appendChild(c);
 }
-$('btnExport').onclick = () => {
+function exportXml() {
   let n = 0;
   for (const sh of Object.values(sheets)) for (const r of sh.rows) for (const f of sh.fields) {
-    const c = r.cells[f]; if (c.value === c.orig) continue; setCell(r.el, sh.colOf[f], c.value, sh.types[f]); n++;
+    const c = r.cells[f]; if (c.value === c.orig) continue; setCell(r.el, sh.colOf[f], c.value, sh.types[f]); c.orig = c.value; n++;
   }
   const xml = '<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n' + new XMLSerializer().serializeToString(xmlDoc.documentElement);
-  download(fileName.replace(/\.xml$/i, '') + '_changed.xml', xml, 'application/xml');
-  log(`XML saved with ${n} changed cell(s).`, 'ok');
-};
+  const name = fileName.replace(/\.xml$/i, '') + (n ? '_changed' : '') + '.xml';
+  download(name, xml, 'application/xml');
+  log(`XML saved as ${name}${n ? ` with ${n} changed cell(s)` : ''}.`, 'ok');
+  renderGrid();
+}
+$('btnExport').onclick = exportXml;
+$('btnGridDl').onclick = exportXml;
 
 /* ------------------------------------------------------------------ */
 /* Change / step-wise create: compare with SAP, build one change set   */
@@ -1433,7 +1515,306 @@ $('btnResume').onclick = async () => {
 $('btnStop').onclick = () => { stopRequested = true; log('Stop requested: running requests finish, no new ones start.', 'warn'); };
 $('btnLog').onclick = () => download('matmass_log.txt', fullLog.join('\r\n'));
 $('btnClear').onclick = () => { logEl.innerHTML = ''; fullLog.length = 0; };
+/* ------------------------------------------------------------------ */
+/* Read from SAP: selection of fields and products -> Product template */
+/* ------------------------------------------------------------------ */
+// Key fields per sheet: always read, always visible (MEINS: base unit, the unit reference of quantities in Change). Fields of a child sheet that come from the parent row (link)
+// are filled from the parent.
+const SHEET_KEYS = { S_MARA: ['PRODUCT', 'MEINS'], S_MAKT: ['PRODUCT', 'SPRAS'], S_MARM: ['PRODUCT', 'MEINH'], S_MEAN: ['PRODUCT', 'MEINH', 'EAN11'],
+  S_MARC: ['PRODUCT', 'WERKS'], S_MARD: ['PRODUCT', 'WERKS', 'LGORT'], S_MRP_AREA: ['PRODUCT', 'WERKS', 'BERID'], S_QMAT: ['PRODUCT', 'WERKS', 'ART'],
+  S_MBEW: ['PRODUCT', 'BWKEY', 'BWTAR'], S_MVKE: ['PRODUCT', 'VKORG', 'VTWEG'] };
+const READ_SHEETS = Object.keys(SHEET_KEYS);   // S_MLAN (tax) is not read: one template row holds 9 API entries
+// Selection criteria: template field -> [API property, label, entity set (default Product), Edm type]
+const CRIT_FIELDS = { MATNR: ['Product', 'Material Number (MARA-MATNR)'], MTART: ['ProductType', 'Material Type (MARA-MTART)'],
+  MATKL: ['ProductGroup', 'Material Group (MARA-MATKL)'], MSTAE: ['CrossPlantStatus', 'Cross-plant Status (MARA-MSTAE)'],
+  ERSDA: ['CreationDate', 'Created on (MARA-ERSDA, YYYY-MM-DD)', '', 'date'], WERKS: ['Plant', 'Plant (MARC-WERKS)', 'ProductPlant'] };
+let tpl = null;                 // bundled template: text and parsed sheets (field lists, descriptions)
+const readSel = new Set();      // selected fields "S_MARM.BRGEW"
+let pkSheet = 'S_MARA', productList = null, productListKey = '';
+
+function nodeOfField(sheet, f) { return TREE.find(n => n.sheet === sheet && !n.expand && n.fields[f] && !n.fields[f].startsWith('(')); }
+async function loadTemplate() {
+  if (tpl) return tpl;
+  const r = await fetch('template_product.xml', { credentials: 'include' });
+  if (!r.ok) throw new Error(`template_product.xml → HTTP ${r.status}`);
+  const text = await r.text(); tpl = { text, sheets: parseWorkbook(text).sheets }; return tpl;
+}
+function fieldLabel(sheet, f) { const d = tpl && tpl.sheets[sheet] && tpl.sheets[sheet].descr[f]; return d || f; }
+function selectedFields() {
+  if (document.querySelector('input[name=scope]:checked').value === 'fields') return new Set(readSel);
+  const all = new Set();
+  for (const st of READ_SHEETS) for (const f of (tpl && tpl.sheets[st] ? tpl.sheets[st].fields : [])) if (nodeOfField(st, f)) all.add(`${st}.${f}`);
+  return all;
+}
+
+// Fields that SAP needs together with a selected field (Measures annotations: currency/unit of an amount or
+// quantity, "Together with property 'GrossWeight' also property 'WeightISOUnit' needs to be provided"), and the
+// language of a description, are read as well, so that a later Change run has them in the file.
+function expandSel(sel) {
+  const out = new Set(sel);
+  for (const k of sel) {
+    const [st, f] = k.split('.'); const n = nodeOfField(st, f); if (!n) continue;
+    const p = schema && schema[typeOf(n.id)] && schema[typeOf(n.id)].props[n.fields[f]];
+    const ref = p && p.ref; const rf = ref && Object.keys(n.fields).find(x => n.fields[x] === ref);
+    if (rf) out.add(`${st}.${rf}`);
+    if (f === 'MAKTX') out.add(`${st}.SPRAS`);
+  }
+  return out;
+}
+// --- field picker
+function renderTokens() {
+  const box = $('selTokens'); box.innerHTML = '';
+  const all = document.querySelector('input[name=scope]:checked').value === 'all';
+  if (all) box.insertAdjacentHTML('beforeend', '<span class="tok">All fields of all sheets</span>');
+  else for (const k of readSel) {
+    const [st, f] = k.split('.');
+    const t = document.createElement('span'); t.className = 'tok';
+    t.innerHTML = `${fieldLabel(st, f)} <b>(${SHEET_TAB[st]} – ${f})</b><i title="remove">×</i>`;
+    t.querySelector('i').onclick = () => { readSel.delete(k); renderTokens(); renderPicker(); };
+    box.appendChild(t);
+  }
+  if (!all) { const b = document.createElement('button'); b.className = 'icon'; b.textContent = $('picker').hidden ? '+ Add fields' : 'Close field list';
+    b.onclick = () => { $('picker').hidden = !$('picker').hidden; renderTokens(); renderPicker(); }; box.appendChild(b); }
+}
+function renderPicker() {
+  if ($('picker').hidden || !tpl) return;
+  const sh = $('pkSheets'); sh.innerHTML = '';
+  for (const st of READ_SHEETS) {
+    if (!tpl.sheets[st]) continue;
+    const n = [...readSel].filter(k => k.startsWith(st + '.')).length;
+    const d = document.createElement('div'); d.className = st === pkSheet ? 'on' : '';
+    d.textContent = `${SHEET_TAB[st]} (${st.replace('S_', '')})${n ? ` · ${n}` : ''}`; d.onclick = () => { pkSheet = st; renderPicker(); };
+    sh.appendChild(d);
+  }
+  const q2 = $('pkSearch').value.trim().toUpperCase();
+  const box = $('pkFields'); box.innerHTML = '';
+  const fields = tpl.sheets[pkSheet].fields.filter(f => !q2 || f.includes(q2) || fieldLabel(pkSheet, f).toUpperCase().includes(q2));
+  const free = fields.filter(f => nodeOfField(pkSheet, f) && !SHEET_KEYS[pkSheet].includes(f));
+  const allOn = free.length && free.every(f => readSel.has(`${pkSheet}.${f}`));
+  const wl = document.createElement('label'); wl.innerHTML = `<input type="checkbox" ${allOn ? 'checked' : ''}> <b>All fields of this sheet${q2 ? ' (search result)' : ''}</b>`;
+  wl.querySelector('input').onchange = e => { free.forEach(f => e.target.checked ? readSel.add(`${pkSheet}.${f}`) : readSel.delete(`${pkSheet}.${f}`)); renderTokens(); renderPicker(); };
+  box.appendChild(wl);
+  for (const f of fields) {
+    const key = SHEET_KEYS[pkSheet].includes(f), api = !!nodeOfField(pkSheet, f);
+    const l = document.createElement('label'); if (key || !api) l.className = 'key';
+    l.innerHTML = `<input type="checkbox" ${key || readSel.has(`${pkSheet}.${f}`) ? 'checked' : ''} ${key || !api ? 'disabled' : ''}> ${fieldLabel(pkSheet, f)} <span class="t">&nbsp;${f}${key ? ' · key' : ''}${api ? '' : ' · not in API'}</span>`;
+    l.querySelector('input').onchange = e => { e.target.checked ? readSel.add(`${pkSheet}.${f}`) : readSel.delete(`${pkSheet}.${f}`); renderTokens(); renderPicker(); };
+    box.appendChild(l);
+  }
+}
+
+// --- selection criteria
+function addCrit(sign, field, op, low, high) {
+  const d = document.createElement('div'); d.className = 'crit';
+  d.innerHTML = `<select class="cSign"><option value="I">Include</option><option value="E">Exclude</option></select>
+    <select class="cField">${Object.entries(CRIT_FIELDS).map(([k, v]) => `<option value="${k}">${v[1]}</option>`).join('')}</select>
+    <select class="cOp"><option value="eq">equal to</option><option value="bt">between</option><option value="sw">starts with</option></select>
+    <input type="text" class="cLow"><input type="text" class="cHigh" placeholder="to"><button class="icon" title="remove">×</button>`;
+  d.querySelector('.cSign').value = sign || 'I'; d.querySelector('.cField').value = field || 'MATNR'; d.querySelector('.cOp').value = op || 'eq';
+  d.querySelector('.cLow').value = low || ''; d.querySelector('.cHigh').value = high || '';
+  const syncHigh = () => { d.querySelector('.cHigh').disabled = d.querySelector('.cOp').value !== 'bt'; };
+  d.querySelector('.cOp').onchange = syncHigh; syncHigh();
+  d.querySelector('button').onclick = () => d.remove();
+  $('critRows').appendChild(d);
+}
+function critLines() {
+  return [...document.querySelectorAll('#critRows .crit')].map(d => ({ sign: d.querySelector('.cSign').value, field: d.querySelector('.cField').value,
+    op: d.querySelector('.cOp').value, low: d.querySelector('.cLow').value.trim(), high: d.querySelector('.cHigh').value.trim() })).filter(c => c.low);
+}
+// OData $filter for the lines of one entity set: same field OR, different fields AND, exclude = not(...)
+function critFilter(lines) {
+  const lit = (c, v) => CRIT_FIELDS[c.field][3] === 'date' ? v : q(c.field === 'MATNR' || CRIT_FIELDS[c.field][0] !== 'Product' ? v.toUpperCase() : v);
+  const expr = c => { const p = CRIT_FIELDS[c.field][0];
+    if (c.op === 'bt') return `(${p} ge ${lit(c, c.low)} and ${p} le ${lit(c, c.high || c.low)})`;
+    if (c.op === 'sw') return `startswith(${p},${lit(c, c.low.replace(/\*+$/, ''))})`;
+    return `${p} eq ${lit(c, c.low)}`; };
+  const parts = [];
+  for (const f of [...new Set(lines.map(c => c.field))]) {
+    const inc = lines.filter(c => c.field === f && c.sign === 'I').map(expr), exc = lines.filter(c => c.field === f && c.sign === 'E').map(expr);
+    if (inc.length) parts.push(inc.length > 1 ? `(${inc.join(' or ')})` : inc[0]);
+    exc.forEach(e => parts.push(`not ${e.startsWith('(') ? e : `(${e})`}`));
+  }
+  return parts.join(' and ').replace(/ /g, '%20');
+}
+async function resolveProducts() {
+  const max = Math.max(1, parseInt($('maxProducts').value, 10) || 25000);
+  if (document.querySelector('input[name=selBy]:checked').value === 'list') {
+    const list = [...new Set($('selList').value.split(/[\s,;]+/).map(x => x.trim()).filter(Boolean))];
+    if (!list.length) throw new Error('No material numbers in the list.');
+    return list.slice(0, max);
+  }
+  const lines = critLines();
+  if (!lines.length) throw new Error('Enter at least one selection criterion (e.g. Material Number).');
+  const bySet = {}; lines.forEach(c => { const set = CRIT_FIELDS[c.field][2] || 'Product'; (bySet[set] = bySet[set] || []).push(c); });
+  let result = null;
+  for (const [set, ls] of Object.entries(bySet)) {
+    const t = Date.now();
+    const rows = await readAll(`${set}?$filter=${critFilter(ls)}&$select=Product&$orderby=Product&$top=${set === 'Product' ? max : max * 50}`);
+    const ids = new Set(rows.map(r => r.Product));
+    log(`  ${set}: ${ids.size} product(s) for the criteria (${((Date.now() - t) / 1000).toFixed(1)} s)`);
+    result = result ? new Set([...result].filter(x => ids.has(x))) : ids;
+  }
+  return [...result].sort().slice(0, max);
+}
+
+// --- tree of the selected fields, used for readMany ($select per entity type, one GET per entity set)
+function selectionItem(sel) {
+  const items = {};
+  const get = id => {
+    if (items[id]) return items[id];
+    const n = NODE[id], it = { node: id, data: {}, children: {} }; items[id] = it;
+    if (n.parent) { const p = get(n.parent); if (n.many) (p.children[n.nav] = p.children[n.nav] || []).push(it); else p.children[n.nav] = it; }
+    for (const k of SHEET_KEYS[n.sheet] || []) { const kn = nodeOfField(n.sheet, k); if (kn && k !== 'PRODUCT') get(kn.id).data[kn.fields[k]] = 1; }
+    return it;
+  };
+  get('Product');
+  for (const key of sel) { const [st, f] = key.split('.'); const n = nodeOfField(st, f); if (n) get(n.id).data[n.fields[f]] = 1; }
+  return items.Product;
+}
+// API value -> template cell
+function cellOf(type, prop, v) {
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'boolean') return v ? 'X' : '';
+  const p = schema && schema[type] && schema[type].props[prop];
+  if (p && /Edm\.(Date|DateTimeOffset)/.test(p.type)) return String(v).substring(0, 10);
+  return String(v);
+}
+// One product (current state as rebuilt by readMany) -> template rows per sheet
+function productRows(product, cur, sel, out) {
+  const sheetUsed = st => st === 'S_MARA' || [...sel].some(k => k.startsWith(st + '.'));
+  const fill = (n, obj, vals) => {
+    const et = typeOf(n.id);
+    for (const [f, prop] of Object.entries(n.fields)) {
+      if (prop.startsWith('(') || obj[prop] === undefined) continue;
+      if (!sel.has(`${n.sheet}.${f}`) && !(SHEET_KEYS[n.sheet] || []).includes(f)) continue;
+      if (vals[f] === undefined || vals[f] === '') vals[f] = cellOf(et, prop, obj[prop]);
+    }
+  };
+  const walk = (id, obj, vals) => {
+    fill(NODE[id], obj, vals);
+    for (const c of TREE.filter(x => x.parent === id && !x.expand && READ_SHEETS.includes(x.sheet))) {
+      const v = obj[c.nav]; if (v === undefined || v === null) continue;
+      if (c.sameRow && c.many) { const d = v.find(x => x.Language === 'EN') || v[0]; if (d) fill(c, d, vals); }   // description on Basic Data
+      else if (c.sameRow) walk(c.id, v, vals);
+      else for (const ch of (Array.isArray(v) ? v : [v])) {
+        const row = { PRODUCT: product }; for (const l of c.link || []) row[l] = vals[l] || '';
+        if (sheetUsed(c.sheet)) (out[c.sheet] = out[c.sheet] || []).push(row);
+        walk(c.id, ch, row);
+      }
+    }
+  };
+  const head = { PRODUCT: product }; (out.S_MARA = out.S_MARA || []).push(head);
+  walk('Product', cur, head);
+}
+// Template DOM: drop the example rows, append the SAP rows, hide columns
+function columnEls(table) {
+  const byIdx = {}; let i = 0;
+  for (const c of [...table.children].filter(n => n.localName === 'Column')) {
+    const ix = c.getAttributeNS(SS, 'Index'); if (ix) i = parseInt(ix, 10) - 1;
+    const span = parseInt(c.getAttributeNS(SS, 'Span') || '0', 10);
+    byIdx[i] = c;
+    if (span) {   // split "Span" so that every column can be hidden on its own
+      c.removeAttributeNS(SS, 'Span'); let prev = c;
+      for (let k = 1; k <= span; k++) { const cl = c.cloneNode(false); cl.removeAttributeNS(SS, 'Index'); prev.parentNode.insertBefore(cl, prev.nextSibling); prev = cl; byIdx[i + k] = cl; }
+    }
+    i += 1 + span;
+  }
+  return byIdx;
+}
+function buildFromSap(rowsBySheet, sel) {
+  const res = parseWorkbook(tpl.text); xmlDoc = res.doc;
+  const hideEmpty = $('optHideEmpty').checked, hideUnsel = $('optHideUnsel').checked, onlyFilled = $('optOnlyFilled').checked;
+  let hiddenTotal = 0;
+  for (const [st, sh] of Object.entries(res.sheets)) {
+    sh.rows.forEach(r => r.el.parentNode.removeChild(r.el)); sh.rows = [];
+    if (!READ_SHEETS.includes(st)) continue;
+    const keys = SHEET_KEYS[st], selF = sh.fields.filter(f => sel.has(`${st}.${f}`));
+    let list = rowsBySheet[st] || [];
+    if (onlyFilled && st !== 'S_MARA' && selF.length) list = list.filter(v => selF.some(f => v[f]));
+    const table = [...sh.ws.children].find(n => n.localName === 'Table');
+    for (const v of list) {
+      const el = xmlDoc.createElementNS(SS, 'Row'); table.appendChild(el);
+      const cells = {};
+      for (const f of sh.fields) { const val = v[f] || ''; cells[f] = { value: val, orig: val }; if (val) setCell(el, sh.colOf[f], val, sh.types[f]); }
+      sh.rows.push({ el, cells, include: true, target: st === 'S_MARA' ? v.PRODUCT : undefined });
+    }
+    sh.hidden = new Set(sh.fields.filter(f => !keys.includes(f) &&
+      ((hideUnsel && !sel.has(`${st}.${f}`)) || (hideEmpty && !sh.rows.some(r => r.cells[f].value)))));
+    const cols = columnEls(table);
+    for (const f of sh.fields) { const c = cols[sh.colOf[f]]; if (!c) continue; if (sh.hidden.has(f)) c.setAttributeNS(SS, 'ss:Hidden', '1'); else c.removeAttributeNS(SS, 'Hidden'); }
+    if (sh.rows.length) hiddenTotal += sh.hidden.size;
+  }
+  return { res, hiddenTotal };
+}
+
+$('srcFile').onclick = () => { $('srcFile').className = 'on'; $('srcSap').className = ''; $('filePanel').hidden = false; $('readPanel').hidden = true; };
+$('srcSap').onclick = async () => {
+  $('srcSap').className = 'on'; $('srcFile').className = ''; $('filePanel').hidden = true; $('readPanel').hidden = false;
+  try { await loadTemplate(); renderTokens(); renderPicker(); } catch (e) { log(`Template could not be loaded: ${e.message}`, 'err'); }
+};
+document.querySelectorAll('input[name=scope]').forEach(r => r.onchange = () => { $('picker').hidden = true; renderTokens(); });
+document.querySelectorAll('input[name=selBy]').forEach(r => r.onchange = () => { const list = r.value === 'list' && r.checked; $('listBox').hidden = !list; $('critBox').hidden = list; });
+$('pkSearch').oninput = () => renderPicker();
+$('btnCritAdd').onclick = () => addCrit();
+addCrit('I', 'MATNR', 'eq');
+$('btnCount').onclick = async () => {
+  try {
+    if (!schema) await testConnection(); if (!schema) return;
+    const t = Date.now(); productList = await resolveProducts();
+    $('readState').textContent = `${productList.length} product(s) found (${((Date.now() - t) / 1000).toFixed(1)} s)`; $('readState').className = 'ok';
+    log(`Selection: ${productList.length} product(s).`, 'ok');
+  } catch (e) { $('readState').textContent = e.message; $('readState').className = 'err'; log(e.message, 'err'); }
+};
+$('btnRead').onclick = async () => {
+  const st = $('readState');
+  try {
+    if (!schema) await testConnection(); if (!schema) return;
+    await loadTemplate();
+    const sel = expandSel(selectedFields());
+    if (!sel.size) throw new Error('Select at least one field (or "All fields of all sheets").');
+    $('btnRead').disabled = true; stopRequested = false;
+    const t0 = Date.now();
+    const products = await resolveProducts();
+    if (!products.length) throw new Error('No products found for the selection.');
+    const item = selectionItem(sel);
+    const parallel = Math.max(1, Math.min(16, parseInt($('parallel').value, 10) || 1));
+    const size = Math.max(1, Math.min(100, parseInt($('batchSize').value, 10) || 1));
+    log(`Read from SAP: ${products.length} product(s), ${sel.size} field(s), packages of ${size}, ${parallel} in parallel.`);
+    const queue = []; for (let i = 0; i < products.length; i += size) queue.push(products.slice(i, i + size));
+    const found = new Map(); let done = 0, errors = 0;
+    const worker = async () => {
+      while (queue.length && !stopRequested) {
+        const chunk = queue.shift(); const t = Date.now();
+        const reads = await readMany(chunk.map(p => ({ item, product: p })));
+        reads.forEach((r, i) => { if (r.error) { errors++; log(`${chunk[i]}: ${r.error}`, 'err'); } else found.set(chunk[i], r.cur); });
+        done += chunk.length;
+        st.textContent = `${done}/${products.length} read · ${errors} error(s)`; st.className = 'muted';
+        log(`  ${chunk.length} product(s) read in one $batch in ${((Date.now() - t) / 1000).toFixed(1)} s`);
+      }
+    };
+    await Promise.all(Array.from({ length: parallel }, worker));
+    const rowsBySheet = {};
+    for (const p of products) if (found.has(p)) productRows(p, found.get(p), sel, rowsBySheet);
+    const { res, hiddenTotal } = buildFromSap(rowsBySheet, sel);
+    sheets = res.sheets; results.clear(); buildIndex();
+    const stamp = new Date().toISOString().replace(/[:T]/g, '-').substring(0, 16);
+    fileName = `Product_from_SAP_${$('client').value.trim() || 'session'}_${stamp}.xml`;
+    const used = Object.entries(sheets).filter(([, v]) => v.rows.length);
+    $('fileInfo').innerHTML = `<b>${fileName}</b> (read from SAP)<br>` + used.map(([, v]) => `<span class="pill">${v.name}: ${v.rows.length}</span>`).join('');
+    document.querySelector('input[name=mode][value=change]').checked = true;
+    const first = [...sel][0].split('.')[0]; activeTab = sheets[first] && sheets[first].rows.length ? first : 'S_MARA'; gridPage = 0;
+    renderTabs(); renderGrid();
+    ['btnDry', 'btnRun', 'btnExport', 'btnResults', 'btnGridDl', 'btnReadDl'].forEach(id => $(id).disabled = false);
+    st.textContent = `${found.size} product(s) read · ${errors} error(s) · ${used.length} sheet(s) with data · ${hiddenTotal} column(s) hidden · ${((Date.now() - t0) / 1000).toFixed(1)} s`;
+    st.className = errors ? 'warn' : 'ok';
+    log(`Read from SAP: ${found.size} product(s), ${used.map(([, v]) => `${v.name} ${v.rows.length}`).join(', ')}; ${hiddenTotal} column(s) hidden. Mode set to Change.`, errors ? 'warn' : 'ok');
+  } catch (e) { st.textContent = e.message; st.className = 'err'; log(e.message, 'err'); }
+  finally { $('btnRead').disabled = false; }
+};
+$('btnReadDl').onclick = exportXml;
+
 $('gridFilter').oninput = () => { gridPage = 0; renderGrid(); };
+$('showHidden').onchange = () => renderGrid();
 $('btnPrev').onclick = () => { gridPage = Math.max(0, gridPage - 1); renderGrid(); };
 $('btnNext').onclick = () => { gridPage++; renderGrid(); };
 $('btnSelAll').onclick = () => { const sh = sheets[activeTab]; if (sh) sh.rows.forEach(r => r.include = true); renderGrid(); };

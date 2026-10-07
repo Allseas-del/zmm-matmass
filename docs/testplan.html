@@ -81,6 +81,10 @@ const STEPS = [
   ['Optional: method "product first, then views in one change set" for a new material.', 'Material is created; log shows "basic data created" followed by the view changes.'],
   ['Mode Change, Parallel requests 8, Products per $batch 20: change one field (e.g. Cross Reference) for ~200 materials and Execute.', 'Log per package: "20 product(s) read in one $batch in x s" and "n change set(s) sent in one $batch in y s"; all materials "n change(s)" or "no differences". Note x, y and the products/s of the progress line in the remarks.'],
   ['Repeat the previous step with Products per $batch 50 (and, if wanted, Parallel requests 12).', 'Same result in SAP. Note x, y and products/s, and whether other users in DS4/410 noticed slowness.'],
+  ['Section 2: click "Read from SAP". Select fields (e.g. Gross Weight on Alt. Units, Cross Reference on Basic Data) with "+ Add fields"; selection criteria: Material Number equal to 1000181 and 1000198 (two lines). Click "Count products", then "Read from SAP".', 'Count: 2 products. After reading: tabs Basic Data and Alt. Units with the SAP values (compare with MM03 / the MDG export); only keys and the selected fields visible; mode Change selected.'],
+  ['Click "Download template (XML)" and open the file in Excel.', 'The Product template opens; the selected fields and keys are visible, the other columns hidden (to unhide: unprotect the sheet). Values as in SAP.'],
+  ['Change one value in the grid (e.g. Gross Weight of one unit) and click "Execute in SAP".', 'Log: the changed material "1 change(s)", the other "no differences". The value is changed in SAP.'],
+  ['Read from SAP with a criterion on Plant (e.g. your plant) and Material Type; note the number of products and the time in the remarks.', 'The products of that plant and type are read; the time per package is in the log.'],
   ['Optional: run ~100 materials to measure throughput (progress line).', 'Note the throughput (products/s) and total duration in the remarks.']
 ];
 const tbl = document.getElementById('steps');
