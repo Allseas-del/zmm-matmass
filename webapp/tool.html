@@ -142,7 +142,7 @@
           <label><input type="radio" name="selBy" value="list"> Paste list of material numbers</label>
         </div>
         <div id="critBox"><div id="critRows"></div><button class="icon" id="btnCritAdd">+ criterion</button>
-          <div class="muted" style="font-size:12.5px;margin-top:4px">Lines with the same field are combined with OR, different fields with AND. Exclude lines remove products.</div></div>
+          <div class="muted" style="font-size:12.5px;margin-top:4px">Every field of the template can be a criterion (fields that the service marks as not filterable are not offered). Lines with the same field: OR; different fields of the same sheet: AND on the same row (e.g. plant NL10 and MRP type PD); different sheets: AND per product. Exclude removes the products that have a matching row. Values as in the template (ISO units, X for yes, dates YYYY-MM-DD).</div></div>
         <div id="listBox" hidden><textarea id="selList" rows="6" cols="40" placeholder="One material number per line (or separated by space, comma, semicolon)"></textarea></div>
       </div>
       <div>
@@ -851,7 +851,7 @@ async function testConnection() {
     if (!r.ok) throw new Error(`$metadata: HTTP ${r.status}${authHint(r.status)}`);
     if (looksLikeLogonPage(r, t)) throw new Error('$metadata returned a logon page.');
     const md = new DOMParser().parseFromString(t, 'application/xml');
-    readKeys(md); schema = parseSchema(md);
+    readKeys(md); schema = parseSchema(md); readFilterRestrictions(md);
     if (!schema.Product_Type) throw new Error('$metadata has no Product_Type: this is not the Product API.');
     const ns = (md.getElementsByTagName('Schema')[0] || { getAttribute: () => '' }).getAttribute('Namespace');
     log(`Service reachable: ${ns}, ${Object.keys(schema).length} entity types.`, 'ok');
@@ -1524,10 +1524,6 @@ const SHEET_KEYS = { S_MARA: ['PRODUCT', 'MEINS'], S_MAKT: ['PRODUCT', 'SPRAS'],
   S_MARC: ['PRODUCT', 'WERKS'], S_MARD: ['PRODUCT', 'WERKS', 'LGORT'], S_MRP_AREA: ['PRODUCT', 'WERKS', 'BERID'], S_QMAT: ['PRODUCT', 'WERKS', 'ART'],
   S_MBEW: ['PRODUCT', 'BWKEY', 'BWTAR'], S_MVKE: ['PRODUCT', 'VKORG', 'VTWEG'] };
 const READ_SHEETS = Object.keys(SHEET_KEYS);   // S_MLAN (tax) is not read: one template row holds 9 API entries
-// Selection criteria: template field -> [API property, label, entity set (default Product), Edm type]
-const CRIT_FIELDS = { MATNR: ['Product', 'Material Number (MARA-MATNR)'], MTART: ['ProductType', 'Material Type (MARA-MTART)'],
-  MATKL: ['ProductGroup', 'Material Group (MARA-MATKL)'], MSTAE: ['CrossPlantStatus', 'Cross-plant Status (MARA-MSTAE)'],
-  ERSDA: ['CreationDate', 'Created on (MARA-ERSDA, YYYY-MM-DD)', '', 'date'], WERKS: ['Plant', 'Plant (MARC-WERKS)', 'ProductPlant'] };
 let tpl = null;                 // bundled template: text and parsed sheets (field lists, descriptions)
 const readSel = new Set();      // selected fields "S_MARM.BRGEW"
 let pkSheet = 'S_MARA', productList = null, productListKey = '';
@@ -1604,37 +1600,103 @@ function renderPicker() {
 }
 
 // --- selection criteria
+// Selection criteria: any template field with an API property (sheet.field), plus "Created on" (not a template field).
+// The criterion is applied to the entity set of that field; a set other than Product gives a list of products.
+const CRIT_EXTRA = { '*.ERSDA': { label: 'Created on (MARA-ERSDA)', node: 'Product', prop: 'CreationDate' } };
+const CRIT_TOP = ['S_MARA.PRODUCT', 'S_MARA.MTART', 'S_MARA.MATKL', 'S_MARA.MSTAE', '*.ERSDA', 'S_MARC.WERKS'];
+let nonFilterable = {};   // entity set -> Set of properties (Capabilities.FilterRestrictions in $metadata)
+function readFilterRestrictions(md) {
+  nonFilterable = {};
+  for (const an of md.getElementsByTagName('Annotations')) {
+    const set = ((an.getAttribute('Target') || '').match(/\/(\w+)$/) || [])[1]; if (!set) continue;
+    for (const a of an.getElementsByTagName('Annotation')) {
+      if (!/FilterRestrictions$/.test(a.getAttribute('Term') || '')) continue;
+      for (const pv of a.getElementsByTagName('PropertyValue')) {
+        if (pv.getAttribute('Property') === 'Filterable' && pv.getAttribute('Bool') === 'false') (nonFilterable[set] = nonFilterable[set] || new Set()).add('*');
+        if (pv.getAttribute('Property') !== 'NonFilterableProperties') continue;
+        for (const pp of pv.getElementsByTagName('PropertyPath')) (nonFilterable[set] = nonFilterable[set] || new Set()).add(pp.textContent.trim());
+      }
+    }
+  }
+}
+function critDef(key) {
+  if (CRIT_EXTRA[key]) { const x = CRIT_EXTRA[key]; return { key, label: x.label, node: x.node, prop: x.prop }; }
+  const [st, f] = key.split('.'); const n = nodeOfField(st, f); if (!n) return null;
+  return { key, label: `${fieldLabel(st, f)} (${st.replace('S_', '')}-${f})`, node: n.id, prop: n.fields[f] };
+}
+function critMeta(d) {
+  const et = typeOf(d.node), set = setOfType(et);
+  const p = schema && schema[et] && schema[et].props[d.prop];
+  const nf = nonFilterable[set];
+  return { et, set, p, type: p ? p.type : 'Edm.String', filterable: !!p && !(nf && (nf.has('*') || nf.has(d.prop))) };
+}
+function critOptionsHtml() {
+  const opt = k => { const d = critDef(k); if (!d) return ''; const m = schema ? critMeta(d) : { filterable: true };
+    return m.filterable ? `<option value="${k}">${d.label}</option>` : ''; };
+  let h = `<optgroup label="Frequently used">${CRIT_TOP.map(opt).join('')}</optgroup>`;
+  for (const st of READ_SHEETS) {
+    if (!tpl || !tpl.sheets[st]) continue;
+    const o = tpl.sheets[st].fields.map(f => opt(`${st}.${f}`)).join('');
+    if (o) h += `<optgroup label="${SHEET_TAB[st]} (${st.replace('S_', '')})">${o}</optgroup>`;
+  }
+  return h;
+}
 function addCrit(sign, field, op, low, high) {
   const d = document.createElement('div'); d.className = 'crit';
   d.innerHTML = `<select class="cSign"><option value="I">Include</option><option value="E">Exclude</option></select>
-    <select class="cField">${Object.entries(CRIT_FIELDS).map(([k, v]) => `<option value="${k}">${v[1]}</option>`).join('')}</select>
-    <select class="cOp"><option value="eq">equal to</option><option value="bt">between</option><option value="sw">starts with</option></select>
+    <select class="cField">${critOptionsHtml()}</select><select class="cOp"></select>
     <input type="text" class="cLow"><input type="text" class="cHigh" placeholder="to"><button class="icon" title="remove">×</button>`;
-  d.querySelector('.cSign').value = sign || 'I'; d.querySelector('.cField').value = field || 'MATNR'; d.querySelector('.cOp').value = op || 'eq';
+  const fSel = d.querySelector('.cField'), oSel = d.querySelector('.cOp');
+  const syncOps = () => {   // operators by type: text eq/between/starts with, numbers and dates eq/between, yes/no eq
+    const def = critDef(fSel.value), t = def && schema ? critMeta(def).type : 'Edm.String', keep = oSel.value;
+    const ops = t === 'Edm.Boolean' ? [['eq', 'equal to (X or empty)']] : t === 'Edm.String' ? [['eq', 'equal to'], ['bt', 'between'], ['sw', 'starts with']] : [['eq', 'equal to'], ['bt', 'between']];
+    oSel.innerHTML = ops.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+    if (ops.some(o => o[0] === keep)) oSel.value = keep;
+    d.querySelector('.cLow').placeholder = /Date/.test(t) ? 'YYYY-MM-DD' : '';
+    d.querySelector('.cHigh').disabled = oSel.value !== 'bt';
+  };
+  d.querySelector('.cSign').value = sign || 'I'; fSel.value = field || 'S_MARA.PRODUCT'; if (!fSel.value) fSel.selectedIndex = 0;
+  fSel.onchange = syncOps; oSel.onchange = syncOps; syncOps(); if (op) { oSel.value = op; syncOps(); }
   d.querySelector('.cLow').value = low || ''; d.querySelector('.cHigh').value = high || '';
-  const syncHigh = () => { d.querySelector('.cHigh').disabled = d.querySelector('.cOp').value !== 'bt'; };
-  d.querySelector('.cOp').onchange = syncHigh; syncHigh();
   d.querySelector('button').onclick = () => d.remove();
   $('critRows').appendChild(d);
 }
 function critLines() {
   return [...document.querySelectorAll('#critRows .crit')].map(d => ({ sign: d.querySelector('.cSign').value, field: d.querySelector('.cField').value,
-    op: d.querySelector('.cOp').value, low: d.querySelector('.cLow').value.trim(), high: d.querySelector('.cHigh').value.trim() })).filter(c => c.low);
+    op: d.querySelector('.cOp').value, low: d.querySelector('.cLow').value.trim(), high: d.querySelector('.cHigh').value.trim() }))
+    .filter(c => c.low || critMeta(critDef(c.field)).type === 'Edm.Boolean');
 }
-// OData $filter for the lines of one entity set: same field OR, different fields AND, exclude = not(...)
+// Value as OData literal, converted like a template cell (ISO unit, leading zeros, upper case, X → true)
+function critLiteral(c, raw) {
+  const def = critDef(c.field), m = critMeta(def);
+  let v = m.type === 'Edm.Boolean' ? (/^(x|true|1|y)$/i.test(raw) ? 'X' : '') : raw;
+  v = m.type === 'Edm.Boolean' ? /^X$/.test(v) : convert(m.et, def.prop, v);
+  if (typeof v === 'boolean' || typeof v === 'number') return String(v);
+  if (m.type === 'Edm.Date') return String(v).substring(0, 10);
+  if (m.type === 'Edm.DateTimeOffset') return String(v).substring(0, 10) + 'T00:00:00Z';
+  return q(def.prop === 'Product' || (m.p && m.p.upper) ? String(v).toUpperCase() : String(v));
+}
+function critExpr(c) {
+  const p = critDef(c.field).prop;
+  if (c.op === 'bt') return `(${p} ge ${critLiteral(c, c.low)} and ${p} le ${critLiteral(c, c.high || c.low)})`;
+  if (c.op === 'sw') return `startswith(${p},${critLiteral(c, c.low.replace(/\*+$/, ''))})`;
+  return `${p} eq ${critLiteral(c, c.low)}`;
+}
+// Include lines of one entity set: same field OR, different fields AND (same row of that set)
 function critFilter(lines) {
-  const lit = (c, v) => CRIT_FIELDS[c.field][3] === 'date' ? v : q(c.field === 'MATNR' || CRIT_FIELDS[c.field][0] !== 'Product' ? v.toUpperCase() : v);
-  const expr = c => { const p = CRIT_FIELDS[c.field][0];
-    if (c.op === 'bt') return `(${p} ge ${lit(c, c.low)} and ${p} le ${lit(c, c.high || c.low)})`;
-    if (c.op === 'sw') return `startswith(${p},${lit(c, c.low.replace(/\*+$/, ''))})`;
-    return `${p} eq ${lit(c, c.low)}`; };
   const parts = [];
   for (const f of [...new Set(lines.map(c => c.field))]) {
-    const inc = lines.filter(c => c.field === f && c.sign === 'I').map(expr), exc = lines.filter(c => c.field === f && c.sign === 'E').map(expr);
-    if (inc.length) parts.push(inc.length > 1 ? `(${inc.join(' or ')})` : inc[0]);
-    exc.forEach(e => parts.push(`not ${e.startsWith('(') ? e : `(${e})`}`));
+    const inc = lines.filter(c => c.field === f).map(critExpr);
+    parts.push(inc.length > 1 ? `(${inc.join(' or ')})` : inc[0]);
   }
   return parts.join(' and ').replace(/ /g, '%20');
+}
+async function productsOf(set, filter, max) {
+  const t = Date.now();
+  const rows = await readAll(`${set}?$filter=${filter}&$select=Product&$orderby=Product${set === 'Product' ? `&$top=${max}` : ''}`);
+  const ids = new Set(rows.map(r => r.Product));
+  log(`  ${set}: ${ids.size} product(s) (${((Date.now() - t) / 1000).toFixed(1)} s)`);
+  return ids;
 }
 async function resolveProducts() {
   const max = Math.max(1, parseInt($('maxProducts').value, 10) || 25000);
@@ -1644,17 +1706,32 @@ async function resolveProducts() {
     return list.slice(0, max);
   }
   const lines = critLines();
-  if (!lines.length) throw new Error('Enter at least one selection criterion (e.g. Material Number).');
-  const bySet = {}; lines.forEach(c => { const set = CRIT_FIELDS[c.field][2] || 'Product'; (bySet[set] = bySet[set] || []).push(c); });
-  let result = null;
-  for (const [set, ls] of Object.entries(bySet)) {
-    const t = Date.now();
-    const rows = await readAll(`${set}?$filter=${critFilter(ls)}&$select=Product&$orderby=Product&$top=${set === 'Product' ? max : max * 50}`);
-    const ids = new Set(rows.map(r => r.Product));
-    log(`  ${set}: ${ids.size} product(s) for the criteria (${((Date.now() - t) / 1000).toFixed(1)} s)`);
-    result = result ? new Set([...result].filter(x => ids.has(x))) : ids;
+  if (!lines.some(c => c.sign === 'I')) throw new Error('Enter at least one Include criterion (e.g. Material Number).');
+  for (const c of lines) { const m = critMeta(critDef(c.field)); if (!m.filterable) throw new Error(`${critDef(c.field).label}: not filterable in this service.`); }
+  const setOf = c => c.set || critMeta(critDef(c.field)).set;
+  // A key of the sheet (e.g. WERKS) also restricts the other entity sets of that sheet that have the same property, so that
+  // "plant NL10 and MRP type PD" means the same plant row (ProductPlant and ProductPlantSupplyPlanning both have Plant).
+  for (const c of lines.filter(x => x.sign === 'I' && !x.set)) {
+    const [st, f] = c.field.split('.'); if (!(SHEET_KEYS[st] || []).includes(f) || f === 'PRODUCT') continue;
+    const prop = critDef(c.field).prop;
+    for (const o of lines.filter(x => x.sign === 'I' && x.field.startsWith(st + '.') && setOf(x) !== setOf(c))) {
+      const m = critMeta(critDef(o.field));
+      if (m.p && schema[m.et].props[prop] && !lines.some(x => x.set === m.set && x.field === c.field && x.low === c.low)) lines.push({ ...c, set: m.set });
+    }
   }
-  return [...result].sort().slice(0, max);
+  const sets = [...new Set(lines.map(setOf))];
+  let result = null; const minus = new Set();
+  for (const set of sets) {
+    const inc = lines.filter(c => setOf(c) === set && c.sign === 'I'), exc = lines.filter(c => setOf(c) === set && c.sign === 'E');
+    if (set === 'Product' && inc.length) {   // product level: exclusions in the same filter
+      const f = [critFilter(inc), ...exc.map(c => `not%20${critExpr(c).startsWith('(') ? '' : '('}${critExpr(c).replace(/ /g, '%20')}${critExpr(c).startsWith('(') ? '' : ')'}`)].join('%20and%20');
+      const ids = await productsOf(set, f, max); result = result ? new Set([...result].filter(x => ids.has(x))) : ids; continue;
+    }
+    if (inc.length) { const ids = await productsOf(set, critFilter(inc), max); result = result ? new Set([...result].filter(x => ids.has(x))) : ids; }
+    // child level (plant, valuation, …): a product is excluded when it has a row that matches the exclude line
+    for (const c of exc) (await productsOf(set, critFilter([c]), max)).forEach(x => minus.add(x));
+  }
+  return [...result].filter(x => !minus.has(x)).sort().slice(0, max);
 }
 
 // --- tree of the selected fields, used for readMany ($select per entity type, one GET per entity set)
@@ -1750,13 +1827,17 @@ function buildFromSap(rowsBySheet, sel) {
 $('srcFile').onclick = () => { $('srcFile').className = 'on'; $('srcSap').className = ''; $('filePanel').hidden = false; $('readPanel').hidden = true; };
 $('srcSap').onclick = async () => {
   $('srcSap').className = 'on'; $('srcFile').className = ''; $('filePanel').hidden = true; $('readPanel').hidden = false;
-  try { await loadTemplate(); renderTokens(); renderPicker(); } catch (e) { log(`Template could not be loaded: ${e.message}`, 'err'); }
+  try {
+    await loadTemplate(); if (!schema) await testConnection();
+    if (!$('critRows').children.length) addCrit('I', 'S_MARA.PRODUCT', 'eq');
+    else document.querySelectorAll('#critRows .cField').forEach(f => { const v = f.value; f.innerHTML = critOptionsHtml(); f.value = v; });
+    renderTokens(); renderPicker();
+  } catch (e) { log(`Template could not be loaded: ${e.message}`, 'err'); }
 };
 document.querySelectorAll('input[name=scope]').forEach(r => r.onchange = () => { $('picker').hidden = true; renderTokens(); });
 document.querySelectorAll('input[name=selBy]').forEach(r => r.onchange = () => { const list = r.value === 'list' && r.checked; $('listBox').hidden = !list; $('critBox').hidden = list; });
 $('pkSearch').oninput = () => renderPicker();
 $('btnCritAdd').onclick = () => addCrit();
-addCrit('I', 'MATNR', 'eq');
 $('btnCount').onclick = async () => {
   try {
     if (!schema) await testConnection(); if (!schema) return;

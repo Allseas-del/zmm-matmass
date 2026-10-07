@@ -234,6 +234,21 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
     /Product_from_SAP_/.test(dlr.suggestedFilename()) && /<Column[^>]*ss:Hidden="1"/.test(rx) && /S_MARM/.test(rx) && back.n === 2 && back.hid && back.groes === sap1.SizeOrDimensionText &&
     /ZTEST-001 → ZTEST-001: no differences/.test(L) && /ZTEST-002 → ZTEST-002: no differences/.test(L),
     `${dlr.suggestedFilename()} rows=${back.n} hiddenKept=${back.hid}`);
+  // any template field as criterion: plant + MRP type on the same plant row; not filterable property not offered
+  await page.click('#srcSap'); await page.waitForSelector('#critRows .crit');
+  const opts = await page.$$eval('#critRows .crit:first-child .cField option', o => o.map(x => x.value));
+  await page.evaluate(() => { $('critRows').innerHTML = ''; addCrit('I', 'S_MARC.WERKS', 'eq', 'NL01'); addCrit('I', 'S_MARC.DISMM', 'eq', 'VB'); addCrit('I', 'S_MARA.PRODUCT', 'sw', 'ztest'); });
+  const opsDismm = await page.$$eval('#critRows .crit:nth-child(2) .cOp option', o => o.map(x => x.value).join(','));
+  const g0 = await api('/__stats');
+  await page.click('#btnCount'); await page.waitForFunction(() => /found|rror|Enter|not filterable/.test(document.getElementById('readState').textContent));
+  const cnt2 = await page.textContent('#readState'); L = await logText(); const fl2 = ((await api('/__stats')).filters || []).slice((g0.filters || []).length);
+  const want = (await Promise.all(['ZTEST-001', 'ZTEST-002', 'ZTEST-003'].map(id => api('/__product?id=' + id))))
+    .filter(pr => pr && pr._ProductPlant.some(pl => pl.Plant === 'NL01' && pl._ProductPlantSupplyPlanning.MRPType === 'VB')).length;
+  ok('27c any template field as criterion: Plant NL01 and MRP type VB on the same plant row (ProductPlantSupplyPlanning filtered on Plant too), material number "ztest" upper-cased; not filterable field (BISMT) not offered; operators by type',
+    opts.length > 300 && opts.includes('S_MARC.DISMM') && opts.includes('S_MBEW.BKLAS') && !opts.includes('S_MARA.BISMT') && opsDismm === 'eq,bt,sw' &&
+    new RegExp(`^${want} product\\(s\\) found`).test(cnt2) && want === 1 && fl2.some(x => /^ProductPlantSupplyPlanning:/.test(x) && /MRPType eq 'VB'/.test(x) && /Plant eq 'NL01'/.test(x)) &&
+    fl2.some(x => /^Product:startswith\(Product,'ZTEST'\)/.test(x)),
+    `options=${opts.length} ops=${opsDismm} | ${cnt2} | expected ${want} | ${fl2.join(' ; ')}`);
   ok('26 no JavaScript errors on the page', errors.length === 0, errors.join(' | '));
   await page.screenshot({ path: path.join(__dirname, 'screenshot.png'), fullPage: true });
   await browser.close();

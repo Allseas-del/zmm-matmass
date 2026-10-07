@@ -98,6 +98,8 @@ function metadata() {
     x += '</EntityType>';
   }
   x += '<EntityContainer Name="Container">' + Object.keys(T).map(t => `<EntitySet Name="${SET(t)}" EntityType="com.sap.gateway.srvd_a2x.api_product_2.v0001.${t}"/>`).join('') + '</EntityContainer>';
+  // DS4-like filter restriction (test: a property that is not offered as selection criterion)
+  ann.push('<Annotations Target="SAP__self.Container/Product"><Annotation Term="SAP__capabilities.FilterRestrictions"><Record><PropertyValue Property="NonFilterableProperties"><Collection><PropertyPath>ProductOldID</PropertyPath></Collection></PropertyValue></Record></Annotation></Annotations>');
   return x + ann.join('') + '</Schema></edmx:DataServices></edmx:Edmx>';
 }
 
@@ -221,7 +223,7 @@ function handle(method, p, body, headers) {   // returns { status, body }
       return { status: 200, body: { value: out } };
     }
     if (/^(\w+)$/.test(pathOnly) && TYPE_OF_SET[pathOnly] && (fl || /\$top|\$count/.test(qs))) {   // collection query (Read from SAP: selection)
-      stats.collectionGets = (stats.collectionGets || 0) + 1; stats.lastFilter = fl || '';
+      stats.collectionGets = (stats.collectionGets || 0) + 1; stats.lastFilter = fl || ''; (stats.filters = stats.filters || []).push(pathOnly + ':' + (fl || ''));
       const t = TYPE_OF_SET[pathOnly], test = fl ? compileFilter(fl) : () => true; let out = [];
       for (const prod of store.values()) { const walk = n => { if (n.type === t) { const o = serialize({ ...n, navs: {} }, prod); if (test(o)) out.push(o); } Object.values(n.navs).forEach(v => (Array.isArray(v) ? v : [v]).forEach(walk)); }; walk(prod); }
       out.sort((a, b) => String(a.Product).localeCompare(String(b.Product)));
