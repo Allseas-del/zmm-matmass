@@ -4,7 +4,7 @@
     "id": "com.allseas.zmmmatmass",
     "type": "application",
     "i18n": "i18n/i18n.properties",
-    "applicationVersion": { "version": "0.0.1" },
+    "applicationVersion": { "version": "0.8.0" },
     "title": "{{appTitle}}",
     "description": "{{appDescription}}",
     "crossNavigation": {

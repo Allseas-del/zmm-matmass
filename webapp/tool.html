@@ -1535,7 +1535,7 @@ let pkSheet = 'S_MARA', productList = null, productListKey = '';
 function nodeOfField(sheet, f) { return TREE.find(n => n.sheet === sheet && !n.expand && n.fields[f] && !n.fields[f].startsWith('(')); }
 async function loadTemplate() {
   if (tpl) return tpl;
-  const r = await fetch('template_product.xml', { credentials: 'include' });
+  const r = await fetch('template_product.xml', { credentials: 'include', cache: 'no-cache' });
   if (!r.ok) throw new Error(`template_product.xml → HTTP ${r.status}`);
   const text = await r.text(); tpl = { text, sheets: parseWorkbook(text).sheets }; return tpl;
 }
