@@ -137,9 +137,9 @@
     <button id="btnClear" class="sec">Clear log</button>
   </div>
   <div class="row">
-    <label>Parallel requests <input type="text" id="parallel" size="3" value="4"></label>
+    <label>Parallel requests <input type="text" id="parallel" size="3" value="8"></label>
     <label>Products per $batch <input type="text" id="batchSize" size="4" value="20"></label>
-    <span class="muted">(split: the selection is cut into $batch packages of this size)</span>
+    <span class="muted">(Create with deep insert and Change: the selection is cut into $batch packages of this size; Change reads and writes each package in one $batch each)</span>
   </div>
   <div class="row">
     <button id="btnResults" class="sec" disabled>Download results (CSV)</button>
@@ -983,23 +983,12 @@ async function readAll(path) {   // follows server-side paging
   while (next) { const j = await call('GET', next); rows.push(...((j && j.value) || [])); next = j && j['@odata.nextLink']; }
   return rows;
 }
-async function readCurrent(item, product) {
+function readTypes(item) {
   const nodes = [...usedNodes(item)].filter(n => n !== 'Product');
-  const types = [...new Set(nodes.map(typeOf).filter(Boolean))];
-  const filter = `?$filter=Product%20eq%20${q(product)}`;   // no spaces: the path goes into the $batch request line
-  const reqs = [{ req: { method: 'GET', path: keyPath('Product', { Product: product }, ['Product']) } },
-    ...types.map(t => ({ req: { method: 'GET', path: setOfType(t) + filter } }))];
-  const answers = await batchAll(reqs);
-  const [root] = answers;
-  if (!(root.status >= 200 && root.status < 300)) throw new Error(`GET Product(${product}) → ${errText(root.body, root.status)}${root.status === 404 ? ' — object does not exist in SAP' : ''}`);
-  const data = {};
-  for (let i = 0; i < types.length; i++) {
-    const a = answers[i + 1];
-    if (!(a.status >= 200 && a.status < 300)) throw new Error(`GET ${setOfType(types[i])} → ${errText(a.body, a.status)}`);
-    data[types[i]] = (a.body && a.body.value) || [];
-    if (a.body && a.body['@odata.nextLink']) data[types[i]].push(...await readAll(a.body['@odata.nextLink']));
-  }
-  // rebuild the tree as a nested $expand would have returned it: a child belongs to a parent when all parent keys match
+  return { nodes, types: [...new Set(nodes.map(typeOf).filter(Boolean))] };
+}
+// rebuild the tree as a nested $expand would have returned it: a child belongs to a parent when all parent keys match
+function assemble(rootBody, nodes, data) {
   const attach = (obj, nodeId) => {
     const pt = typeOf(nodeId);
     for (const child of TREE.filter(c => c.parent === nodeId && nodes.includes(c.id))) {
@@ -1009,7 +998,60 @@ async function readCurrent(item, product) {
     }
     return obj;
   };
-  return attach(root.body, 'Product');
+  return attach(rootBody, 'Product');
+}
+// $select per entity type: only the fields filled in the file, plus keys, parent keys, the currency/unit
+// reference of each field (Measures annotations) and LastChangeDateTime (ETag). Unknown names are left out.
+function collectFields(item, acc = {}) {
+  const t = typeOf(item.node);
+  if (t) { const s = acc[t] = acc[t] || new Set(); Object.keys(item.data).forEach(k => s.add(k)); }
+  for (const c of Object.values(item.children)) (Array.isArray(c) ? c : [c]).forEach(x => collectFields(x, acc));
+  return acc;
+}
+function selectOf(type, fields) {
+  const e = schema && schema[type]; if (!e || !fields) return '';
+  const parents = TREE.filter(n => typeOf(n.id) === type && n.parent).map(n => typeOf(n.parent));
+  const s = new Set([...keysOf(type), ...parents.flatMap(keysOf), ...fields, 'LastChangeDateTime']);
+  for (const k of [...s]) { const r = e.props[k] && e.props[k].ref; if (r) s.add(r); }
+  const list = [...s].filter(k => e.props[k]);
+  return list.length ? '$select=' + list.join(',') : '';
+}
+const FILTER_PRODUCTS = 20;   // products per filtered GET ("Product eq … or …"), keeps the request line short
+// Reads the current state of several products in ONE $batch: a GET per product plus, per entity set,
+// one filtered GET for up to FILTER_PRODUCTS products. Returns [{ cur } | { error }] in the order of list.
+async function readMany(list) {
+  const per = list.map(x => readTypes(x.item));
+  const types = [...new Set(per.flatMap(p => p.types))];
+  const prods = [...new Set(list.map(x => x.product))];
+  const packs = []; for (let i = 0; i < prods.length; i += FILTER_PRODUCTS) packs.push(prods.slice(i, i + FILTER_PRODUCTS));
+  const fields = {}; list.forEach(x => { for (const [t, f] of Object.entries(collectFields(x.item))) { fields[t] = fields[t] || new Set(); f.forEach(k => fields[t].add(k)); } });
+  const sel = t => { const v = selectOf(t, fields[t]); return v ? '&' + v : ''; };
+  const rootSel = selectOf(typeOf('Product'), fields[typeOf('Product')]);
+  const setReqs = [];   // no spaces: the path goes into the $batch request line
+  types.forEach(t => packs.forEach(pk => setReqs.push({ t, path: setOfType(t) + '?$filter=' + pk.map(p => `Product%20eq%20${q(p)}`).join('%20or%20') + sel(t) })));
+  const answers = await batchAll([
+    ...list.map(x => ({ req: { method: 'GET', path: keyPath('Product', { Product: x.product }, ['Product']) + (rootSel ? '?' + rootSel : '') } })),
+    ...setReqs.map(r => ({ req: { method: 'GET', path: r.path } }))]);
+  const data = {}, setErr = {};
+  for (let i = 0; i < setReqs.length; i++) {
+    const a = answers[list.length + i] || { status: 0 }, t = setReqs[i].t;
+    if (!(a.status >= 200 && a.status < 300)) { setErr[t] = `GET ${setOfType(t)} → ${errText(a.body, a.status)}`; continue; }
+    const rows = (a.body && a.body.value) || [];
+    if (a.body && a.body['@odata.nextLink']) rows.push(...await readAll(a.body['@odata.nextLink']));
+    (data[t] = data[t] || []).push(...rows);
+  }
+  return list.map((x, i) => {
+    const root = answers[i] || { status: 0 };
+    if (!(root.status >= 200 && root.status < 300)) return { error: `GET Product(${x.product}) → ${errText(root.body, root.status)}${root.status === 404 ? ' — object does not exist in SAP' : ''}` };
+    const bad = per[i].types.find(t => setErr[t]); if (bad) return { error: setErr[bad] };
+    const mine = {}; per[i].types.forEach(t => { mine[t] = (data[t] || []).filter(r => same(r.Product, x.product)); });
+    return { cur: assemble(root.body, per[i].nodes, mine) };
+  });
+}
+async function readCurrent(item, product) {
+  const [r] = await readMany([{ item, product }]);
+  if (r.error) throw new Error(r.error);
+  return r.cur;
 }
 
 /* ------------------------------------------------------------------ */
@@ -1129,18 +1171,16 @@ async function createDeep(chunk) {
     else { finish(h, 'failed', '', errText(a.body, a.status)); log(`${prodOf(h)}: ${errText(a.body, a.status)}`, 'err'); }
   });
 }
-async function upsert(h, item, product, createdNow) {
-  log(`  ${prodOf(h)} → ${product}: reading current data from SAP (one $batch, one GET per entity set)…`);
-  const t = Date.now(); const cur = await readCurrent(item, product);
-  log(`  ${prodOf(h)} → ${product}: read in ${((Date.now() - t) / 1000).toFixed(1)} s`);
+function changeOps(h, item, cur, product) {
   const ops = diffOps(item, cur, keyPath('Product', { Product: product }, ['Product']), [], product);
   // All PATCHes share the product's ETag (LastChangeDateTime). The first one carries it; the rest of the change set
   // uses "*" because the first change already moves the timestamp. The change set is atomic, so the check stays effective.
   let seen = false; ops.forEach(o => { if (o.headers && o.headers['If-Match']) { if (seen) o.headers = { 'If-Match': '*' }; seen = true; } });
   (ops.warnings || []).forEach(w => log('  ' + w, 'warn'));
-  if (!ops.length) { finish(h, 'done', product, 'no differences', 0); log(`${prodOf(h)} → ${product}: no differences`, 'ok'); return; }
-  log(`  ${prodOf(h)} → ${product}: sending change set with ${ops.length} operation(s)…`);
-  const [a] = await batchAll([{ changeset: ops.map(o => ({ method: o.method, path: o.path, body: o.body, headers: o.headers })) }]);
+  return ops;
+}
+const changeSet = ops => ({ changeset: ops.map(o => ({ method: o.method, path: o.path, body: o.body, headers: o.headers })) });
+function changeResult(h, product, ops, a, createdNow) {
   if (a.status >= 200 && a.status < 300) {
     ops.forEach(o => log(`  ${o.label}`));
     finish(h, 'done', product, '', ops.length); log(`${prodOf(h)} → ${product}: ${ops.length} change(s)`, 'ok');
@@ -1149,6 +1189,43 @@ async function upsert(h, item, product, createdNow) {
     finish(h, createdNow ? 'partial' : 'failed', product, msg); log(`${prodOf(h)} → ${product}: change set rejected, nothing of it saved — ${msg}`, 'err');
     logBlock(`Change set for ${product}`, ops);
   }
+}
+function noDifferences(h, product) { finish(h, 'done', product, 'no differences', 0); log(`${prodOf(h)} → ${product}: no differences`, 'ok'); }
+async function upsert(h, item, product, createdNow) {
+  log(`  ${prodOf(h)} → ${product}: reading current data from SAP (one $batch, one GET per entity set)…`);
+  const t = Date.now(); const cur = await readCurrent(item, product);
+  log(`  ${prodOf(h)} → ${product}: read in ${((Date.now() - t) / 1000).toFixed(1)} s`);
+  const ops = changeOps(h, item, cur, product);
+  if (!ops.length) return noDifferences(h, product);
+  log(`  ${prodOf(h)} → ${product}: sending change set with ${ops.length} operation(s)…`);
+  const [a] = await batchAll([changeSet(ops)]);
+  changeResult(h, product, ops, a, createdNow);
+}
+// Change mode for a package of products: all reads in one $batch, then all change sets (one per product, each atomic)
+// in one $batch. A product whose change set is rejected does not stop the others (continue-on-error).
+async function changeChunk(chunk) {
+  const todo = [];
+  for (const h of chunk) {
+    const product = h.target || prodOf(h);
+    if (!product) { finish(h, 'failed', '', 'SAP product empty.'); log(`${prodOf(h)}: SAP product empty.`, 'err'); continue; }
+    const item = buildProduct(h); delete item.data.Product; todo.push({ h, item, product });
+  }
+  if (!todo.length) return;
+  let t = Date.now();
+  const reads = await readMany(todo);
+  log(`  ${todo.length} product(s) read in one $batch in ${((Date.now() - t) / 1000).toFixed(1)} s (${todo[0].product} … ${todo[todo.length - 1].product})`);
+  const writes = [];
+  todo.forEach((x, i) => {
+    const r = reads[i];
+    if (r.error) { finish(x.h, 'failed', x.product, r.error); log(`${prodOf(x.h)}: ${r.error}`, 'err'); return; }
+    const ops = changeOps(x.h, x.item, r.cur, x.product);
+    if (!ops.length) noDifferences(x.h, x.product); else writes.push({ x, ops });
+  });
+  if (!writes.length) return;
+  t = Date.now();
+  const answers = await batchAll(writes.map(w => changeSet(w.ops)));
+  log(`  ${writes.length} change set(s) sent in one $batch in ${((Date.now() - t) / 1000).toFixed(1)} s`);
+  writes.forEach((w, i) => changeResult(w.x.h, w.x.product, w.ops, answers[i] || { status: 0, body: { error: { message: 'no answer' } } }, false));
 }
 // Create with internal number through the V2 API: basic data (type, industry sector, base unit) and descriptions.
 // Everything else goes through V4 afterwards (step-wise create), compared with what SAP has then.
@@ -1230,6 +1307,14 @@ async function runOne(h) {
   await upsert(h, item, product, true);
 }
 
+async function runOneSafe(h) {
+  try { await runOne(h); }
+  catch (e) {
+    const r = result(h); finish(h, r.product ? 'partial' : 'failed', r.product, e.message); log(`${prodOf(h)}: ${e.message}`, 'err');
+    if (/logon page|session expired/i.test(e.message)) { stopRequested = true; log('Stopped: the SAP session is no longer valid. Download the results, reload the launchpad, load file and results again.', 'err'); }
+  }
+}
+
 $('btnRun').onclick = async () => {
   buildIndex();
   const m = mode();
@@ -1238,7 +1323,7 @@ $('btnRun').onclick = async () => {
   if (!schema) await testConnection();
   if (!schema) return;
   const parallel = Math.max(1, Math.min(16, parseInt($('parallel').value, 10) || 1));
-  const size = Math.max(1, parseInt($('batchSize').value, 10) || 1);
+  const size = Math.max(1, Math.min(100, parseInt($('batchSize').value, 10) || 1));
   stopRequested = false; $('btnRun').disabled = true; $('btnStop').disabled = false;
   const t0 = Date.now(); let finished = 0;
   hs.forEach(h => { const r = results.get(prodOf(h)); if (r) r.status = 'open'; }); runCount.ok = 0; runCount.bad = 0; let lastSave = Date.now();   // meter counts this run only (hs holds no done products in Create)
@@ -1259,18 +1344,20 @@ $('btnRun').onclick = async () => {
     validateAll(hs);
     const deep = m === 'create' && $('createMethod').value === 'deep' && $('extNum').checked;
     if (m === 'create' && !$('extNum').checked) log('Create without product number: product via V2 (internal number), then the views via V4.');
-    const queue = []; for (let i = 0; i < hs.length; i += deep ? size : 1) queue.push(hs.slice(i, i + (deep ? size : 1)));
+    const pack = deep || m === 'change' ? size : 1;
+    const queue = []; for (let i = 0; i < hs.length; i += pack) queue.push(hs.slice(i, i + pack));
     const worker = async () => {
       while (queue.length && !stopRequested) {
         const chunk = queue.shift();
         if (deep) await createDeep(chunk);
-        else for (const h of chunk) {
-          try { await runOne(h); }
+        else if (m === 'change' && chunk.length > 1) {
+          try { await changeChunk(chunk); }
           catch (e) {
-            const r = result(h); finish(h, r.product ? 'partial' : 'failed', r.product, e.message); log(`${prodOf(h)}: ${e.message}`, 'err');
             if (/logon page|session expired/i.test(e.message)) { stopRequested = true; log('Stopped: the SAP session is no longer valid. Download the results, reload the launchpad, load file and results again.', 'err'); }
+            else { log(`$batch for ${chunk.length} products failed (${e.message}); these products one by one`, 'warn'); for (const h of chunk) if (!stopRequested) await runOneSafe(h); }
           }
         }
+        else for (const h of chunk) await runOneSafe(h);
         finished += chunk.length; progress();
         if (Date.now() - lastSave > 20000) { lastSave = Date.now(); saveLastRun(`running: ${finished}/${hs.length}`); }   // every 20 s
       }

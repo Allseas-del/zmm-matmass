@@ -79,6 +79,8 @@ const STEPS = [
   ['Close the app, open it again, load the template and then the results CSV under "Resume from results".', 'Log: "Results loaded: n done (deselected)". Done materials are deselected.'],
   ['Start a run of ~50 materials, close the browser tab halfway. Open the tool again, load the same file, click "Resume last run".', 'Log: "Resumed from this browser (n result(s)…)". Materials already done are deselected, column SAP product filled. "Log of last run" downloads the log up to the close. Execute processes only the rest.'],
   ['Optional: method "product first, then views in one change set" for a new material.', 'Material is created; log shows "basic data created" followed by the view changes.'],
+  ['Mode Change, Parallel requests 8, Products per $batch 20: change one field (e.g. Cross Reference) for ~200 materials and Execute.', 'Log per package: "20 product(s) read in one $batch in x s" and "n change set(s) sent in one $batch in y s"; all materials "n change(s)" or "no differences". Note x, y and the products/s of the progress line in the remarks.'],
+  ['Repeat the previous step with Products per $batch 50 (and, if wanted, Parallel requests 12).', 'Same result in SAP. Note x, y and products/s, and whether other users in DS4/410 noticed slowness.'],
   ['Optional: run ~100 materials to measure throughput (progress line).', 'Note the throughput (products/s) and total duration in the remarks.']
 ];
 const tbl = document.getElementById('steps');

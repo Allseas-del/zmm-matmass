@@ -190,19 +190,23 @@ function handle(method, p, body, headers) {   // returns { status, body }
       const out = []; for (const prod of store.values()) for (const v of prod.navs._ProductValuation || []) if (v.data.ValuationArea === fa[1]) out.push({ ValuationArea: fa[1], Currency: v.data.Currency });
       return { status: 200, body: { value: out.slice(0, 1) } };
     }
-    const fm = /^(\w+)$/.test(pathOnly) && decodeURIComponent(p.split('?')[1] || '').match(/\$filter=Product eq '([^']*)'/);
-    if (fm) {   // Set?$filter=Product eq '…' -> all nodes of that type in the product
-      stats.filterGets = (stats.filterGets || 0) + 1;
+    const qs = decodeURIComponent(p.split('?')[1] || '');
+    const selM = qs.match(/\$select=([^&]*)/); const sel = selM ? selM[1].split(',') : null;
+    if (sel) stats.selectGets = (stats.selectGets || 0) + 1;
+    const pick = o => { if (!sel) return o; for (const k of sel) if (!(k in o) && !k.startsWith('@')) { /* unknown names are not sent by the tool */ } const r = { '@odata.etag': o['@odata.etag'] }; for (const k of sel) if (k in o) r[k] = o[k]; return r; };
+    const fl = /^(\w+)$/.test(pathOnly) && (qs.match(/\$filter=([^&]*)/) || [])[1];
+    const fps = fl && /^Product eq '[^']*'( or Product eq '[^']*')*$/.test(fl) ? [...fl.matchAll(/Product eq '([^']*)'/g)].map(m => m[1]) : null;
+    if (fps) {   // Set?$filter=Product eq '…' [or Product eq '…' …] -> all nodes of that type in these products
+      stats.filterGets = (stats.filterGets || 0) + 1; stats.maxFilterProducts = Math.max(stats.maxFilterProducts || 0, fps.length);
       const t = TYPE_OF_SET[pathOnly]; if (!t) throw new ODataError(404, 'Entity set not found ' + pathOnly);
-      const prod = store.get(fm[1]); const out = [];
-      const walk = n => { if (n.type === t) out.push(serialize({ ...n, navs: {} }, prod)); Object.values(n.navs).forEach(v => (Array.isArray(v) ? v : [v]).forEach(walk)); };
-      if (prod) walk(prod);
+      const out = [];
+      for (const id of fps) { const prod = store.get(id); const walk = n => { if (n.type === t) out.push(pick(serialize({ ...n, navs: {} }, prod))); Object.values(n.navs).forEach(v => (Array.isArray(v) ? v : [v]).forEach(walk)); }; if (prod) walk(prod); }
       return { status: 200, body: { value: out } };
     }
     if (/\$expand=/.test(decodeURIComponent(p))) stats.expandGets = (stats.expandGets || 0) + 1;
     const { node, prod, nav } = resolve(pathOnly);
     const v = nav ? node.navs[nav] : node;
-    return { status: 200, body: Array.isArray(v) ? { value: v.map(x => serialize(x, prod)) } : serialize(v, prod) };
+    return { status: 200, body: Array.isArray(v) ? { value: v.map(x => pick(serialize(x, prod))) } : pick(serialize(v, prod)) };
   }
   if (method === 'POST' && pathOnly === 'Product') {
     stats.post++;

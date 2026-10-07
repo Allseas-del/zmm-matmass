@@ -100,6 +100,19 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
     `groes=${JSON.stringify(p1d.SizeOrDimensionText)} brgew=${p1d.GrossWeight}`);
   await page.evaluate(() => { sheets.S_MARA.rows[0].cells.GROES.value = 'M12X50'; sheets.S_MARA.rows[0].cells.BRGEW.value = '0.05'; });
   await page.click('#btnRun'); await waitIdle();
+  // Change in packages: all products of a package read in one $batch (filter with "or", $select), all change sets in one $batch;
+  // a product that does not exist (ZTEST-003, created only in test 21) is reported and does not stop the others
+  const g2 = await page.evaluate(() => sheets.S_MARA.rows[1].cells.GROES.value);
+  await page.evaluate(() => { sheets.S_MARA.rows[0].cells.GROES.value = 'M12X60'; sheets.S_MARA.rows[1].cells.GROES.value = 'M8X20'; });
+  await page.fill('#batchSize', '20'); await select(['ZTEST-001', 'ZTEST-002', 'ZTEST-003']);
+  const s0 = await api('/__stats');
+  await page.click('#btnRun'); await waitIdle(); L = await logText(); st = await api('/__stats');
+  const c1 = await api('/__product?id=ZTEST-001'), c2 = await api('/__product?id=ZTEST-002');
+  ok('20b change in packages: 3 products read in one $batch (one filtered GET per entity set for all, $select), 2 change sets in one $batch; missing product reported, the others saved',
+    /3 product\(s\) read in one \$batch/.test(L) && /2 change set\(s\) sent in one \$batch/.test(L) && st.batch - s0.batch <= 3 && st.maxFilterProducts >= 3 &&
+    st.selectGets > (s0.selectGets || 0) && c1.SizeOrDimensionText === 'M12X60' && c2.SizeOrDimensionText === 'M8X20' && /ZTEST-003: GET Product\(ZTEST-003\)/.test(L),
+    `batches=${st.batch - s0.batch} maxFilterProducts=${st.maxFilterProducts} select=${st.selectGets}`);
+  await page.evaluate(g => { sheets.S_MARA.rows[0].cells.GROES.value = 'M12X50'; sheets.S_MARA.rows[1].cells.GROES.value = g; }, g2);
   // step-wise create for the corrected ZTEST-003
   await page.evaluate(() => { sheets.S_MARC.rows[2].cells.WERKS.value = 'NL01'; });
   await page.check('input[name=mode][value=create]'); await page.selectOption('#createMethod', 'step'); await select(['ZTEST-003']);
