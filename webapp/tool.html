@@ -575,14 +575,40 @@ function parseWorkbook(text) {
 /* ------------------------------------------------------------------ */
 /* $metadata                                                          */
 /* ------------------------------------------------------------------ */
+// Unit / currency property that SAP demands together with a quantity or amount, when $metadata carries no Measures
+// annotation for it (property names of API_PRODUCT_2). DS4 8 Oct 2026: a PATCH of GrossWeight on Product without
+// WeightISOUnit is rejected ("Together with property 'GrossWeight' also property 'WeightISOUnit' needs to be provided").
+const UNIT_REF = {
+  GrossWeight: 'WeightISOUnit', NetWeight: 'WeightISOUnit', ProductVolume: 'VolumeISOUnit',
+  BaseUnitSpecificProductLength: 'ProductMeasurementISOUnit', BaseUnitSpecificProductWidth: 'ProductMeasurementISOUnit', BaseUnitSpecificProductHeight: 'ProductMeasurementISOUnit',
+  UnitSpecificProductLength: 'ProductMeasurementISOUnit', UnitSpecificProductWidth: 'ProductMeasurementISOUnit', UnitSpecificProductHeight: 'ProductMeasurementISOUnit',
+  MaximumPackagingLength: 'MaxPackggDimensionISOUnit', MaximumPackagingWidth: 'MaxPackggDimensionISOUnit', MaximumPackagingHeight: 'MaxPackggDimensionISOUnit',
+  AllowedPackagingWeightQty: 'AllwdPackagingWeightQtyISOUnit', AllowedPackagingVolumeQty: 'AllwdPackagingVolumeQtyISOUnit', QuarantinePeriod: 'QuarantinePeriodISOUnit',
+  ProductPriceUnitQuantity: 'BaseISOUnit', MovingAveragePrice: 'Currency', StandardPrice: 'Currency', LotSizeIndependentCosts: 'Currency'
+};
+function applyAnnotation(p, a) {
+  const term = a.getAttribute('Term') || '';
+  if (term.endsWith('core.Computed')) p.computed = true;
+  if (term.endsWith('core.Immutable')) p.immutable = true;
+  if (term.endsWith('common.IsUpperCase')) p.upper = true;
+  if (term.endsWith('common.IsDigitSequence')) p.digits = true;
+  // amount/quantity -> currency/unit property of the same entity. Term Org.OData.Measures.V1.ISOCurrency / .Unit;
+  // SAP's $metadata writes it with the alias "SAP__measures" (lower case), so the match is case-insensitive.
+  if (/measures(\.v1)?\.(isocurrency|unit)$/i.test(term)) {
+    const path = a.getAttribute('Path') || ((a.getElementsByTagName('Path')[0] || {}).textContent) || '';
+    if (path && !path.includes('/')) p.ref = path;
+  }
+}
 function parseSchema(md) {
   const out = {};
   for (const et of md.getElementsByTagName('EntityType')) {
     const e = { props: {}, navs: {} };
     for (const pr of et.children) {
       if (pr.localName === 'Property') {
-        e.props[pr.getAttribute('Name')] = { type: pr.getAttribute('Type'), maxLength: pr.getAttribute('MaxLength') ? parseInt(pr.getAttribute('MaxLength'), 10) : null,
+        const p = { type: pr.getAttribute('Type'), maxLength: pr.getAttribute('MaxLength') ? parseInt(pr.getAttribute('MaxLength'), 10) : null,
           precision: pr.getAttribute('Precision') ? parseInt(pr.getAttribute('Precision'), 10) : null, scale: pr.getAttribute('Scale'), nullable: pr.getAttribute('Nullable') !== 'false' };
+        for (const a of pr.children) if (a.localName === 'Annotation') applyAnnotation(p, a);   // inline annotations
+        e.props[pr.getAttribute('Name')] = p;
       } else if (pr.localName === 'NavigationProperty') {
         const t = pr.getAttribute('Type') || '';
         e.navs[pr.getAttribute('Name')] = { target: t.replace(/^Collection\(|\)$/g, '').split('.').pop(), collection: t.startsWith('Collection(') };
@@ -590,23 +616,13 @@ function parseSchema(md) {
     }
     out[et.getAttribute('Name')] = e;
   }
-  for (const an of md.getElementsByTagName('Annotations')) {
+  for (const an of md.getElementsByTagName('Annotations')) {   // external annotations (<Annotations Target="…_Type/Prop">)
     const m = (an.getAttribute('Target') || '').match(/\.?([A-Za-z0-9_]+_Type)\/([A-Za-z0-9_]+)$/);
     if (!m || !out[m[1]] || !out[m[1]].props[m[2]]) continue;
-    const p = out[m[1]].props[m[2]];
-    for (const a of an.getElementsByTagName('Annotation')) {
-      const term = a.getAttribute('Term') || '';
-      if (term.endsWith('core.Computed')) p.computed = true;
-      if (term.endsWith('core.Immutable')) p.immutable = true;
-      if (term.endsWith('common.IsUpperCase')) p.upper = true;
-      if (term.endsWith('common.IsDigitSequence')) p.digits = true;
-      // amount/quantity -> currency/unit property of the same entity (Org.OData.Measures.V1.ISOCurrency / Unit)
-      if (/Measures(\.V1)?\.(ISOCurrency|Unit)$/.test(term)) {
-        const path = a.getAttribute('Path') || ((a.getElementsByTagName('Path')[0] || {}).textContent) || '';
-        if (path && !path.includes('/')) p.ref = path;
-      }
-    }
+    for (const a of an.getElementsByTagName('Annotation')) applyAnnotation(out[m[1]].props[m[2]], a);
   }
+  // fallback for quantities without a Measures annotation: the known unit property, when the entity has it
+  for (const e of Object.values(out)) for (const [name, p] of Object.entries(e.props)) if (!p.ref && UNIT_REF[name] && e.props[UNIT_REF[name]]) p.ref = UNIT_REF[name];
   return out;
 }
 // Entity type of each tree node, derived from the navigation properties in $metadata
@@ -770,6 +786,9 @@ function validateObject(entity, obj, path, issues) {
     }
     if (/Edm\.(Byte|Int16|Int32)/.test(pr.type) && !Number.isInteger(v)) issues.push(`${path}.${k}: must be a whole number`);
     if (pr.type === 'Edm.Date' && !/^\d{4}-\d{2}-\d{2}$/.test(String(v))) issues.push(`${path}.${k}: date must be YYYY-MM-DD`);
+    // a quantity/amount needs its unit/currency in the same request; in mode Change the unit in SAP is used when the file has none
+    if (pr.ref && mode() !== 'change' && !keysOf(entity).includes(pr.ref) && (obj[pr.ref] === undefined || obj[pr.ref] === '') && e.props[pr.ref] && !e.props[pr.ref].computed)
+      issues.push(`${path}.${k}: SAP needs ${pr.ref} together with ${k} (fill the unit/currency column)`);
   }
 }
 
@@ -1069,10 +1088,17 @@ function diffOps(item, cur, url, ops, label) {
     delete d.Currency; item.data = { ...item.data, Currency: cur.Currency };
   }
   // amounts and quantities go together with their currency/unit ("Together with property 'MovingAveragePrice' also
-  // property 'Currency' needs to be provided"): from $metadata (Measures annotations), plus Currency/BaseISOUnit as fallback
+  // property 'Currency' needs to be provided", "Together with property 'GrossWeight' also property 'WeightISOUnit'
+  // needs to be provided"): the reference property from $metadata (Measures annotations) or the UNIT_REF table, with
+  // the value from the file, or else the current value in SAP (a file that changes only the weight keeps SAP's unit).
+  // Currency/BaseISOUnit of a child entity are sent along as a general fallback.
   if (Object.keys(d).length) {
     const e = schema && schema[type];
-    for (const k of Object.keys(d)) { const r = e && e.props[k] && e.props[k].ref; if (r && item.data[r] !== undefined && !keys.includes(r)) d[r] = item.data[r]; }
+    for (const k of Object.keys(d)) {
+      const r = e && e.props[k] && e.props[k].ref; if (!r || keys.includes(r) || d[r] !== undefined) continue;
+      const u = item.data[r] !== undefined ? item.data[r] : cur[r];
+      if (u !== undefined && u !== null && u !== '') d[r] = u;
+    }
     if (item.node !== 'Product') for (const r of ['Currency', 'BaseISOUnit']) if (item.data[r] !== undefined) d[r] = item.data[r];
   }
   if (Object.keys(d).length) ops.push({ method: 'PATCH', path: url, body: d, headers: ifMatch(cur), label: `${label}: ${Object.keys(d).map(k => `${k} ${JSON.stringify(cur[k] ?? '')} → ${JSON.stringify(d[k])}`).join(', ')}` });

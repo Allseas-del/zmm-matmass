@@ -125,9 +125,24 @@
   "info": "groes=\"\" brgew=0"
  },
  {
+  "name": "20c $metadata: SAP__measures annotations (lower case alias) give the unit/currency reference of a quantity",
+  "pass": true,
+  "info": "WeightISOUnit,WeightISOUnit,Currency"
+ },
+ {
+  "name": "20d change: gross/net weight sent together with WeightISOUnit from the file although the unit itself is unchanged",
+  "pass": true,
+  "info": "brgew=0.07 ntgew=0.06"
+ },
+ {
+  "name": "20e change: weight without unit in the file → the unit currently in SAP is sent along (Product and unit of measure)",
+  "pass": true,
+  "info": "brgew=0.08 marm=2.6"
+ },
+ {
   "name": "20b change in packages: 3 products read in one $batch (one filtered GET per entity set for all, $select), 2 change sets in one $batch; missing product reported, the others saved",
   "pass": true,
-  "info": "batches=2 maxFilterProducts=3 select=74"
+  "info": "batches=2 maxFilterProducts=3 select=110"
  },
  {
   "name": "21 step-wise create: product first, views via change set (1:1 views PATCHed, plant POSTed)",
@@ -147,7 +162,7 @@
  {
   "name": "24a after reload: log and results of the last run available",
   "pass": true,
-  "info": "Last run: 10/7/2026, 6:37:11 PM · test_products.xml · finished: 0 ok, 1 with errors of 1"
+  "info": "Last run: 08/10/2026, 10:48:26 · test_products.xml · finished: 0 ok, 1 with errors of 1"
  },
  {
   "name": "24 resume: results loaded, done products deselected",
@@ -167,7 +182,7 @@
  {
   "name": "25a internal numbering: product created through V2 (Product \"\", SAP unit), views and other basic data through V4; number in column SAP product",
   "pass": true,
-  "info": "v2post=2 targets=4001040,4001049, plants=1"
+  "info": "v2post=2 targets=4001018,4001027, plants=1"
  },
  {
   "name": "25b example template: download, load (2 products, 2 MARC, 2 MARD, 2 MBEW), no validation problems, V2 units M and AU",
@@ -182,7 +197,7 @@
  {
   "name": "25d end of run: log and results downloaded automatically, last run kept in the browser (after reload too)",
   "pass": true,
-  "info": "roundtrip_results_2026-10-07-16-37-11.csv, template_download_log_2026-10-07-16-37-12.txt, roundtrip_results_2026-10-07-16-37-12.csv, template_download_results_2026-10-07-16-37-12.csv | finished: 0 ok, 1 with errors of 1"
+  "info": "template_download_log_2026-10-08-08-48-29.txt, template_download_results_2026-10-08-08-48-29.csv | finished: 0 ok, 1 with errors of 1"
  },
  {
   "name": "27 read from SAP: criteria (starts with ZTEST, exclude ZTEST-003) → 2 products; selected fields of 3 sheets in the Product template (description EN, base unit), one $batch read, $select",
@@ -192,12 +207,12 @@
  {
   "name": "27a columns: not selected and empty hidden (BISMT), selected and keys visible (GROES, PRODUCT, BRGEW), grid shows only visible columns; mode set to Change",
   "pass": true,
-  "info": "hidden=true,false,false,false,true mode=change gridColumns=8 | 2 product(s) read · 0 error(s) · 3 sheet(s) with data · 295 column(s) hidden · 0.1 s"
+  "info": "hidden=true,false,false,false,true mode=change gridColumns=8 | 2 product(s) read · 0 error(s) · 3 sheet(s) with data · 294 column(s) hidden · 0.1 s"
  },
  {
   "name": "27b download: Product template with the SAP rows and hidden columns (ss:Hidden), loads again (hidden columns kept), Change on the unchanged file gives \"no differences\"",
   "pass": true,
-  "info": "Product_from_SAP_session_2026-10-07-16-37.xml rows=2 hiddenKept=true"
+  "info": "Product_from_SAP_session_2026-10-08-08-48.xml rows=2 hiddenKept=true"
  },
  {
   "name": "27c any template field as criterion: Plant NL01 and MRP type VB on the same plant row (ProductPlantSupplyPlanning filtered on Plant too), material number \"ztest\" upper-cased; not filterable field (BISMT) not offered; operators by type",

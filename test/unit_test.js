@@ -100,6 +100,20 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
     `groes=${JSON.stringify(p1d.SizeOrDimensionText)} brgew=${p1d.GrossWeight}`);
   await page.evaluate(() => { sheets.S_MARA.rows[0].cells.GROES.value = 'M12X50'; sheets.S_MARA.rows[0].cells.BRGEW.value = '0.05'; });
   await page.click('#btnRun'); await waitIdle();
+  // weight with its unit reference (DS4 8 Oct 2026: "Together with property 'GrossWeight' also property 'WeightISOUnit' needs
+  // to be provided"; the mock rejects a weight without WeightISOUnit in the same PATCH)
+  const refs = await page.evaluate(() => [schema.Product_Type.props.GrossWeight.ref, schema.ProductUnitOfMeasure_Type.props.GrossWeight.ref, schema.ProductValuation_Type.props.MovingAveragePrice.ref]);
+  ok('20c $metadata: SAP__measures annotations (lower case alias) give the unit/currency reference of a quantity', refs.join(',') === 'WeightISOUnit,WeightISOUnit,Currency', refs.join(','));
+  await page.evaluate(() => { sheets.S_MARA.rows[0].cells.BRGEW.value = '0.07'; sheets.S_MARA.rows[0].cells.NTGEW.value = '0.06'; });
+  await page.click('#btnRun'); await waitIdle(); L = await logText();
+  const p1e = await api('/__product?id=ZTEST-001');
+  ok('20d change: gross/net weight sent together with WeightISOUnit from the file although the unit itself is unchanged', p1e.GrossWeight === 0.07 && p1e.NetWeight === 0.06 && !/needs to be provided/.test(L), `brgew=${p1e.GrossWeight} ntgew=${p1e.NetWeight}`);
+  await page.evaluate(() => { sheets.S_MARA.rows[0].cells.BRGEW.value = '0.08'; sheets.S_MARA.rows[0].cells.GEWEI.value = ''; sheets.S_MARM.rows[0].cells.BRGEW.value = '2.6'; sheets.S_MARM.rows[0].cells.GEWEI.value = ''; });
+  await page.click('#btnRun'); await waitIdle(); L = await logText();
+  const p1f = await api('/__product?id=ZTEST-001');
+  ok('20e change: weight without unit in the file → the unit currently in SAP is sent along (Product and unit of measure)', p1f.GrossWeight === 0.08 && p1f._ProductUnitOfMeasure[0].GrossWeight === 2.6 && !/needs to be provided/.test(L), `brgew=${p1f.GrossWeight} marm=${p1f._ProductUnitOfMeasure[0].GrossWeight}`);
+  await page.evaluate(() => { sheets.S_MARA.rows[0].cells.BRGEW.value = '0.05'; sheets.S_MARA.rows[0].cells.NTGEW.value = '0.045'; sheets.S_MARA.rows[0].cells.GEWEI.value = 'KGM'; sheets.S_MARM.rows[0].cells.BRGEW.value = '2.5'; sheets.S_MARM.rows[0].cells.GEWEI.value = 'KGM'; });
+  await page.click('#btnRun'); await waitIdle();
   // Change in packages: all products of a package read in one $batch (filter with "or", $select), all change sets in one $batch;
   // a product that does not exist (ZTEST-003, created only in test 21) is reported and does not stop the others
   const g2 = await page.evaluate(() => sheets.S_MARA.rows[1].cells.GROES.value);

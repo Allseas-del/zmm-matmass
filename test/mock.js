@@ -82,6 +82,9 @@ function edmType(p) {
   return 'Edm.String';
 }
 const MAXLEN = { Product: 18, ProductDescription: 40, Language: 2, Plant: 4, StorageLocation: 4, ValuationArea: 4, ProductType: 4, ProductGroup: 9 };
+// quantity/amount -> unit/currency property of the same entity (DS4 $metadata: SAP__measures.Unit / ISOCurrency)
+const MEASURE_REF = { GrossWeight: 'WeightISOUnit', NetWeight: 'WeightISOUnit', ProductVolume: 'VolumeISOUnit', ProductPriceUnitQuantity: 'BaseISOUnit',
+  MovingAveragePrice: 'Currency', StandardPrice: 'Currency' };
 function metadata() {
   let x = '<?xml version="1.0" encoding="utf-8"?><edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0"><edmx:DataServices>' +
     '<Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="com.sap.gateway.srvd_a2x.api_product_2.v0001" Alias="SAP__self">';
@@ -93,6 +96,8 @@ function metadata() {
       x += `<Property Name="${p}" Type="${ty}"` + (ty === 'Edm.String' ? ` MaxLength="${MAXLEN[p] || (/ISOUnit|Unit$/.test(p) ? 3 : 40)}"` : '') +
         (ty === 'Edm.Decimal' ? ' Precision="13" Scale="3"' : '') + '/>';
       if ((COMPUTED[t] || []).includes(p) || computedKeys(t).includes(p)) ann.push(`<Annotations Target="SAP__self.${t}/${p}"><Annotation Term="SAP__core.Computed"/></Annotations>`);
+      // Measures annotations as SAP writes them (alias SAP__measures, external <Annotations> block)
+      if (MEASURE_REF[p] && d.props[MEASURE_REF[p]]) ann.push(`<Annotations Target="SAP__self.${t}/${p}"><Annotation Term="SAP__measures.${MEASURE_REF[p] === 'Currency' ? 'ISOCurrency' : 'Unit'}" Path="${MEASURE_REF[p]}"/></Annotations>`);
     }
     for (const [n, [tt, many]] of Object.entries(d.navs || {})) x += `<NavigationProperty Name="${n}" Type="${many ? 'Collection(' : ''}com.sap.gateway.srvd_a2x.api_product_2.v0001.${tt}${many ? ')' : ''}"/>`;
     x += '</EntityType>';
@@ -125,6 +130,9 @@ function checkProps(t, obj, creating) {
     throw new ODataError(400, "Together with property 'ProductPriceUnitQuantity' also property 'BaseISOUnit' needs to be provided");
   if (t === 'ProductValuation_Type' && (obj.MovingAveragePrice !== undefined || obj.StandardPrice !== undefined) && !obj.Currency)
     throw new ODataError(400, "Together with property 'MovingAveragePrice' also property 'Currency' needs to be provided");
+  // DS4 behaviour (8 Oct 2026): a weight on Product or on a unit of measure without WeightISOUnit in the same request is rejected
+  for (const w of ['GrossWeight', 'NetWeight'])
+    if (obj[w] !== undefined && !obj.WeightISOUnit) throw new ODataError(400, `Together with property '${w}' also property 'WeightISOUnit' needs to be provided`);
 }
 function makeNode(t, obj, parentKeys, prod, implicit) {
   checkProps(t, obj, true);
