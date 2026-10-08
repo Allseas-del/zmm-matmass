@@ -11,5 +11,8 @@ hosted as BSP `ZMMMATMASS` in the Fiori launchpad instead of the console loader.
   intent `Material-massUploadTest`, built with `ui5-test.yaml` / `ui5-deploy-test.yaml` after `scripts/variant.js apply`);
   direct URL `/sap/bc/ui5_ui5/sap/zmmmatmasst/tool.html?sap-client=410`. Both variants share the browser storage
   (last run, unit translation) because they run on the same origin.
-- Commodity code (MARC-STAWN): not in the Product API; column `STAWN` on Plant Data goes through the custom service
-  in `docs/abap/` (class + SICF node to be created once).
+- Commodity code (MARC-STAWN): not in the Product API; column `STAWN` on Plant Data is written as trade classification
+  (/SAPSLL/MARITC) through the RAP service `ZMM_MATMASS_STAWN_O2` (sources and ADT steps in `abap/`), read with V2
+  `A_ProductPlant-Commodity`.
+- The test variant BSP `ZMMMATMASST` is in package `ZMM_MATMASS` / transport `DS4K915674` as well: remove it from the
+  transport (or delete the BSP) before the transport goes to production.
