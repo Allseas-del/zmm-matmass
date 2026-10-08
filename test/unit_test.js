@@ -114,6 +114,39 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   ok('20e change: weight without unit in the file → the unit currently in SAP is sent along (Product and unit of measure)', p1f.GrossWeight === 0.08 && p1f._ProductUnitOfMeasure[0].GrossWeight === 2.6 && !/needs to be provided/.test(L), `brgew=${p1f.GrossWeight} marm=${p1f._ProductUnitOfMeasure[0].GrossWeight}`);
   await page.evaluate(() => { sheets.S_MARA.rows[0].cells.BRGEW.value = '0.05'; sheets.S_MARA.rows[0].cells.NTGEW.value = '0.045'; sheets.S_MARA.rows[0].cells.GEWEI.value = 'KGM'; sheets.S_MARM.rows[0].cells.BRGEW.value = '2.5'; sheets.S_MARM.rows[0].cells.GEWEI.value = 'KGM'; });
   await page.click('#btnRun'); await waitIdle();
+  // commodity code (MARC-STAWN): not in the Product API; column STAWN of Plant Data goes through the custom ABAP service
+  // after the product's V4 change set (the BAPI moves the ETag), counted as changes, "#" clears, unchanged = no differences
+  const stawnHdr = await page.evaluate(() => { activeTab = 'S_MARC'; renderGrid(); const th = [...document.querySelectorAll('#grid th')].find(t => t.textContent.startsWith('STAWN')); return th ? [th.className, th.textContent] : null; });
+  ok('20f grid: STAWN column of Plant Data shown as custom-service field, not as "not in API"', stawnHdr && stawnHdr[0] === '' && /custom service: MARC-STAWN/.test(stawnHdr[1]), JSON.stringify(stawnHdr));
+  await page.evaluate(() => { activeTab = 'S_MARA'; renderGrid(); });   // the status column is on the Basic Data tab
+  await page.evaluate(() => { sheets.S_MARC.rows[0].cells.STAWN.value = '84099900'; sheets.S_MARA.rows[0].cells.GROES.value = 'M12X55'; });
+  await page.click('#btnDry'); await page.waitForFunction(() => /Commodity code \(STAWN\) filled on 1 plant row/.test(fullLog.join('\n')));
+  await page.click('#btnRun'); await waitIdle(); L = await logText(); st = await api('/__stats');
+  const p1g = await api('/__product?id=ZTEST-001');
+  ok('20g change: commodity code sent to ZMM_MATMASS_STAWN_O2 ($batch, POST setCode function import) after the V4 change set; both counted (2 changes); old → new logged',
+    p1g._ProductPlant[0].ZZ_STAWN === '84099900' && p1g.SizeOrDimensionText === 'M12X55' && /ZTEST-001 → ZTEST-001: 2 change\(s\)/.test(L) && /ZTEST-001 plant NL01: commodity code "" → "84099900"/.test(L) && st.stawnPosts >= 1,
+    `stawn=${p1g._ProductPlant[0].ZZ_STAWN} groes=${p1g.SizeOrDimensionText} posts=${st.stawnPosts}`);
+  await page.click('#btnRun'); await waitIdle();
+  ok('20h unchanged commodity code and no other difference: "no differences"', /ZTEST-001 → ZTEST-001: no differences/.test(await logText()));
+  await page.evaluate(() => { sheets.S_MARC.rows[0].cells.STAWN.value = '#'; });
+  await page.click('#btnRun'); await waitIdle();
+  const p1h = await api('/__product?id=ZTEST-001'); const stCol = await page.$$eval('#grid td.st', t => t.map(x => x.textContent));
+  ok('20i "#" clears the commodity code through the custom service; status "changed: 1 change(s)" without V4 differences', p1h._ProductPlant[0].ZZ_STAWN === '' && stCol[0] === 'changed: 1 change(s)', `stawn=${JSON.stringify(p1h._ProductPlant[0].ZZ_STAWN)} status=${stCol[0]}`);
+  await page.evaluate(() => { sheets.S_MARC.rows[0].cells.STAWN.value = 'ABC'; });
+  await page.click('#btnDry'); await page.waitForFunction(() => /must be digits/.test(fullLog.join('\n')));
+  ok('20j dry run rejects a non-numeric commodity code', /ZTEST-001 plant NL01: commodity code "ABC" must be digits/.test(await logText()));
+  // CSRF on the RAP service (Gateway): a cross-site style POST (text/plain, no token) and a $batch without token are rejected
+  const csrf = await page.evaluate(async () => {
+    const base = stawnBase();
+    const a = await fetch(withParams(base + "setCode?Material='ZTEST-001'&Plant='NL01'&Code='11111111'"), { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'text/plain' }, body: '' });
+    const b = await fetch(withParams(base + '$batch'), { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'multipart/mixed;boundary=x' }, body: '--x--' });
+    return [a.status, b.status, b.headers.get('x-csrf-token')].join(',');
+  });
+  const p1k = await api('/__product?id=ZTEST-001');
+  ok('20k commodity code service (Gateway): POST without CSRF token → 403, $batch without token → 403 "Required"; nothing changed; the tool itself fetched a token and took the function import name setCode from $metadata',
+    csrf === '403,403,Required' && p1k._ProductPlant[0].ZZ_STAWN !== '11111111' && /tokstawn-/.test(await page.evaluate(() => csrfStawn || '')) && await page.evaluate(() => stawnFn) === 'setCode', csrf);
+  await page.evaluate(() => { sheets.S_MARC.rows[0].cells.STAWN.value = ''; sheets.S_MARA.rows[0].cells.GROES.value = 'M12X50'; });
+  await page.click('#btnRun'); await waitIdle();
   // Change in packages: all products of a package read in one $batch (filter with "or", $select), all change sets in one $batch;
   // a product that does not exist (ZTEST-003, created only in test 21) is reported and does not stop the others
   const g2 = await page.evaluate(() => sheets.S_MARA.rows[1].cells.GROES.value);
@@ -209,7 +242,8 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   await page.uncheck('#autoDl');
   // Read from SAP: selection of fields and products into the Product template; columns hidden; round trip with Change
   await page.click('#srcSap'); await page.waitForFunction(() => typeof tpl !== 'undefined' && tpl && document.querySelector('#selTokens button'));
-  await page.evaluate(() => { readSel.clear(); ['S_MARA.GROES', 'S_MARA.MAKTX', 'S_MARC.DISMM', 'S_MARM.BRGEW'].forEach(k => readSel.add(k)); renderTokens(); });
+  await page.evaluate(async () => { readSel.clear(); ['S_MARA.GROES', 'S_MARA.MAKTX', 'S_MARC.DISMM', 'S_MARM.BRGEW', 'S_MARC.STAWN'].forEach(k => readSel.add(k)); renderTokens();
+    await stawnBatch([{ material: 'ZTEST-001', plant: 'NL01', commodityCode: '84099900' }]); });
   await page.click('#selTokens button'); await page.waitForSelector('#pkFields label');
   const pk = await page.$$eval('#pkFields label', ls => ls.length);
   await page.selectOption('#critRows .crit .cOp', 'sw'); await page.fill('#critRows .crit .cLow', 'ZTEST');
@@ -224,6 +258,8 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
   const rd = await page.evaluate(() => ({
     mara: sheets.S_MARA.rows.map(r => [prodOf(r), r.cells.GROES.value, r.cells.SPRAS.value, r.cells.MAKTX.value, r.cells.MEINS.value, r.cells.BISMT.value].join('|')),
     marc: sheets.S_MARC.rows.map(r => [prodOf(r), r.cells.WERKS.value, r.cells.DISMM.value].join('|')),
+    stawn: sheets.S_MARC.rows.map(r => [prodOf(r), r.cells.WERKS.value, r.cells.STAWN.value].join('|')),
+    stawnPick: (() => { pkSheet = 'S_MARC'; renderPicker(); const l = [...document.querySelectorAll('#pkFields label')].find(x => /STAWN/.test(x.textContent)); return l ? [l.querySelector('input').disabled, /V2 API \(read only\)/.test(l.textContent)].join(',') : 'none'; })(),
     marm: sheets.S_MARM.rows.map(r => [prodOf(r), r.cells.MEINH.value, r.cells.BRGEW.value].join('|')),
     mbew: (sheets.S_MBEW || { rows: [] }).rows.length,
     hid: [sheets.S_MARA.hidden.has('BISMT'), sheets.S_MARA.hidden.has('GROES'), sheets.S_MARA.hidden.has('PRODUCT'), sheets.S_MARM.hidden.has('BRGEW'), sheets.S_MARM.hidden.has('UMREZ')].join(','),
@@ -235,6 +271,8 @@ const select = async ids => page.evaluate(ids => sheets.S_MARA.rows.forEach(r =>
     rd.marc[0] === `ZTEST-001|${sap1._ProductPlant[0].Plant}|${sap1._ProductPlant[0]._ProductPlantSupplyPlanning.MRPType}` &&
     rd.marm.includes(`ZTEST-001|${sap1._ProductUnitOfMeasure[0].AlternativeISOUnit}|${sap1._ProductUnitOfMeasure[0].GrossWeight}`) && rd.mbew === 0 && st.batch - r0.batch === 1 && pk > 10,
     `${cnt} | filter=${flt} | ${rd.mara.join(' ; ')} | marc=${rd.marc.join(',')} | marm=${rd.marm.join(',')} | batches=${st.batch - r0.batch}`);
+  ok('27s read from SAP: commodity code STAWN selectable ("V2 API (read only)") and read from V2 A_ProductPlant-Commodity into the plant rows',
+    rd.stawnPick === 'false,true' && rd.stawn.includes('ZTEST-001|NL01|84099900') && (st.v2get || 0) >= 1, `${rd.stawnPick} | ${rd.stawn.join(',')} | v2get=${st.v2get}`);
   ok('27a columns: not selected and empty hidden (BISMT), selected and keys visible (GROES, PRODUCT, BRGEW), grid shows only visible columns; mode set to Change',
     rd.hid === 'true,false,false,false,true' && rd.mode === 'change' && rd.grid < 10, `hidden=${rd.hid} mode=${rd.mode} gridColumns=${rd.grid} | ${rs}`);
   const [dlr] = await Promise.all([page.waitForEvent('download'), page.click('#btnReadDl')]);

@@ -140,9 +140,39 @@
   "info": "brgew=0.08 marm=2.6"
  },
  {
+  "name": "20f grid: STAWN column of Plant Data shown as custom-service field, not as \"not in API\"",
+  "pass": true,
+  "info": "[\"\",\"STAWNcustom service: MARC-STAWN (ZMM_MATMASS_STAWN_O2)\"]"
+ },
+ {
+  "name": "20g change: commodity code sent to ZMM_MATMASS_STAWN_O2 ($batch, POST setCode function import) after the V4 change set; both counted (2 changes); old → new logged",
+  "pass": true,
+  "info": "stawn=84099900 groes=M12X55 posts=1"
+ },
+ {
+  "name": "20h unchanged commodity code and no other difference: \"no differences\"",
+  "pass": true,
+  "info": ""
+ },
+ {
+  "name": "20i \"#\" clears the commodity code through the custom service; status \"changed: 1 change(s)\" without V4 differences",
+  "pass": true,
+  "info": "stawn=\"\" status=changed: 1 change(s)"
+ },
+ {
+  "name": "20j dry run rejects a non-numeric commodity code",
+  "pass": true,
+  "info": ""
+ },
+ {
+  "name": "20k commodity code service (Gateway): POST without CSRF token → 403, $batch without token → 403 \"Required\"; nothing changed; the tool itself fetched a token and took the function import name setCode from $metadata",
+  "pass": true,
+  "info": "403,403,Required"
+ },
+ {
   "name": "20b change in packages: 3 products read in one $batch (one filtered GET per entity set for all, $select), 2 change sets in one $batch; missing product reported, the others saved",
   "pass": true,
-  "info": "batches=2 maxFilterProducts=3 select=110"
+  "info": "batches=2 maxFilterProducts=3 select=158"
  },
  {
   "name": "21 step-wise create: product first, views via change set (1:1 views PATCHed, plant POSTed)",
@@ -162,7 +192,7 @@
  {
   "name": "24a after reload: log and results of the last run available",
   "pass": true,
-  "info": "Last run: 08/10/2026, 10:48:26 · test_products.xml · finished: 0 ok, 1 with errors of 1"
+  "info": "Last run: 10/8/2026, 4:34:59 PM · test_products.xml · finished: 0 ok, 1 with errors of 1"
  },
  {
   "name": "24 resume: results loaded, done products deselected",
@@ -182,7 +212,7 @@
  {
   "name": "25a internal numbering: product created through V2 (Product \"\", SAP unit), views and other basic data through V4; number in column SAP product",
   "pass": true,
-  "info": "v2post=2 targets=4001018,4001027, plants=1"
+  "info": "v2post=2 targets=4001020,4001029, plants=1"
  },
  {
   "name": "25b example template: download, load (2 products, 2 MARC, 2 MARD, 2 MBEW), no validation problems, V2 units M and AU",
@@ -197,12 +227,17 @@
  {
   "name": "25d end of run: log and results downloaded automatically, last run kept in the browser (after reload too)",
   "pass": true,
-  "info": "template_download_log_2026-10-08-08-48-29.txt, template_download_results_2026-10-08-08-48-29.csv | finished: 0 ok, 1 with errors of 1"
+  "info": "roundtrip_results_2026-10-08-14-35-01.csv, template_download_log_2026-10-08-14-35-01.txt, template_download_results_2026-10-08-14-35-01.csv | finished: 0 ok, 1 with errors of 1"
  },
  {
   "name": "27 read from SAP: criteria (starts with ZTEST, exclude ZTEST-003) → 2 products; selected fields of 3 sheets in the Product template (description EN, base unit), one $batch read, $select",
   "pass": true,
   "info": "2 product(s) found (0.0 s) | filter=startswith(Product,'ZTEST') and not (Product eq 'ZTEST-003') | ZTEST-001|M12X60|EN|Test bolt M12 x 40|PCE| ; ZTEST-002|M8X20|EN|Test gasket DN50|PCE| | marc=ZTEST-001|NL01|VB,ZTEST-002|NL01|ND | marm=ZTEST-001|BX|2.5 | batches=1"
+ },
+ {
+  "name": "27s read from SAP: commodity code STAWN selectable (\"V2 API (read only)\") and read from V2 A_ProductPlant-Commodity into the plant rows",
+  "pass": true,
+  "info": "false,true | ZTEST-001|NL01|84099900,ZTEST-002|NL01| | v2get=1"
  },
  {
   "name": "27a columns: not selected and empty hidden (BISMT), selected and keys visible (GROES, PRODUCT, BRGEW), grid shows only visible columns; mode set to Change",
@@ -212,7 +247,7 @@
  {
   "name": "27b download: Product template with the SAP rows and hidden columns (ss:Hidden), loads again (hidden columns kept), Change on the unchanged file gives \"no differences\"",
   "pass": true,
-  "info": "Product_from_SAP_session_2026-10-08-08-48.xml rows=2 hiddenKept=true"
+  "info": "Product_from_SAP_session_2026-10-08-14-35.xml rows=2 hiddenKept=true"
  },
  {
   "name": "27c any template field as criterion: Plant NL01 and MRP type VB on the same plant row (ProductPlantSupplyPlanning filtered on Plant too), material number \"ztest\" upper-cased; not filterable field (BISMT) not offered; operators by type",

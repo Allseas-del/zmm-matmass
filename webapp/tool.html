@@ -126,6 +126,7 @@
     </div>
     <div>
       <label class="stack">V2 service (create with internal number)<input type="text" id="svcV2" value="/sap/opu/odata/sap/API_PRODUCT_SRV/"></label>
+      <label class="stack" style="margin-top:12px">Commodity code service (RAP, OData V2, column STAWN of Plant Data)<input type="text" id="svcStawn" value="/sap/opu/odata/sap/ZMM_MATMASS_STAWN_O2/"></label>
       <details class="disclose" style="margin-top:12px"><summary>▸ Details</summary>
         <ul class="hints muted small">
           <li>The app runs inside the Fiori launchpad of the same SAP system; requests use your launchpad session. No password is entered or stored.</li>
@@ -931,11 +932,17 @@ async function testConnection() {
 /* ------------------------------------------------------------------ */
 /* Grid                                                               */
 /* ------------------------------------------------------------------ */
+// Template columns that the released Product API does not carry and that go through a custom ABAP service instead
+// (DS4 8 Oct 2026: neither API_PRODUCT_2 nor API_PRODUCT_SRV has the commodity code MARC-STAWN; the plant entity
+// "International Trade" only has country/region of origin, CAS number, PRODCOM number and consumption tax code).
+// STAWN is an Allseas column appended to the Plant Data sheet (field name row 5, type row 6, description row 8).
+const CUSTOM_FIELDS = { S_MARC: { STAWN: 'custom service: MARC-STAWN (ZMM_MATMASS_STAWN_O2)' } };
 function apiOf(sheet, field) {
   const hits = TREE.filter(n => n.sheet === sheet && (n.fields[field] || (n.carry && n.carry[field]))).map(n => {
     const p = n.fields[field] || n.carry[field];
     return p.startsWith('(') ? `${n.nav || n.id} ${p}` : `${n.id === 'Product' ? '' : (n.nav || '') + '.'}${p}`;
   });
+  if (!hits.length && CUSTOM_FIELDS[sheet] && CUSTOM_FIELDS[sheet][field]) return CUSTOM_FIELDS[sheet][field];
   return [...new Set(hits)].join(', ');
 }
 function renderTabs() {
@@ -1290,6 +1297,14 @@ function validateAll(hs) {
     total += issues.length;
   }
   for (const [k, n] of missingProps) log(`Template column filled in ${n} row(s), but ${k} is not in this service — not sent.`, 'warn');
+  // commodity code column (custom service): digits and spaces, max 17 characters (MARC-STAWN), or "#" to clear
+  let nStawn = 0;
+  for (const h of hs) for (const r of (index.S_MARC && index.S_MARC.get(prodOf(h))) || []) {
+    const v = r.include && r.cells.STAWN ? r.cells.STAWN.value.trim() : ''; if (!v) continue;
+    nStawn++;
+    if (v !== CLEAR_MARK && !/^[0-9 ]{1,17}$/.test(v)) { if (total < 200) log(`  ${prodOf(h)} plant ${val(r, 'WERKS')}: commodity code "${v}" must be digits (max 17, spaces allowed)`, 'err'); total++; }
+  }
+  if (nStawn) log(`Commodity code (STAWN) filled on ${nStawn} plant row(s): sent through the custom service ${$('svcStawn').value.trim()} after the product's change set, not through the Product API.`);
   log(total ? `Validation against $metadata: ${total} problem(s).` : 'Validation against $metadata: no problems.', total ? 'warn' : 'ok');
   return total;
 }
@@ -1329,10 +1344,16 @@ function changeOps(h, item, cur, product) {
   return ops;
 }
 const changeSet = ops => ({ changeset: ops.map(o => ({ method: o.method, path: o.path, body: o.body, headers: o.headers })) });
-function changeResult(h, product, ops, a, createdNow) {
-  if (a.status >= 200 && a.status < 300) {
-    ops.forEach(o => log(`  ${o.label}`));
-    finish(h, 'done', product, '', ops.length); log(`${prodOf(h)} → ${product}: ${ops.length} change(s)`, 'ok');
+// Outcome of one product: the V4 change set (a = null when there were no differences) plus the custom-service part
+// (extra = { steps, error, labels } from sendStawn, undefined when the file has no STAWN for this product).
+function changeResult(h, product, ops, a, createdNow, extra) {
+  const ex = extra || { steps: 0, error: '', labels: [] };
+  if (!a || (a.status >= 200 && a.status < 300)) {
+    ops.forEach(o => log(`  ${o.label}`)); ex.labels.forEach(l => log(`  ${l}`));
+    const n = ops.length + ex.steps;
+    if (ex.error) { finish(h, n || createdNow ? 'partial' : 'failed', product, ex.error); log(`${prodOf(h)} → ${product}: ${n} change(s) saved, commodity code rejected — ${ex.error}`, 'err'); }
+    else if (!n) noDifferences(h, product);
+    else { finish(h, 'done', product, '', n); log(`${prodOf(h)} → ${product}: ${n} change(s)`, 'ok'); }
   } else {
     const msg = errText(a.body, a.status);
     finish(h, createdNow ? 'partial' : 'failed', product, msg); log(`${prodOf(h)} → ${product}: change set rejected, nothing of it saved — ${msg}`, 'err');
@@ -1340,15 +1361,101 @@ function changeResult(h, product, ops, a, createdNow) {
   }
 }
 function noDifferences(h, product) { finish(h, 'done', product, 'no differences', 0); log(`${prodOf(h)} → ${product}: no differences`, 'ok'); }
+// --- commodity code (MARC-STAWN) through the custom ABAP service, see CUSTOM_FIELDS and abap/README.md
+// Items { material, plant, commodityCode } ("#" in the file clears the code: commodityCode ""), sent after the product's V4 change set.
+function stawnItems(h, product) {
+  const out = [];
+  for (const r of (index.S_MARC && index.S_MARC.get(prodOf(h))) || []) {
+    if (!r.include || !r.cells.STAWN) continue;
+    const v = r.cells.STAWN.value.trim(); if (!v) continue;
+    out.push({ material: product, plant: val(r, 'WERKS'), commodityCode: v === CLEAR_MARK ? '' : v });
+  }
+  return out;
+}
+// --- commodity code (MARC-STAWN) through the RAP service ZMM_MATMASS_STAWN_O2 (OData V2, static action setCode), see abap/README.md
+// One $batch per call, one change set per material with "POST setCode?Material='…'&Plant='…'&Code='…'" per plant (function
+// import). The action plans the classification in /SAPSLL/MARITC (shown as MARC-STAWN) and answers 200 with Previous,
+// Changed, MessageType ('S'|'E'), Message.
+// CSRF as for every Gateway service: token from a GET on the service root with "X-CSRF-Token: Fetch"; the function import
+// name is taken from $metadata (the one ending in "setCode").
+let csrfStawn = null, stawnFn = null;
+function stawnBase() { let p = $('svcStawn').value.trim(); if (!p.endsWith('/')) p += '/'; return p; }
+async function fetchStawnToken() {
+  const r = await fetch(withParams(stawnBase()), { credentials: 'include', headers: { 'X-CSRF-Token': 'Fetch', Accept: 'application/json' } });
+  const t = await r.text();
+  if (looksLikeLogonPage(r, t)) throw new Error('logon page: session expired');
+  csrfStawn = r.headers.get('x-csrf-token');
+  if (!r.ok || !csrfStawn || csrfStawn.toLowerCase() === 'required') {
+    csrfStawn = null;
+    throw new Error(`service not reachable (HTTP ${r.status}${r.status === 404 || r.status === 403 ? ' — service binding not published, or no S_SERVICE authorization' : ''})`);
+  }
+  if (!stawnFn) {
+    const m = await fetch(withParams(stawnBase() + '$metadata'), { credentials: 'include' });
+    const x = m.ok ? await m.text() : '';
+    const f = x.match(/<FunctionImport\s[^>]*Name="([^"]*setCode)"/i);
+    stawnFn = f ? f[1] : 'setCode';
+  }
+}
+const v2Lit = v => encodeURIComponent(`'${String(v).replace(/'/g, "''")}'`);
+const v2Err = (body, status) => { const m = body && body.error && body.error.message; return `HTTP ${status}: ${(m && (m.value || m)) || ''}`; };
+async function stawnBatch(items) {   // -> [{ status, body }] in the order of items
+  if (!csrfStawn || !stawnFn) await fetchStawnToken();
+  // one change set (= one LUW in SAP) per material: the code is kept per material and country, so the plants of a
+  // material must be checked together (the service rejects two different codes for plants of the same country)
+  const groups = [];
+  items.forEach((it, i) => { let g = groups.find(x => x.material === it.material); if (!g) groups.push(g = { material: it.material, idx: [] }); g.idx.push(i); });
+  const boundary = 'batch_' + Math.random().toString(36).slice(2);
+  let payload = '', id = 0;
+  groups.forEach(g => {
+    const cs = 'changeset_' + Math.random().toString(36).slice(2);
+    payload += `--${boundary}\r\nContent-Type: multipart/mixed;boundary=${cs}\r\n\r\n` + g.idx.map(i => { const it = items[i];
+      return `--${cs}\r\n` + httpPart({ method: 'POST', path: `${stawnFn}?Material=${v2Lit(it.material)}&Plant=${v2Lit(it.plant)}&Code=${v2Lit(it.commodityCode)}` }, ++id); }).join('') + `--${cs}--\r\n`;
+  });
+  payload += `--${boundary}--\r\n`;
+  const send = () => fetch(withParams(stawnBase() + '$batch'), { method: 'POST', credentials: 'include', body: payload,
+    headers: { 'Content-Type': `multipart/mixed;boundary=${boundary}`, Accept: 'multipart/mixed', 'X-CSRF-Token': csrfStawn || '' } });
+  let r = await send();
+  if (r.status === 403 && (r.headers.get('x-csrf-token') || '').toLowerCase() === 'required') { await fetchStawnToken(); r = await send(); }
+  const text = await r.text();
+  if (looksLikeLogonPage(r, text)) throw new Error('logon page: session expired');
+  if (!r.ok) throw new Error(`$batch → HTTP ${r.status}: ${text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 200)}`);
+  const m = (r.headers.get('content-type') || '').match(/boundary=([^;]+)/i);
+  if (!m) throw new Error('$batch → response without multipart boundary');
+  const out = new Array(items.length);
+  splitMultipart(text, m[1].replace(/"/g, '').trim()).forEach((part, gi) => {
+    const g = groups[gi]; if (!g) return;
+    const cm = part.substring(0, 300).match(/Content-Type:\s*multipart\/mixed;\s*boundary=([^\s;]+)/i);
+    const answers = cm ? splitMultipart(part, cm[1].replace(/"/g, '')).map(parseHttp) : [parseHttp(part)];
+    // a failed change set comes back as one error response for all its requests
+    g.idx.forEach((i, k) => { out[i] = answers.length === g.idx.length ? answers[k] : answers[0]; });
+  });
+  return out.map(a => a || { status: 0, body: null });
+}
+async function sendStawn(list) {   // list: [{ h, product }] -> Map product -> { steps, error, labels }
+  const res = new Map(); const items = [];
+  for (const x of list) { const its = stawnItems(x.h, x.product); if (its.length) { res.set(x.product, { steps: 0, error: '', labels: [] }); items.push(...its); } }
+  if (!items.length) return res;
+  let answers;
+  try { answers = await stawnBatch(items); }
+  catch (e) { for (const v of res.values()) v.error = `commodity code service ${stawnBase()}: ${e.message}`; return res; }
+  items.forEach((it, i) => {
+    const v = res.get(it.material), a = answers[i] || { status: 0, body: null };
+    const d = a.body && a.body.d && (a.body.d[stawnFn] || a.body.d);
+    if (!(a.status >= 200 && a.status < 300) || !d) { v.error = (v.error ? v.error + ' | ' : '') + `plant ${it.plant}: ${v2Err(a.body, a.status)}`; return; }
+    if (d.MessageType === 'E' || d.MessageType === 'A') v.error = (v.error ? v.error + ' | ' : '') + `plant ${it.plant}: ${d.Message}`;
+    else if (d.Changed === true || d.Changed === 'X') { v.steps++; v.labels.push(`${it.material} plant ${it.plant}: commodity code ${JSON.stringify(d.Previous || '')} → ${JSON.stringify(d.Code || '')}`); }
+  });
+  return res;
+}
 async function upsert(h, item, product, createdNow) {
   log(`  ${prodOf(h)} → ${product}: reading current data from SAP (one $batch, one GET per entity set)…`);
   const t = Date.now(); const cur = await readCurrent(item, product);
   log(`  ${prodOf(h)} → ${product}: read in ${((Date.now() - t) / 1000).toFixed(1)} s`);
   const ops = changeOps(h, item, cur, product);
-  if (!ops.length) return noDifferences(h, product);
-  log(`  ${prodOf(h)} → ${product}: sending change set with ${ops.length} operation(s)…`);
-  const [a] = await batchAll([changeSet(ops)]);
-  changeResult(h, product, ops, a, createdNow);
+  let a = null;
+  if (ops.length) { log(`  ${prodOf(h)} → ${product}: sending change set with ${ops.length} operation(s)…`); [a] = await batchAll([changeSet(ops)]); }
+  const extra = !a || a.status < 300 ? (await sendStawn([{ h, product }])).get(product) : undefined;
+  changeResult(h, product, ops, a, createdNow, extra);
 }
 // Change mode for a package of products: all reads in one $batch, then all change sets (one per product, each atomic)
 // in one $batch. A product whose change set is rejected does not stop the others (continue-on-error).
@@ -1363,18 +1470,22 @@ async function changeChunk(chunk) {
   let t = Date.now();
   const reads = await readMany(todo);
   log(`  ${todo.length} product(s) read in one $batch in ${((Date.now() - t) / 1000).toFixed(1)} s (${todo[0].product} … ${todo[todo.length - 1].product})`);
-  const writes = [];
+  const writes = [], outcome = [];   // outcome: { x, ops, a } per product, settled after the custom-service call
   todo.forEach((x, i) => {
     const r = reads[i];
     if (r.error) { finish(x.h, 'failed', x.product, r.error); log(`${prodOf(x.h)}: ${r.error}`, 'err'); return; }
     const ops = changeOps(x.h, x.item, r.cur, x.product);
-    if (!ops.length) noDifferences(x.h, x.product); else writes.push({ x, ops });
+    if (!ops.length) outcome.push({ x, ops, a: null }); else writes.push({ x, ops });
   });
-  if (!writes.length) return;
-  t = Date.now();
-  const answers = await batchAll(writes.map(w => changeSet(w.ops)));
-  log(`  ${writes.length} change set(s) sent in one $batch in ${((Date.now() - t) / 1000).toFixed(1)} s`);
-  writes.forEach((w, i) => changeResult(w.x.h, w.x.product, w.ops, answers[i] || { status: 0, body: { error: { message: 'no answer' } } }, false));
+  if (writes.length) {
+    t = Date.now();
+    const answers = await batchAll(writes.map(w => changeSet(w.ops)));
+    log(`  ${writes.length} change set(s) sent in one $batch in ${((Date.now() - t) / 1000).toFixed(1)} s`);
+    writes.forEach((w, i) => outcome.push({ x: w.x, ops: w.ops, a: answers[i] || { status: 0, body: { error: { message: 'no answer' } } } }));
+  }
+  // commodity codes of the products whose V4 part succeeded (or had no differences), one POST for the whole package
+  const stawn = await sendStawn(outcome.filter(o => !o.a || o.a.status < 300).map(o => o.x));
+  outcome.forEach(o => changeResult(o.x.h, o.x.product, o.ops, o.a, false, stawn.get(o.x.product)));
 }
 // Create with internal number through the V2 API: basic data (type, industry sector, base unit) and descriptions.
 // Everything else goes through V4 afterwards (step-wise create), compared with what SAP has then.
@@ -1595,6 +1706,10 @@ let tpl = null;                 // bundled template: text and parsed sheets (fie
 const readSel = new Set();      // selected fields "S_MARM.BRGEW"
 let pkSheet = 'S_MARA', productList = null, productListKey = '';
 
+// Template fields that API_PRODUCT_2 lacks but the standard V2 API_PRODUCT_SRV returns (read only): the commodity code.
+// A_ProductPlant-Commodity is the value S/4 shows as MARC-STAWN (/SAPSLL/MARITC for the plant's country, DS4 8 Oct 2026).
+const V2_READ = { S_MARC: { STAWN: 'Commodity' } };
+const v2Read = (sheet, f) => !!(V2_READ[sheet] && V2_READ[sheet][f]);
 function nodeOfField(sheet, f) { return TREE.find(n => n.sheet === sheet && !n.expand && n.fields[f] && !n.fields[f].startsWith('(')); }
 async function loadTemplate() {
   if (tpl) return tpl;
@@ -1606,7 +1721,7 @@ function fieldLabel(sheet, f) { const d = tpl && tpl.sheets[sheet] && tpl.sheets
 function selectedFields() {
   if (document.querySelector('input[name=scope]:checked').value === 'fields') return new Set(readSel);
   const all = new Set();
-  for (const st of READ_SHEETS) for (const f of (tpl && tpl.sheets[st] ? tpl.sheets[st].fields : [])) if (nodeOfField(st, f)) all.add(`${st}.${f}`);
+  for (const st of READ_SHEETS) for (const f of (tpl && tpl.sheets[st] ? tpl.sheets[st].fields : [])) if (nodeOfField(st, f) || v2Read(st, f)) all.add(`${st}.${f}`);
   return all;
 }
 
@@ -1652,15 +1767,15 @@ function renderPicker() {
   const q2 = $('pkSearch').value.trim().toUpperCase();
   const box = $('pkFields'); box.innerHTML = '';
   const fields = tpl.sheets[pkSheet].fields.filter(f => !q2 || f.includes(q2) || fieldLabel(pkSheet, f).toUpperCase().includes(q2));
-  const free = fields.filter(f => nodeOfField(pkSheet, f) && !SHEET_KEYS[pkSheet].includes(f));
+  const free = fields.filter(f => (nodeOfField(pkSheet, f) || v2Read(pkSheet, f)) && !SHEET_KEYS[pkSheet].includes(f));
   const allOn = free.length && free.every(f => readSel.has(`${pkSheet}.${f}`));
   const wl = document.createElement('label'); wl.innerHTML = `<input type="checkbox" ${allOn ? 'checked' : ''}> <b>All fields of this sheet${q2 ? ' (search result)' : ''}</b>`;
   wl.querySelector('input').onchange = e => { free.forEach(f => e.target.checked ? readSel.add(`${pkSheet}.${f}`) : readSel.delete(`${pkSheet}.${f}`)); renderTokens(); renderPicker(); };
   box.appendChild(wl);
   for (const f of fields) {
-    const key = SHEET_KEYS[pkSheet].includes(f), api = !!nodeOfField(pkSheet, f);
+    const key = SHEET_KEYS[pkSheet].includes(f), api = !!nodeOfField(pkSheet, f) || v2Read(pkSheet, f);
     const l = document.createElement('label'); if (key || !api) l.className = 'key';
-    l.innerHTML = `<input type="checkbox" ${key || readSel.has(`${pkSheet}.${f}`) ? 'checked' : ''} ${key || !api ? 'disabled' : ''}> ${fieldLabel(pkSheet, f)} <span class="t">&nbsp;${f}${key ? ' · key' : ''}${api ? '' : ' · not in API'}</span>`;
+    l.innerHTML = `<input type="checkbox" ${key || readSel.has(`${pkSheet}.${f}`) ? 'checked' : ''} ${key || !api ? 'disabled' : ''}> ${fieldLabel(pkSheet, f)} <span class="t">&nbsp;${f}${key ? ' · key' : ''}${v2Read(pkSheet, f) ? ' · V2 API (read only)' : api ? '' : ' · not in API'}</span>`;
     l.querySelector('input').onchange = e => { e.target.checked ? readSel.add(`${pkSheet}.${f}`) : readSel.delete(`${pkSheet}.${f}`); renderTokens(); renderPicker(); };
     box.appendChild(l);
   }
@@ -1812,7 +1927,11 @@ function selectionItem(sel) {
     return it;
   };
   get('Product');
-  for (const key of sel) { const [st, f] = key.split('.'); const n = nodeOfField(st, f); if (n) get(n.id).data[n.fields[f]] = 1; }
+  for (const key of sel) {
+    const [st, f] = key.split('.'); const n = nodeOfField(st, f);
+    if (n) get(n.id).data[n.fields[f]] = 1;
+    else if (v2Read(st, f)) { const kn = nodeOfField(st, SHEET_KEYS[st][1]); if (kn) get(kn.id); }   // rows of the sheet (keys)
+  }
   return items.Product;
 }
 // API value -> template cell
@@ -1943,6 +2062,7 @@ $('btnRead').onclick = async () => {
     await Promise.all(Array.from({ length: parallel }, worker));
     const rowsBySheet = {};
     for (const p of products) if (found.has(p)) productRows(p, found.get(p), sel, rowsBySheet);
+    await readV2Fields([...found.keys()], sel, rowsBySheet);
     const { res, hiddenTotal } = buildFromSap(rowsBySheet, sel);
     sheets = res.sheets; results.clear(); buildIndex();
     const stamp = new Date().toISOString().replace(/[:T]/g, '-').substring(0, 16);
@@ -1960,6 +2080,31 @@ $('btnRead').onclick = async () => {
   finally { $('btnRead').disabled = false; }
 };
 $('btnReadDl').onclick = exportXml;
+// Fields of V2_READ: GET A_ProductPlant?$filter=Product eq 'A' or …&$select=Product,Plant,<props> (20 products per GET,
+// paging via __next), values put into the plant rows built from the V4 read.
+async function readV2Fields(products, sel, rowsBySheet) {
+  const want = Object.entries(V2_READ.S_MARC).filter(([f]) => sel.has(`S_MARC.${f}`));
+  if (!want.length || !products.length || !rowsBySheet.S_MARC) return;
+  const t = Date.now(), vals = new Map(); let n = 0;
+  for (let i = 0; i < products.length; i += 20) {
+    const flt = products.slice(i, i + 20).map(p => `Product eq '${String(p).replace(/'/g, "''")}'`).join(' or ');
+    let url = withParams(v2Base() + `A_ProductPlant?$filter=${encodeURIComponent(flt)}&$select=Product,Plant,${want.map(w => w[1]).join(',')}&$format=json`);
+    while (url) {
+      const r = await fetch(url, { credentials: 'include', headers: { Accept: 'application/json' } });
+      const text = await r.text();
+      if (looksLikeLogonPage(r, text)) throw new Error('logon page: session expired');
+      let b = null; try { b = JSON.parse(text); } catch (e) { /* not JSON */ }
+      if (!r.ok || !b || !b.d) throw new Error(`V2 A_ProductPlant → ${v2Err(b, r.status)}`);
+      for (const x of b.d.results || []) { vals.set(`${x.Product}|${x.Plant}`, x); n++; }
+      url = b.d.__next ? withParams(b.d.__next) : null;
+    }
+  }
+  for (const row of rowsBySheet.S_MARC) {
+    const x = vals.get(`${row.PRODUCT}|${row.WERKS}`); if (!x) continue;
+    for (const [f, prop] of want) row[f] = x[prop] == null ? '' : String(x[prop]);
+  }
+  log(`  V2 ${v2Base()}A_ProductPlant: ${want.map(w => `${w[0]} (${w[1]})`).join(', ')} for ${n} plant row(s) in ${((Date.now() - t) / 1000).toFixed(1)} s`);
+}
 
 $('gridFilter').oninput = () => { gridPage = 0; renderGrid(); };
 $('showHidden').onchange = () => renderGrid();
