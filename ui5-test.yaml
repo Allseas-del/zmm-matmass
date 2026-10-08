@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
+# Build config of the test variant (namespace com.allseas.zmmmatmasst), used by deploy-test.cmd
+specVersion: "4.0"
+metadata:
+  name: com.allseas.zmmmatmasst
+type: application

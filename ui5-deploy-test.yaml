@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
+# Test variant next to the productive app: BSP ZMMMATMASST, app id com.allseas.zmmmatmasst, intent
+# Material-massUploadTest. Built with ui5-test.yaml after scripts/variant.js has renamed the id. Run: deploy-test.cmd
+# Direct URL after deploy: /sap/bc/ui5_ui5/sap/zmmmatmasst/tool.html?sap-client=410
+specVersion: "4.0"
+metadata:
+  name: com.allseas.zmmmatmasst
+type: application
+builder:
+  resources:
+    excludes:
+      - /test/**
+      - /localService/**
+  customTasks:
+    - name: deploy-to-abap
+      afterTask: generateCachebusterInfo
+      configuration:
+        target:
+          url: https://vhlruds4ci.sap.allseas.global:44300
+          client: '400'
+        app:
+          name: ZMMMATMASST
+          description: Material master mass upload (test version)
+          package: ZMM_MATMASS
+          transport: DS4K915674
+        exclude:
+          - /test/

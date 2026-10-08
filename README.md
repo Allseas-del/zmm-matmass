@@ -6,4 +6,10 @@ hosted as BSP `ZMMMATMASS` in the Fiori launchpad instead of the console loader.
 
 - Package `ZMM_MATMASS`, transport `DS4K915674`, build in DS4/400, test in DS4/410
 - Design: `docs/design.html`
-- Deploy: `npm install` then `npm run deploy`
+- Deploy: `npm install` then `npm run deploy` (or `deploy.cmd`; logon from `.env`: `FIORI_TOOLS_USER` / `FIORI_TOOLS_PASSWORD`)
+- Test variant next to the productive app: `deploy-test.cmd` deploys BSP `ZMMMATMASST` (app id `com.allseas.zmmmatmasst`,
+  intent `Material-massUploadTest`, built with `ui5-test.yaml` / `ui5-deploy-test.yaml` after `scripts/variant.js apply`);
+  direct URL `/sap/bc/ui5_ui5/sap/zmmmatmasst/tool.html?sap-client=410`. Both variants share the browser storage
+  (last run, unit translation) because they run on the same origin.
+- Commodity code (MARC-STAWN): not in the Product API; column `STAWN` on Plant Data goes through the custom service
+  in `docs/abap/` (class + SICF node to be created once).
