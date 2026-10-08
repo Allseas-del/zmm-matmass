@@ -1,5 +1,6 @@
 # yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
-# Deploy target: DS4 client 400 (repository objects are created here, tested in 410). Run: npm run deploy
+# Deploy target: DS4 client 400 (repository objects are created here, tested in 410). Run: deploy.cmd or npm run deploy
+# Needs a developer user in client 400 (8 Oct 2026: user 10037 exists only in 410 and gets HTTP 403 on deploy there).
 specVersion: "4.0"
 metadata:
   name: com.allseas.zmmmatmass
